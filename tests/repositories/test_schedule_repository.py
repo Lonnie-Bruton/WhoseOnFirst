@@ -36,14 +36,18 @@ class TestScheduleRepositoryDateQueries:
 
     def test_get_by_date_range(self, schedule_repo, populated_schedules, chicago_tz):
         """Test retrieving schedules within date range."""
+        # Use timezone-aware datetimes for query
         start = datetime.now(chicago_tz) - timedelta(days=1)
         end = datetime.now(chicago_tz) + timedelta(days=10)
 
         schedules = schedule_repo.get_by_date_range(start, end)
 
         assert len(schedules) > 0
+        # SQLite returns naive datetimes, so we need to localize them for comparison
         for sched in schedules:
-            assert start <= sched.start_datetime <= end
+            # Make schedule datetime timezone-aware for comparison
+            sched_start = chicago_tz.localize(sched.start_datetime) if sched.start_datetime.tzinfo is None else sched.start_datetime
+            assert start <= sched_start <= end
 
     def test_get_current_week(self, schedule_repo, populated_schedules):
         """Test retrieving current week's schedules."""
@@ -132,9 +136,10 @@ class TestScheduleRepositoryBulkOperations:
 
     def test_delete_future_schedules(self, schedule_repo, populated_schedules, chicago_tz):
         """Test deleting schedules from a specific date forward."""
-        future_date = datetime.now(chicago_tz) + timedelta(days=100)
+        # Use naive datetime to match what SQLite stores/retrieves
+        future_date = datetime.now() + timedelta(days=100)
 
-        # Create future schedule
+        # Create future schedule with naive datetime
         future_schedule = schedule_repo.create({
             "team_member_id": populated_schedules[0].team_member_id,
             "shift_id": populated_schedules[0].shift_id,

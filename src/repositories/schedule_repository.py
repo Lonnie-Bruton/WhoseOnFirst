@@ -402,10 +402,12 @@ class ScheduleRepository(BaseRepository[Schedule]):
         """
         try:
             schedules = [self.model(**data) for data in schedules_data]
-            self.db.bulk_save_objects(schedules)
+
+            # Use add_all instead of bulk_save_objects to keep objects in session
+            self.db.add_all(schedules)
             self.db.commit()
 
-            # Refresh to get IDs - bulk operations don't auto-refresh
+            # Refresh to get IDs and load relationships
             for schedule in schedules:
                 self.db.refresh(schedule)
 
