@@ -1,0 +1,175 @@
+"""
+Base repository with common CRUD operations.
+
+Provides generic database operations that can be inherited by specific repositories.
+"""
+
+from typing import Generic, TypeVar, Type, List, Optional, Dict, Any
+from sqlalchemy.orm import Session
+from sqlalchemy.exc import SQLAlchemyError
+
+# Generic type for model classes
+ModelType = TypeVar("ModelType")
+
+
+class BaseRepository(Generic[ModelType]):
+    """
+    Base repository with common CRUD operations.
+
+    Provides standard database operations that can be used by all repositories.
+    Handles database session management and error handling.
+
+    Type Parameters:
+        ModelType: The SQLAlchemy model class this repository manages
+
+    Attributes:
+        db: SQLAlchemy database session
+        model: The model class this repository operates on
+    """
+
+    def __init__(self, db: Session, model: Type[ModelType]):
+        """
+        Initialize repository with database session and model.
+
+        Args:
+            db: SQLAlchemy database session
+            model: The SQLAlchemy model class
+        """
+        self.db = db
+        self.model = model
+
+    def get_by_id(self, id: int) -> Optional[ModelType]:
+        """
+        Retrieve a single record by ID.
+
+        Args:
+            id: Primary key value
+
+        Returns:
+            Model instance if found, None otherwise
+        """
+        try:
+            return self.db.query(self.model).filter(self.model.id == id).first()
+        except SQLAlchemyError as e:
+            self.db.rollback()
+            raise Exception(f"Database error getting {self.model.__name__} by id: {str(e)}")
+
+    def get_all(self, skip: int = 0, limit: int = 100) -> List[ModelType]:
+        """
+        Retrieve all records with optional pagination.
+
+        Args:
+            skip: Number of records to skip (for pagination)
+            limit: Maximum number of records to return
+
+        Returns:
+            List of model instances
+        """
+        try:
+            return self.db.query(self.model).offset(skip).limit(limit).all()
+        except SQLAlchemyError as e:
+            self.db.rollback()
+            raise Exception(f"Database error getting all {self.model.__name__}: {str(e)}")
+
+    def create(self, data: Dict[str, Any]) -> ModelType:
+        """
+        Create a new record.
+
+        Args:
+            data: Dictionary of field values to create the record
+
+        Returns:
+            Created model instance with ID populated
+
+        Raises:
+            Exception: If database operation fails
+        """
+        try:
+            instance = self.model(**data)
+            self.db.add(instance)
+            self.db.commit()
+            self.db.refresh(instance)
+            return instance
+        except SQLAlchemyError as e:
+            self.db.rollback()
+            raise Exception(f"Database error creating {self.model.__name__}: {str(e)}")
+
+    def update(self, id: int, data: Dict[str, Any]) -> Optional[ModelType]:
+        """
+        Update an existing record.
+
+        Args:
+            id: Primary key of record to update
+            data: Dictionary of field values to update
+
+        Returns:
+            Updated model instance if found, None otherwise
+
+        Raises:
+            Exception: If database operation fails
+        """
+        try:
+            instance = self.get_by_id(id)
+            if instance:
+                for key, value in data.items():
+                    if hasattr(instance, key):
+                        setattr(instance, key, value)
+                self.db.commit()
+                self.db.refresh(instance)
+            return instance
+        except SQLAlchemyError as e:
+            self.db.rollback()
+            raise Exception(f"Database error updating {self.model.__name__}: {str(e)}")
+
+    def delete(self, id: int) -> bool:
+        """
+        Delete a record by ID.
+
+        Args:
+            id: Primary key of record to delete
+
+        Returns:
+            True if record was deleted, False if not found
+
+        Raises:
+            Exception: If database operation fails
+        """
+        try:
+            instance = self.get_by_id(id)
+            if instance:
+                self.db.delete(instance)
+                self.db.commit()
+                return True
+            return False
+        except SQLAlchemyError as e:
+            self.db.rollback()
+            raise Exception(f"Database error deleting {self.model.__name__}: {str(e)}")
+
+    def count(self) -> int:
+        """
+        Count total number of records.
+
+        Returns:
+            Total count of records in the table
+        """
+        try:
+            return self.db.query(self.model).count()
+        except SQLAlchemyError as e:
+            self.db.rollback()
+            raise Exception(f"Database error counting {self.model.__name__}: {str(e)}")
+
+    def exists(self, id: int) -> bool:
+        """
+        Check if a record exists by ID.
+
+        Args:
+            id: Primary key to check
+
+        Returns:
+            True if record exists, False otherwise
+        """
+        try:
+            return self.db.query(self.model).filter(self.model.id == id).count() > 0
+        except SQLAlchemyError as e:
+            self.db.rollback()
+            raise Exception(f"Database error checking existence of {self.model.__name__}: {str(e)}")

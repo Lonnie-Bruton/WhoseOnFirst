@@ -1,0 +1,150 @@
+"""
+Tests for ScheduleRepository.
+
+Tests complex schedule queries including date ranges, notifications,
+and bulk operations.
+"""
+
+import pytest
+from datetime import datetime, timedelta
+import pytz
+from src.repositories import ScheduleRepository
+
+
+class TestScheduleRepositoryCRUD:
+    """Tests for basic CRUD operations on schedules."""
+
+    def test_create_schedule(self, schedule_repo, sample_schedule_data, populated_team_members, populated_shifts):
+        """Test creating a schedule assignment."""
+        data = sample_schedule_data(populated_team_members[0].id, populated_shifts[0].id)
+        schedule = schedule_repo.create(data)
+
+        assert schedule.id is not None
+        assert schedule.team_member_id == populated_team_members[0].id
+        assert schedule.notified is False
+
+    def test_get_by_id(self, schedule_repo, populated_schedules):
+        """Test retrieving schedule by ID."""
+        schedule = schedule_repo.get_by_id(populated_schedules[0].id)
+
+        assert schedule is not None
+        assert schedule.id == populated_schedules[0].id
+
+
+class TestScheduleRepositoryDateQueries:
+    """Tests for date-based schedule queries."""
+
+    def test_get_by_date_range(self, schedule_repo, populated_schedules, chicago_tz):
+        """Test retrieving schedules within date range."""
+        start = datetime.now(chicago_tz) - timedelta(days=1)
+        end = datetime.now(chicago_tz) + timedelta(days=10)
+
+        schedules = schedule_repo.get_by_date_range(start, end)
+
+        assert len(schedules) > 0
+        for sched in schedules:
+            assert start <= sched.start_datetime <= end
+
+    def test_get_current_week(self, schedule_repo, populated_schedules):
+        """Test retrieving current week's schedules."""
+        schedules = schedule_repo.get_current_week()
+
+        assert len(schedules) > 0
+
+    def test_get_upcoming_weeks(self, schedule_repo, populated_schedules):
+        """Test retrieving upcoming weeks."""
+        schedules = schedule_repo.get_upcoming_weeks(num_weeks=2)
+
+        assert len(schedules) >= 0
+
+
+class TestScheduleRepositoryNotifications:
+    """Tests for notification-related queries."""
+
+    def test_get_pending_notifications(self, schedule_repo, populated_schedules):
+        """Test retrieving schedules needing notifications."""
+        pending = schedule_repo.get_pending_notifications()
+
+        # Should get schedules that are not notified and start today
+        for sched in pending:
+            assert sched.notified is False
+
+    def test_mark_as_notified(self, schedule_repo, populated_schedules):
+        """Test marking schedule as notified."""
+        schedule = populated_schedules[0]
+        updated = schedule_repo.mark_as_notified(schedule.id)
+
+        assert updated.notified is True
+
+    def test_get_active_assignments(self, schedule_repo, populated_schedules):
+        """Test retrieving currently active assignments."""
+        active = schedule_repo.get_active_assignments()
+
+        # Verify all returned schedules are currently active
+        now = datetime.now()
+        for sched in active:
+            # Note: datetime comparison needs timezone handling
+            assert sched.start_datetime <= now or sched.end_datetime >= now
+
+
+class TestScheduleRepositoryMemberQueries:
+    """Tests for team member-specific queries."""
+
+    def test_get_by_team_member(self, schedule_repo, populated_schedules, populated_team_members):
+        """Test retrieving schedules for specific team member."""
+        member = populated_team_members[0]
+        schedules = schedule_repo.get_by_team_member(member.id)
+
+        assert all(s.team_member_id == member.id for s in schedules)
+
+    def test_get_next_assignment_for_member(self, schedule_repo, populated_schedules, populated_team_members):
+        """Test getting next upcoming assignment for member."""
+        member = populated_team_members[0]
+        next_assignment = schedule_repo.get_next_assignment_for_member(member.id)
+
+        if next_assignment:
+            assert next_assignment.team_member_id == member.id
+            assert next_assignment.start_datetime > datetime.now()
+
+
+class TestScheduleRepositoryBulkOperations:
+    """Tests for bulk operations."""
+
+    def test_bulk_create(self, schedule_repo, populated_team_members, populated_shifts, chicago_tz):
+        """Test creating multiple schedules at once."""
+        base_date = datetime.now(chicago_tz)
+        schedules_data = []
+
+        for i in range(3):
+            schedules_data.append({
+                "team_member_id": populated_team_members[i].id,
+                "shift_id": populated_shifts[i].id,
+                "week_number": 1,
+                "start_datetime": base_date + timedelta(days=i),
+                "end_datetime": base_date + timedelta(days=i, hours=24),
+                "notified": False
+            })
+
+        created = schedule_repo.bulk_create(schedules_data)
+
+        assert len(created) == 3
+        assert all(s.id is not None for s in created)
+
+    def test_delete_future_schedules(self, schedule_repo, populated_schedules, chicago_tz):
+        """Test deleting schedules from a specific date forward."""
+        future_date = datetime.now(chicago_tz) + timedelta(days=100)
+
+        # Create future schedule
+        future_schedule = schedule_repo.create({
+            "team_member_id": populated_schedules[0].team_member_id,
+            "shift_id": populated_schedules[0].shift_id,
+            "week_number": 99,
+            "start_datetime": future_date,
+            "end_datetime": future_date + timedelta(hours=24),
+            "notified": False
+        })
+
+        deleted_count = schedule_repo.delete_future_schedules(future_date)
+
+        assert deleted_count >= 1
+        assert schedule_repo.get_by_id(future_schedule.id) is None

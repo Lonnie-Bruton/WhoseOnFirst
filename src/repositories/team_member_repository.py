@@ -1,0 +1,229 @@
+"""
+Team member repository for database operations.
+
+Handles all database operations related to team members,
+including phone validation and active member queries.
+"""
+
+from typing import List, Optional
+from sqlalchemy.orm import Session
+from sqlalchemy.exc import SQLAlchemyError
+
+from .base_repository import BaseRepository
+from ..models.team_member import TeamMember
+
+
+class TeamMemberRepository(BaseRepository[TeamMember]):
+    """
+    Repository for team member database operations.
+
+    Extends BaseRepository with team member-specific queries:
+    - Get active members
+    - Get by phone number
+    - Check phone uniqueness
+    - Deactivate/activate members
+
+    Attributes:
+        db: SQLAlchemy database session
+    """
+
+    def __init__(self, db: Session):
+        """
+        Initialize TeamMemberRepository.
+
+        Args:
+            db: SQLAlchemy database session
+        """
+        super().__init__(db, TeamMember)
+
+    def get_active(self) -> List[TeamMember]:
+        """
+        Get all active team members.
+
+        Returns:
+            List of active TeamMember instances, ordered by name
+
+        Raises:
+            Exception: If database operation fails
+        """
+        try:
+            return (
+                self.db.query(self.model)
+                .filter(self.model.is_active == True)
+                .order_by(self.model.name)
+                .all()
+            )
+        except SQLAlchemyError as e:
+            self.db.rollback()
+            raise Exception(f"Database error getting active team members: {str(e)}")
+
+    def get_inactive(self) -> List[TeamMember]:
+        """
+        Get all inactive team members.
+
+        Returns:
+            List of inactive TeamMember instances, ordered by name
+
+        Raises:
+            Exception: If database operation fails
+        """
+        try:
+            return (
+                self.db.query(self.model)
+                .filter(self.model.is_active == False)
+                .order_by(self.model.name)
+                .all()
+            )
+        except SQLAlchemyError as e:
+            self.db.rollback()
+            raise Exception(f"Database error getting inactive team members: {str(e)}")
+
+    def get_by_phone(self, phone: str) -> Optional[TeamMember]:
+        """
+        Get team member by phone number.
+
+        Args:
+            phone: Phone number in E.164 format (+1XXXXXXXXXX)
+
+        Returns:
+            TeamMember instance if found, None otherwise
+
+        Raises:
+            Exception: If database operation fails
+        """
+        try:
+            return (
+                self.db.query(self.model)
+                .filter(self.model.phone == phone)
+                .first()
+            )
+        except SQLAlchemyError as e:
+            self.db.rollback()
+            raise Exception(f"Database error getting team member by phone: {str(e)}")
+
+    def phone_exists(self, phone: str, exclude_id: Optional[int] = None) -> bool:
+        """
+        Check if phone number already exists in database.
+
+        Useful for validation before creating/updating team members.
+
+        Args:
+            phone: Phone number to check
+            exclude_id: Optional ID to exclude from check (for updates)
+
+        Returns:
+            True if phone exists (and isn't the excluded ID), False otherwise
+
+        Raises:
+            Exception: If database operation fails
+        """
+        try:
+            query = self.db.query(self.model).filter(self.model.phone == phone)
+
+            if exclude_id is not None:
+                query = query.filter(self.model.id != exclude_id)
+
+            return query.count() > 0
+        except SQLAlchemyError as e:
+            self.db.rollback()
+            raise Exception(f"Database error checking phone existence: {str(e)}")
+
+    def deactivate(self, id: int) -> Optional[TeamMember]:
+        """
+        Deactivate a team member (soft delete).
+
+        Sets is_active to False instead of deleting the record.
+        Preserves historical schedule data.
+
+        Args:
+            id: Team member ID to deactivate
+
+        Returns:
+            Updated TeamMember instance if found, None otherwise
+
+        Raises:
+            Exception: If database operation fails
+        """
+        try:
+            member = self.get_by_id(id)
+            if member:
+                member.is_active = False
+                self.db.commit()
+                self.db.refresh(member)
+            return member
+        except SQLAlchemyError as e:
+            self.db.rollback()
+            raise Exception(f"Database error deactivating team member: {str(e)}")
+
+    def activate(self, id: int) -> Optional[TeamMember]:
+        """
+        Activate a team member.
+
+        Sets is_active to True to add them back to rotation.
+
+        Args:
+            id: Team member ID to activate
+
+        Returns:
+            Updated TeamMember instance if found, None otherwise
+
+        Raises:
+            Exception: If database operation fails
+        """
+        try:
+            member = self.get_by_id(id)
+            if member:
+                member.is_active = True
+                self.db.commit()
+                self.db.refresh(member)
+            return member
+        except SQLAlchemyError as e:
+            self.db.rollback()
+            raise Exception(f"Database error activating team member: {str(e)}")
+
+    def get_count_active(self) -> int:
+        """
+        Get count of active team members.
+
+        Useful for rotation algorithm and validation.
+
+        Returns:
+            Number of active team members
+
+        Raises:
+            Exception: If database operation fails
+        """
+        try:
+            return (
+                self.db.query(self.model)
+                .filter(self.model.is_active == True)
+                .count()
+            )
+        except SQLAlchemyError as e:
+            self.db.rollback()
+            raise Exception(f"Database error counting active team members: {str(e)}")
+
+    def search_by_name(self, name_query: str) -> List[TeamMember]:
+        """
+        Search team members by name (case-insensitive partial match).
+
+        Args:
+            name_query: Name or partial name to search for
+
+        Returns:
+            List of matching TeamMember instances
+
+        Raises:
+            Exception: If database operation fails
+        """
+        try:
+            search_term = f"%{name_query}%"
+            return (
+                self.db.query(self.model)
+                .filter(self.model.name.ilike(search_term))
+                .order_by(self.model.name)
+                .all()
+            )
+        except SQLAlchemyError as e:
+            self.db.rollback()
+            raise Exception(f"Database error searching team members by name: {str(e)}")

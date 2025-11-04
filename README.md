@@ -5,7 +5,8 @@
 [![Python Version](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115%2B-009688.svg)](https://fastapi.tiangolo.com/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Status](https://img.shields.io/badge/status-planning-yellow.svg)](docs/planning/PRD.md)
+[![Status](https://img.shields.io/badge/status-in%20development-blue.svg)](docs/planning/PRD.md)
+[![Progress](https://img.shields.io/badge/progress-25%25-blue.svg)](CHANGELOG.md)
 
 ---
 
@@ -25,9 +26,10 @@ WhoseOnFirst is an automated scheduling and notification system that manages fai
 
 ## 📋 Project Status
 
-**Current Phase:** Planning & Documentation  
-**Target Beta:** 30-90 days  
-**Version:** 0.1.0 (Pre-Alpha)
+**Current Phase:** Phase 1 Development (Week 1-2)
+**Progress:** ~25% Complete (Database + Repository Layer)
+**Target Beta:** 30-90 days
+**Version:** 0.2.0 (Pre-Alpha)
 
 ### Documentation
 
@@ -145,15 +147,19 @@ curl -X POST http://localhost:8000/api/v1/notifications/send-test \
 
 ## 🗓️ Development Roadmap
 
-### Phase 1: MVP (Weeks 1-6) 🚧 *In Planning*
+### Phase 1: MVP (Weeks 1-6) 🚧 *In Progress* (~25% Complete)
 - [x] Requirements gathering and PRD
 - [x] Technology research and stack selection
 - [x] Architecture design
-- [ ] Core backend implementation (API, database, models)
+- [x] Database models and migrations (4 tables, 20+ indexes)
+- [x] Repository layer (5 repositories, 1,447 lines)
+- [ ] Service layer (business logic) - *Next*
+- [ ] API endpoints (FastAPI routes)
 - [ ] Scheduling logic and rotation algorithm
 - [ ] Twilio SMS integration
 - [ ] Basic admin interface
 - [ ] Docker containerization
+- [ ] Test suite with 80%+ coverage
 
 ### Phase 2: Enhancement (Weeks 7-10) 📋 *Planned*
 - [ ] Multi-user authentication
