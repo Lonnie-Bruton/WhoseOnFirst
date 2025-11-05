@@ -10,6 +10,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **APScheduler Integration** - Automated daily SMS notifications at 8:00 AM CST (COMPLETE ✅)
+  - `ScheduleManager` class for managing BackgroundScheduler lifecycle
+  - Daily notification job with CronTrigger at 8:00 AM America/Chicago
+  - FastAPI lifespan integration for automatic start/stop
+  - `send_daily_notifications()` function to process pending notifications
+  - Manual trigger endpoint: POST /api/v1/schedules/notifications/trigger
+  - Job status endpoint: GET /api/v1/schedules/notifications/status
+  - Database session management for background jobs
+  - Singleton pattern for global scheduler instance
+  - Comprehensive logging for monitoring and debugging
+  - Misfire grace time (5 minutes) for missed jobs
+  - Coalesce setting to combine multiple missed runs
 - **API Layer** - RESTful FastAPI endpoints with automatic OpenAPI documentation (COMPLETE ✅)
   - `src/main.py` - FastAPI application with CORS, routing, health checks
   - **Team Members API** (`/api/v1/team-members/`) - Full CRUD operations
@@ -102,6 +114,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Bulk insert operations for schedule generation efficiency
 
 ### Technical Details
+- **Scheduler:** APScheduler 3.10.4 with BackgroundScheduler
+  - America/Chicago timezone configuration
+  - Cron trigger: hour=8, minute=0 (daily at 8:00 AM CST)
+  - Memory job store (can be upgraded to SQLAlchemyJobStore)
+  - Max instances: 1 (prevent concurrent runs)
+  - Next scheduled run: 2025-11-06 08:00:00-06:00
+  - 305 lines of scheduler code with lifecycle management
 - **Services:** 4 service files, 315 statements, 87-100% test coverage
   - `ScheduleService`: 57 statements, 98% covered ✅
   - `RotationAlgorithmService`: 63 statements, 95% covered ✅

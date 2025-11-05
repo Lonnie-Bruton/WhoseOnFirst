@@ -23,6 +23,7 @@ from src.services import (
     InsufficientMembersError,
     NoShiftsConfiguredError
 )
+from src.scheduler import trigger_notifications_manually, get_schedule_manager
 
 
 router = APIRouter()
@@ -297,3 +298,57 @@ def get_next_assignment(
     service = ScheduleService(db)
     schedule = service.get_next_assignment(team_member_id=member_id)
     return schedule
+
+
+@router.post("/notifications/trigger", tags=["notifications"])
+def trigger_notifications(
+    db: Session = Depends(get_db)
+):
+    """
+    Manually trigger the daily notification job.
+
+    This endpoint allows testing the notification system without waiting
+    for the scheduled 8:00 AM run time. It processes all pending notifications
+    for today.
+
+    **Note:** This is primarily for testing and manual execution.
+    In production, notifications are sent automatically by APScheduler.
+
+    Returns:
+        dict: Result summary with status and counts
+
+    Example:
+        POST /api/v1/schedules/notifications/trigger
+    """
+    result = trigger_notifications_manually()
+    return result
+
+
+@router.get("/notifications/status", tags=["notifications"])
+def get_notification_job_status():
+    """
+    Get the status of the scheduled notification job.
+
+    Returns information about the daily notification job including
+    next scheduled run time.
+
+    Returns:
+        dict: Job status information
+
+    Example:
+        GET /api/v1/schedules/notifications/status
+    """
+    scheduler = get_schedule_manager()
+    job_status = scheduler.get_job_status()
+
+    if not job_status:
+        return {
+            "status": "not_found",
+            "message": "Notification job not found or scheduler not started"
+        }
+
+    return {
+        "status": "scheduled",
+        "job": job_status,
+        "scheduler_running": scheduler.is_running
+    }

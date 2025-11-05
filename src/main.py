@@ -5,11 +5,64 @@ This module defines the main FastAPI application for the WhoseOnFirst
 on-call rotation and SMS notification system.
 """
 
+from contextlib import asynccontextmanager
+import logging
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 # Import routers
 from src.api.routes import team_members, shifts, schedules
+from src.scheduler import get_schedule_manager
+
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    FastAPI lifespan context manager.
+
+    Handles application startup and shutdown events:
+    - Startup: Initialize and start the APScheduler
+    - Shutdown: Stop the scheduler gracefully
+    """
+    # Startup
+    logger.info("Starting WhoseOnFirst API...")
+
+    # Initialize and start the scheduler
+    try:
+        scheduler = get_schedule_manager()
+        scheduler.start()
+        logger.info("Scheduler started successfully")
+
+        # Log the next run time
+        job_status = scheduler.get_job_status()
+        if job_status:
+            logger.info("Next notification job run: %s", job_status['next_run_time'])
+    except Exception as e:
+        logger.error("Failed to start scheduler: %s", str(e))
+        raise
+
+    yield
+
+    # Shutdown
+    logger.info("Shutting down WhoseOnFirst API...")
+
+    # Stop the scheduler
+    try:
+        scheduler = get_schedule_manager()
+        scheduler.stop(wait=True)
+        logger.info("Scheduler stopped successfully")
+    except Exception as e:
+        logger.error("Error stopping scheduler: %s", str(e))
+
 
 app = FastAPI(
     title="WhoseOnFirst API",
@@ -17,7 +70,8 @@ app = FastAPI(
     version="0.2.0",
     docs_url="/docs",
     redoc_url="/redoc",
-    openapi_url="/openapi.json"
+    openapi_url="/openapi.json",
+    lifespan=lifespan
 )
 
 # CORS middleware configuration
