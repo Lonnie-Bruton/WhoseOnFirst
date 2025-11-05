@@ -10,25 +10,118 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **API Layer** - RESTful FastAPI endpoints with automatic OpenAPI documentation (COMPLETE ✅)
+  - `src/main.py` - FastAPI application with CORS, routing, health checks
+  - **Team Members API** (`/api/v1/team-members/`) - Full CRUD operations
+    - GET / - List all members with optional active filter
+    - GET /{id} - Get specific member
+    - POST / - Create new member with phone validation
+    - PUT /{id} - Update member details
+    - DELETE /{id} - Soft delete (deactivate)
+    - POST /{id}/activate - Reactivate member
+  - **Shifts API** (`/api/v1/shifts/`) - Shift configuration management
+    - GET / - List all shift configurations
+    - GET /{id} - Get specific shift
+    - POST / - Create new shift with validation
+    - PUT /{id} - Update shift configuration
+    - DELETE /{id} - Delete shift (cascades to schedules)
+  - **Schedules API** (`/api/v1/schedules/`) - Schedule generation and queries
+    - GET /current - Current week's schedule
+    - GET /upcoming - Upcoming schedules (configurable weeks)
+    - GET / - Query by date range
+    - GET /member/{id} - Member-specific schedules
+    - GET /member/{id}/next - Next assignment for member
+    - POST /generate - Generate schedules (with force option)
+    - POST /regenerate - Regenerate from date forward
+  - **Pydantic Schemas** - Request/response validation
+    - `TeamMemberCreate`, `TeamMemberUpdate`, `TeamMemberResponse`
+    - `ShiftCreate`, `ShiftUpdate`, `ShiftResponse`
+    - `ScheduleResponse`, `ScheduleGenerateRequest`, `ScheduleRegenerateRequest`
+    - Phone validation (E.164 format)
+    - Timezone validation (America/Chicago required)
+    - Start time validation (HH:MM format)
+    - Duration validation (24h or 48h)
+  - **API Tests** - Comprehensive test coverage
+    - 22 team member endpoint tests
+    - 25+ shift endpoint tests
+    - 25+ schedule endpoint tests
+    - Integration tests for full workflows
+    - TestClient with database session override
+  - **Error Handling** - Consistent HTTP status codes
+    - 200/201 for success
+    - 400 for validation errors
+    - 404 for not found
+    - 422 for Pydantic validation failures
+  - **OpenAPI Documentation** - Auto-generated API docs
+    - Swagger UI available at `/docs`
+    - ReDoc available at `/redoc`
+    - Complete request/response examples
+- **Schedule Service** - Orchestration layer for schedule generation and management (COMPLETE ✅)
+  - `ScheduleService` - Coordinates between rotation algorithm and database persistence
+  - Schedule generation with conflict prevention and force regeneration
+  - Query methods: current week, upcoming schedules, date ranges, member-specific
+  - Schedule regeneration when team composition changes
+  - Notification tracking and management
+  - Timezone-aware datetime validation (America/Chicago)
+  - 28 comprehensive tests with 98% coverage (28/28 passing)
+  - Integration with RotationAlgorithmService and ScheduleRepository
+  - Custom exceptions: ScheduleAlreadyExistsError, InvalidDateRangeError
+- **Rotation Algorithm Service** - Core circular rotation scheduler (COMPLETE ✅)
+  - `RotationAlgorithmService` - Implements fair circular rotation for on-call assignments
+  - Simple algorithm: team members rotate through shifts weekly (Shift N → Shift N+1)
+  - Handles any team size (1 to 15+ members) with automatic position wrapping
+  - Double-shift support (Tuesday-Wednesday 48h) naturally distributes workload
+  - Timezone-aware datetime handling (America/Chicago)
+  - Returns data compatible with ScheduleRepository.bulk_create()
+  - 30 comprehensive tests with 100% coverage
+  - Edge case handling: single member, large teams, more shifts than members, etc.
+- **Service layer implementation** with comprehensive business logic
+  - `TeamMemberService` - Team member management with phone validation and activation/deactivation
+  - `ShiftService` - Shift configuration management with validation and weekend shift identification
+  - Service-specific exceptions for granular error handling
+  - Integration points for future schedule regeneration (Phase 2)
+- Service layer test suite
+  - 133 comprehensive tests for service layer (100% pass rate)
+  - Tests for CRUD operations, validation, error handling, and business rules
+  - Mock-free testing using real database sessions
+  - Rotation algorithm tests: circular rotation, edge cases, datetime handling, integration
+  - Schedule service tests: generation, queries, regeneration, notifications, integration
+  - Repository timezone handling tests (naive/aware datetime conversion for SQLite)
 - Repository layer implementation with full CRUD operations
   - `BaseRepository` - Generic repository with common database operations
   - `TeamMemberRepository` - Team member specific queries (phone validation, active/inactive)
   - `ShiftRepository` - Shift configuration management (weekend shifts, duration filters)
   - `ScheduleRepository` - Complex schedule queries (date ranges, notifications, bulk operations)
   - `NotificationLogRepository` - SMS delivery tracking and audit queries
-- Type-safe repository interfaces using Python generics
-- Comprehensive error handling with SQLAlchemy exception management
-- Query optimization with eager loading (joinedload) for relationships
-- Pagination support in BaseRepository get_all() method
-- Bulk insert operations for schedule generation efficiency
-- Repository layer exports via `__init__.py`
+- Repository layer test suite
+  - 70 comprehensive tests for repository layer (100% pass rate)
+  - Type-safe repository interfaces using Python generics
+  - Comprehensive error handling with SQLAlchemy exception management
+  - Query optimization with eager loading (joinedload) for relationships
+  - Pagination support in BaseRepository get_all() method
+  - Bulk insert operations for schedule generation efficiency
 
 ### Technical Details
-- Total: 6 repository files, 1,447 lines of code
-- All repositories extend BaseRepository for consistency
-- Full type hints for IDE support and MyPy validation
-- Follows Repository Pattern from architecture.md
-- Uses SQLAlchemy ORM exclusively (no raw SQL)
+- **Services:** 4 service files, 315 statements, 87-100% test coverage
+  - `ScheduleService`: 57 statements, 98% covered ✅
+  - `RotationAlgorithmService`: 63 statements, 95% covered ✅
+  - `TeamMemberService`: 84 statements, 90% covered
+  - `ShiftService`: 111 statements, 87% covered
+  - Full business logic validation (phone format, shift numbers, durations, day names)
+  - Proper exception hierarchy for error handling
+  - Timezone-aware datetime handling (America/Chicago)
+- **Repositories:** 6 repository files, 1,447 lines of code
+  - All repositories extend BaseRepository for consistency
+  - Full type hints for IDE support and MyPy validation
+  - Follows Repository Pattern from architecture.md
+  - Uses SQLAlchemy ORM exclusively (no raw SQL)
+- **Tests:** 203 total tests passing (70 repository + 133 service)
+  - Overall project coverage: 50%
+  - Service layer coverage: 87-98%
+  - Repository layer coverage: 61%
+  - Rotation algorithm: 30 tests, 95% coverage ✅
+  - Schedule service: 28 tests, 98% coverage ✅
+  - Repository timezone handling for SQLite (naive/aware datetime conversion)
 
 ---
 
@@ -125,13 +218,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Project Phases
 
 ### Phase 1: MVP (Weeks 1-6) - 🚧 In Progress
-**Current Status:** ~25% Complete
+**Current Status:** ~40% Complete
 - [x] Planning and documentation
 - [x] Database models and migrations
 - [x] Repository layer
-- [ ] Service layer
+- [x] Rotation algorithm (RotationAlgorithmService)
+- [x] Schedule service (ScheduleService)
+- [x] Team member service (TeamMemberService)
+- [x] Shift service (ShiftService)
 - [ ] API endpoints (FastAPI routes)
-- [ ] Rotation algorithm
 - [ ] APScheduler integration
 - [ ] Twilio SMS service
 - [ ] Admin dashboard (basic UI)

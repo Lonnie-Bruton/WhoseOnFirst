@@ -10,7 +10,7 @@
 
 ## Executive Summary
 
-WhoseOnFirst is an automated on-call rotation and SMS notification system designed to manage fair scheduling for technical teams. The system ensures equitable shift distribution, prevents weekend-day clustering for individual team members, and automatically notifies on-call personnel at shift start times.
+WhoseOnFirst is an automated on-call rotation and SMS notification system designed to manage fair scheduling for technical teams. The system ensures equitable shift distribution using a simple circular rotation algorithm, schedules the double-shift during the workweek (Tue-Wed) to minimize weekend impact, and automatically notifies on-call personnel at shift start times.
 
 ---
 
@@ -91,9 +91,9 @@ WhoseOnFirst is an automated on-call rotation and SMS notification system design
 - **REQ-010:** System shall number shifts sequentially (Shift 1, Shift 2, etc.)
 
 #### 3. Schedule Generation
-- **REQ-011:** System shall implement fair rotation algorithm
-- **REQ-012:** System shall prevent individuals from being on-call both Saturday and Sunday
-- **REQ-013:** System shall rotate shift assignments weekly
+- **REQ-011:** System shall implement fair circular rotation algorithm
+- **REQ-012:** System shall distribute on-call burden fairly via double-shift (48h) during workweek (Tue-Wed)
+- **REQ-013:** System shall rotate shift assignments weekly (each member moves to next shift)
 - **REQ-014:** System shall generate schedules at least 4 weeks in advance
 - **REQ-015:** System shall recalculate schedules when team composition changes
 
@@ -231,10 +231,13 @@ WhoseOnFirst is an automated on-call rotation and SMS notification system design
 | 5 | Saturday | 24h | John |
 | 6 | Sunday | 24h | Paul |
 
-### Fairness Algorithm
+### Fairness Algorithm (Circular Rotation)
 - Each week, assignments rotate: person on Shift N moves to Shift N+1
-- Weekend constraint: If person is on Shift 5 (Saturday), they skip Shift 6 (Sunday)
-- This ensures no person is on-call both weekend days
+- Simple circular rotation: `member_index = (shift_index + week_offset) % team_size`
+- Person on Shift 6 wraps back to Shift 1 the following week
+- **No special weekend logic needed**: The 48-hour double shift (Tue-Wed) naturally distributes workload fairly
+- With 7 team members and 6 shifts, one person is "off" each week, rotating through the team
+- Over multiple weeks, every member gets equal distribution of all shifts including the double shift
 
 ---
 

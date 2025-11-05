@@ -577,15 +577,17 @@ import pytest
 from datetime import datetime
 
 def test_rotation_algorithm():
-    """Test that rotation algorithm prevents weekend clustering"""
+    """Test that circular rotation algorithm works correctly"""
     team = create_test_team(7)
     schedule = generate_schedule(team, weeks=4)
-    
-    # Assert no person has both Saturday and Sunday
-    for person in team:
-        assignments = [s for s in schedule if s.person == person]
-        weekend_days = [a.day for a in assignments if a.day in ['Saturday', 'Sunday']]
-        assert len(weekend_days) <= 1 or weekend_days[0] != 'Saturday' or weekend_days[1] != 'Sunday'
+
+    # Assert all shifts covered each week
+    assert len(schedule) == 6 * 4  # 6 shifts * 4 weeks
+
+    # Assert members rotate correctly (person moves forward one position each week)
+    week_1_shift_1 = [s for s in schedule if s.week == 1 and s.shift_number == 1][0]
+    week_2_shift_2 = [s for s in schedule if s.week == 2 and s.shift_number == 2][0]
+    assert week_1_shift_1.person == week_2_shift_2.person  # Same person moved to next shift
 ```
 
 #### 2. Integration Tests

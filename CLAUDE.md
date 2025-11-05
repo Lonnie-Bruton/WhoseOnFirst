@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-WhoseOnFirst is an automated on-call rotation and SMS notification system for technical teams. The system ensures fair shift distribution, prevents weekend-day clustering for individual team members, and automatically notifies on-call personnel at 8:00 AM CST via Twilio.
+WhoseOnFirst is an automated on-call rotation and SMS notification system for technical teams. The system ensures fair shift distribution using a simple circular rotation algorithm, schedules the double-shift during the workweek (Tue-Wed) to minimize weekend impact, and automatically notifies on-call personnel at 8:00 AM CST via Twilio.
 
-**Current Status:** Planning Phase - Implementation has not yet begun. All code should be created following the architecture defined in `docs/planning/`.
+**Current Status:** Implementation Phase - Repository, Service Layer, and Rotation Algorithm complete. See CHANGELOG.md for details.
 
 **Target Deployment:** RHEL 10 VM via Docker/Podman, with development on macOS.
 
@@ -23,14 +23,17 @@ The application follows a strict layered architecture with dependency injection:
 
 **Critical:** Services should never call other services directly for data operations. Use repositories for all database access.
 
-### Fair Rotation Algorithm
+### Circular Rotation Algorithm (✅ IMPLEMENTED)
 
-The core rotation algorithm (to be implemented in `src/services/rotation_algorithm.py`) must:
-- Rotate shift assignments weekly: person on Shift N moves to Shift N+1
-- **Weekend Fairness Constraint:** If a person is assigned Saturday (Shift 5), they must skip Sunday (Shift 6)
-- Handle team size changes by regenerating the schedule from the change date forward
+The rotation algorithm in `src/services/rotation_algorithm.py` implements:
+- **Simple circular rotation:** Each week, person on Shift N moves to Shift N+1
+- **Modulo wrapping:** `member_index = (shift_index + week_offset) % team_size`
+- **No special weekend logic:** The 48-hour double shift (Tue-Wed) naturally distributes workload fairly
+- **Works with any team size:** From 1 member to 15+ members
+- **Timezone-aware:** All datetimes use America/Chicago timezone
+- **100% test coverage:** 30 comprehensive tests covering all scenarios
 
-See PRD.md lines 233-237 for detailed algorithm requirements.
+See `src/services/rotation_algorithm.py` for implementation details.
 
 ## Technology Stack
 
@@ -208,7 +211,7 @@ message = (
 - **Target Coverage:** Minimum 80% overall, 100% for critical paths (rotation algorithm, SMS sending, scheduler)
 - **Test Structure:** Mirror `src/` directory structure in `tests/`
 - **Critical Test Cases:**
-  - Rotation algorithm prevents weekend clustering (multiple weeks, various team sizes)
+  - Rotation algorithm circular rotation (multiple weeks, various team sizes, edge cases)
   - Schedule regeneration when team members added/removed
   - SMS retry logic on Twilio failures
   - Scheduler job execution at correct times
@@ -220,7 +223,7 @@ message = (
 
 1. **Timezone Handling:** All times in America/Chicago (CST/CDT). Use `pytz` for timezone-aware datetimes. Never use naive datetimes.
 2. **Phone Number Format:** E.164 standard only (+1XXXXXXXXXX). Validate on input, store consistently.
-3. **Weekend Definition:** Saturday = Shift 5, Sunday = Shift 6. This is hardcoded in rotation algorithm.
+3. **Shift Configuration:** Default setup is 6 shifts with Shift 2 being the 48-hour double shift (Tue-Wed). Saturday = Shift 5, Sunday = Shift 6.
 4. **Schedule Generation:** Generate minimum 4 weeks in advance. Regenerate from date of change when team composition changes.
 5. **Database Transactions:** All write operations must be within explicit transactions with proper error handling and rollback.
 
@@ -297,9 +300,9 @@ For detailed information, refer to these planning documents:
 
 Focus implementation on these requirements (see PRD.md lines 77-113):
 
-1. Team member management (CRUD with phone validation)
-2. Shift configuration (24h and 48h patterns)
-3. Schedule generation (fair rotation with weekend constraint)
+1. Team member management (CRUD with phone validation) ✅
+2. Shift configuration (24h and 48h patterns) ✅
+3. Schedule generation (simple circular rotation algorithm) ✅
 4. Daily SMS notifications at 8:00 AM CST
 5. Basic admin dashboard (view schedule, manage members)
 

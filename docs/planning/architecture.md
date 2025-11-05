@@ -215,30 +215,30 @@ class ScheduleService:
         self.member_repo = TeamMemberRepository(db)
     
     def generate_schedule(
-        self, 
-        start_date: datetime, 
+        self,
+        start_date: datetime,
         weeks: int = 4
-    ) -> List[ScheduleEntry]:
+    ) -> List[Schedule]:
         """
-        Generate fair rotation schedule
-        
+        Generate fair circular rotation schedule
+
         Algorithm:
-        1. Get all active team members
-        2. Get shift configuration
-        3. Apply rotation algorithm with weekend fairness constraint
-        4. Persist schedule entries
+        1. Use RotationAlgorithmService to generate schedule entries
+        2. Persist entries via ScheduleRepository.bulk_create()
+        3. Return created Schedule objects
         """
-        members = self.member_repo.get_active()
-        shifts = self.shift_repo.get_all()
-        
-        # Use rotation algorithm
-        algorithm = FairRotationAlgorithm(members, shifts)
-        schedule = algorithm.generate(start_date, weeks)
-        
+        # Generate rotation using simple circular algorithm
+        rotation_service = RotationAlgorithmService(self.db)
+        schedule_entries = rotation_service.generate_rotation(
+            start_date,
+            weeks,
+            active_members_only=True
+        )
+
         # Persist to database
-        self.schedule_repo.bulk_create(schedule)
-        
-        return schedule
+        schedules = self.schedule_repo.bulk_create(schedule_entries)
+
+        return schedules
 ```
 
 ##### NotificationService
@@ -290,80 +290,84 @@ class NotificationService:
         return results
 ```
 
-##### RotationAlgorithm
+##### RotationAlgorithm (Simple Circular Rotation)
 ```python
-class FairRotationAlgorithm:
+class RotationAlgorithmService:
     """
-    Implements fair rotation logic with weekend clustering prevention
-    
+    Implements simple circular rotation for fair on-call scheduling
+
     Core Principle:
-    - Each week, person on Shift N moves to Shift N+1
-    - If person is on Shift 5 (Saturday), they skip Shift 6 (Sunday)
-    - Ensures no person has both weekend days in same week
+    - Each week, every team member moves forward one position
+    - Person on Shift N this week → Shift N+1 next week
+    - Person on last shift wraps to Shift 1 the following week
+    - No special weekend logic needed (double shift Tue-Wed handles fairness)
+
+    Algorithm: member_index = (shift_index + week_offset) % team_size
+
+    Example (7 members, 6 shifts):
+    Week 1: [Alice, Bob, Carol, Dave, Eve, Fran] (Greg off)
+    Week 2: [Bob, Carol, Dave, Eve, Fran, Greg] (Alice off)
+    Week 3: [Carol, Dave, Eve, Fran, Greg, Alice] (Bob off)
     """
-    
-    def __init__(self, members: List[TeamMember], shifts: List[Shift]):
-        self.members = members
-        self.shifts = sorted(shifts, key=lambda s: s.shift_number)
-        self.num_members = len(members)
-        self.num_shifts = len(shifts)
-    
-    def generate(
-        self, 
-        start_date: datetime, 
-        weeks: int
-    ) -> List[ScheduleEntry]:
-        """Generate schedule for specified number of weeks"""
-        schedule = []
-        
-        # Initial assignment: member i gets shift i
-        current_assignment = list(range(self.num_members))
-        
+
+    def __init__(self, db: Session):
+        self.db = db
+        self.team_member_repo = TeamMemberRepository(db)
+        self.shift_repo = ShiftRepository(db)
+        self.chicago_tz = timezone('America/Chicago')
+
+    def generate_rotation(
+        self,
+        start_date: datetime,
+        weeks: int = 4,
+        active_members_only: bool = True
+    ) -> List[Dict[str, Any]]:
+        """
+        Generate fair rotation schedule for specified weeks.
+
+        Returns list of dicts ready for ScheduleRepository.bulk_create()
+        """
+        # Get team members (sorted by ID for consistency)
+        members = self._get_team_members(active_members_only)
+        if not members:
+            raise InsufficientMembersError("No active team members")
+
+        # Get shifts (ordered by shift_number)
+        shifts = self.shift_repo.get_all_ordered()
+        if not shifts:
+            raise NoShiftsConfiguredError("No shifts configured")
+
+        # Normalize to Monday of start week
+        monday = self._get_week_start(start_date)
+
+        # Generate schedule entries
+        schedule_entries = []
+
         for week in range(weeks):
-            week_start = start_date + timedelta(weeks=week)
-            
-            for shift in self.shifts:
-                # Get member for this shift
-                member_idx = current_assignment[shift.shift_number - 1]
-                member = self.members[member_idx]
-                
-                # Create schedule entry
-                entry = self._create_entry(
-                    member, 
-                    shift, 
-                    week_start
-                )
-                schedule.append(entry)
-            
-            # Rotate assignments for next week
-            current_assignment = self._rotate_assignments(
-                current_assignment
-            )
-        
-        return schedule
-    
-    def _rotate_assignments(
-        self, 
-        current: List[int]
-    ) -> List[int]:
-        """
-        Rotate assignments with weekend fairness constraint
-        
-        Example: [0,1,2,3,4,5] -> [5,0,1,2,3,4]
-        But with weekend check to prevent clustering
-        """
-        rotated = [current[-1]] + current[:-1]
-        
-        # Apply weekend fairness constraint
-        # If person has Shift 5 (Saturday), ensure they don't get Shift 6 (Sunday)
-        saturday_shift_idx = 4  # 0-indexed, Shift 5
-        sunday_shift_idx = 5    # 0-indexed, Shift 6
-        
-        if rotated[saturday_shift_idx] == rotated[sunday_shift_idx]:
-            # Swap Sunday assignment with next available
-            rotated[sunday_shift_idx] = (rotated[sunday_shift_idx] + 1) % self.num_members
-        
-        return rotated
+            # Calculate rotation offset for this week
+            week_offset = week % len(members)
+
+            # Assign members to shifts (circular rotation)
+            for shift_index, shift in enumerate(shifts):
+                member_index = (shift_index + week_offset) % len(members)
+                member = members[member_index]
+
+                # Calculate shift start/end times
+                shift_start = self._calculate_shift_start(monday, week, shift)
+                shift_end = shift_start + timedelta(hours=shift.duration_hours)
+
+                # Create entry
+                entry = {
+                    "team_member_id": member.id,
+                    "shift_id": shift.id,
+                    "week_number": shift_start.isocalendar()[1],
+                    "start_datetime": shift_start,
+                    "end_datetime": shift_end,
+                    "notified": False
+                }
+                schedule_entries.append(entry)
+
+        return schedule_entries
 ```
 
 ---

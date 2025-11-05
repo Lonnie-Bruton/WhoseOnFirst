@@ -62,10 +62,14 @@ class ScheduleRepository(BaseRepository[Schedule]):
             Exception: If database operation fails
         """
         try:
+            # Convert timezone-aware datetimes to naive for SQLite comparison
+            start_naive = start_date.replace(tzinfo=None) if start_date.tzinfo else start_date
+            end_naive = end_date.replace(tzinfo=None) if end_date.tzinfo else end_date
+
             query = self.db.query(self.model).filter(
                 and_(
-                    self.model.start_datetime >= start_date,
-                    self.model.start_datetime <= end_date
+                    self.model.start_datetime >= start_naive,
+                    self.model.start_datetime <= end_naive
                 )
             )
 
@@ -107,10 +111,14 @@ class ScheduleRepository(BaseRepository[Schedule]):
             )
 
             if start_date:
-                query = query.filter(self.model.start_datetime >= start_date)
+                # Convert timezone-aware datetime to naive for SQLite comparison
+                start_naive = start_date.replace(tzinfo=None) if start_date.tzinfo else start_date
+                query = query.filter(self.model.start_datetime >= start_naive)
 
             if end_date:
-                query = query.filter(self.model.start_datetime <= end_date)
+                # Convert timezone-aware datetime to naive for SQLite comparison
+                end_naive = end_date.replace(tzinfo=None) if end_date.tzinfo else end_date
+                query = query.filter(self.model.start_datetime <= end_naive)
 
             return query.options(
                 joinedload(self.model.shift)
@@ -340,9 +348,12 @@ class ScheduleRepository(BaseRepository[Schedule]):
             Exception: If database operation fails
         """
         try:
+            # Convert timezone-aware datetime to naive for SQLite comparison
+            from_date_naive = from_date.replace(tzinfo=None) if from_date.tzinfo else from_date
+
             deleted_count = (
                 self.db.query(self.model)
-                .filter(self.model.start_datetime >= from_date)
+                .filter(self.model.start_datetime >= from_date_naive)
                 .delete()
             )
             self.db.commit()

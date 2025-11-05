@@ -12,11 +12,11 @@
 
 ## 🎯 Overview
 
-WhoseOnFirst is an automated scheduling and notification system that manages fair on-call rotations for technical teams. The system ensures equitable shift distribution, prevents weekend clustering, and automatically notifies on-call personnel via SMS at the start of each shift.
+WhoseOnFirst is an automated scheduling and notification system that manages fair on-call rotations for technical teams. The system ensures equitable shift distribution using simple circular rotation, schedules the 48-hour double shift during the workweek (Tue-Wed) to minimize weekend impact, and automatically notifies on-call personnel via SMS at the start of each shift.
 
 ### Key Features
 
-- 📅 **Fair Rotation Algorithm** - Ensures no team member is on-call both weekend days
+- 📅 **Simple Circular Rotation** - Fair, predictable rotation where everyone moves forward one position each week
 - 📱 **Automated SMS Notifications** - Daily 8:00 AM CST notifications via Twilio
 - ⚙️ **Flexible Shift Patterns** - Support for 24-hour and 48-hour shifts
 - 🖥️ **Simple Admin Interface** - Web-based dashboard for schedule management

@@ -51,23 +51,51 @@ def test_db_session(test_db_engine):
     """
     Create a database session for testing.
 
-    Automatically rolls back after each test to maintain isolation.
+    Uses a nested transaction (savepoint) to automatically roll back
+    after each test, even if the code under test calls commit().
 
     Scope: function - New session for each test
     """
+    from sqlalchemy import event
+
+    connection = test_db_engine.connect()
+    transaction = connection.begin()
+
     SessionLocal = sessionmaker(
         autocommit=False,
         autoflush=False,
-        bind=test_db_engine
+        bind=connection
     )
 
     session = SessionLocal()
 
+    # Begin a nested transaction (savepoint)
+    nested = connection.begin_nested()
+
+    # Each time the session is committed, restart the savepoint
+    @event.listens_for(session, "after_transaction_end")
+    def restart_savepoint(session, transaction):
+        """Restart the savepoint after each commit."""
+        if transaction.nested and not transaction._parent.nested:
+            # Reopen the savepoint
+            session.begin_nested()
+
     yield session
 
-    # Rollback any uncommitted changes
-    session.rollback()
+    # Rollback the outer transaction to undo all changes
     session.close()
+    transaction.rollback()
+    connection.close()
+
+
+@pytest.fixture(scope="function")
+def db_session(test_db_session):
+    """
+    Alias for test_db_session for service layer tests.
+
+    Provides consistent naming across repository and service tests.
+    """
+    return test_db_session
 
 
 # Repository Fixtures
@@ -117,7 +145,7 @@ def sample_shift_data():
         "shift_number": 1,
         "day_of_week": "Monday",
         "duration_hours": 24,
-        "start_time": "08:00"
+        "start_time": "08:00:00"
     }
 
 
@@ -174,12 +202,12 @@ def populated_team_members(team_member_repo):
 def populated_shifts(shift_repo):
     """Create and return standard 6-day shift pattern."""
     shifts_data = [
-        {"shift_number": 1, "day_of_week": "Monday", "duration_hours": 24, "start_time": "08:00"},
-        {"shift_number": 2, "day_of_week": "Tuesday-Wednesday", "duration_hours": 48, "start_time": "08:00"},
-        {"shift_number": 3, "day_of_week": "Thursday", "duration_hours": 24, "start_time": "08:00"},
-        {"shift_number": 4, "day_of_week": "Friday", "duration_hours": 24, "start_time": "08:00"},
-        {"shift_number": 5, "day_of_week": "Saturday", "duration_hours": 24, "start_time": "08:00"},
-        {"shift_number": 6, "day_of_week": "Sunday", "duration_hours": 24, "start_time": "08:00"},
+        {"shift_number": 1, "day_of_week": "Monday", "duration_hours": 24, "start_time": "08:00:00"},
+        {"shift_number": 2, "day_of_week": "Tuesday-Wednesday", "duration_hours": 48, "start_time": "08:00:00"},
+        {"shift_number": 3, "day_of_week": "Thursday", "duration_hours": 24, "start_time": "08:00:00"},
+        {"shift_number": 4, "day_of_week": "Friday", "duration_hours": 24, "start_time": "08:00:00"},
+        {"shift_number": 5, "day_of_week": "Saturday", "duration_hours": 24, "start_time": "08:00:00"},
+        {"shift_number": 6, "day_of_week": "Sunday", "duration_hours": 24, "start_time": "08:00:00"},
     ]
 
     shifts = [shift_repo.create(data) for data in shifts_data]
