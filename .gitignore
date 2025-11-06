@@ -55,6 +55,9 @@ venv.bak/
 .env.local
 .env.*.local
 
+# Development handoff files (may contain sensitive info)
+HANDOFF.md
+
 # Database
 *.db
 *.db-journal
