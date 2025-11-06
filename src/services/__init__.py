@@ -41,6 +41,12 @@ from .schedule_service import (
     ScheduleAlreadyExistsError,
     InvalidDateRangeError,
 )
+from .sms_service import (
+    SMSService,
+    SMSServiceError,
+    TwilioConfigurationError,
+    SMSDeliveryError,
+)
 
 # Export all services and exceptions
 __all__ = [
@@ -67,4 +73,9 @@ __all__ = [
     "ScheduleServiceError",
     "ScheduleAlreadyExistsError",
     "InvalidDateRangeError",
+    # SMS Service
+    "SMSService",
+    "SMSServiceError",
+    "TwilioConfigurationError",
+    "SMSDeliveryError",
 ]

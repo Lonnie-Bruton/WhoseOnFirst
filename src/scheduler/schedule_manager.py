@@ -24,6 +24,7 @@ from sqlalchemy.orm import Session
 
 from src.models.database import SessionLocal
 from src.services.schedule_service import ScheduleService
+from src.services.sms_service import SMSService
 from src.models.schedule import Schedule
 
 
@@ -241,39 +242,18 @@ def send_daily_notifications() -> None:
 
             logger.info("Found %d schedules requiring notification", len(pending_schedules))
 
-            # Send notifications for each schedule
-            success_count = 0
-            failure_count = 0
+            # Initialize SMS service
+            sms_service = SMSService(db)
 
-            for schedule in pending_schedules:
-                try:
-                    # TODO: Phase 2 - Implement actual Twilio SMS sending
-                    # For now, just log the notification
-                    logger.info(
-                        "Would send SMS to %s (member: %s, shift: %s, starts: %s)",
-                        schedule.team_member.phone,
-                        schedule.team_member.name,
-                        schedule.shift.day_of_week,
-                        schedule.start_datetime
-                    )
-
-                    # Mark as notified
-                    service.mark_as_notified(schedule.id)
-                    success_count += 1
-
-                except Exception as e:
-                    logger.error(
-                        "Failed to send notification for schedule %d: %s",
-                        schedule.id,
-                        str(e),
-                        exc_info=True
-                    )
-                    failure_count += 1
+            # Send notifications using batch method
+            result = sms_service.send_batch_notifications(pending_schedules, force=False)
 
             logger.info(
-                "Notification job complete: %d success, %d failures",
-                success_count,
-                failure_count
+                "Notification job complete: %d successful, %d failed, %d skipped out of %d total",
+                result['successful'],
+                result['failed'],
+                result['skipped'],
+                result['total']
             )
 
         except Exception as e:
