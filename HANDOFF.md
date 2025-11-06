@@ -136,8 +136,8 @@ Docker:              ░░░░░░░░░░░░░░░░░░░�
 
 ### Twilio Credentials (Trial Account) ✅
 ```env
-TWILIO_ACCOUNT_SID=AC******************* (configured in .env)******************* (configured in .env)
-TWILIO_AUTH_TOKEN=******************************** (configured in .env)******************************** (configured in .env)
+TWILIO_ACCOUNT_SID=AC******************* (configured in .env)******************* (configured in .env)******************* (configured in .env)
+TWILIO_AUTH_TOKEN=******************************** (configured in .env)******************************** (configured in .env)******************************** (configured in .env)
 TWILIO_PHONE_NUMBER=+18557482075
 ```
 **Test Phone:** +19187019771 (verified for trial account)
