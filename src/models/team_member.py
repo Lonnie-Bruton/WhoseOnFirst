@@ -20,6 +20,7 @@ class TeamMember(Base):
         name: Full name of team member
         phone: Phone number in E.164 format (+1XXXXXXXXXX)
         is_active: Whether member is currently active in rotation
+        rotation_order: Position in rotation sequence (lower numbers go first)
         created_at: Timestamp when member was added
         updated_at: Timestamp when member was last modified
 
@@ -36,6 +37,7 @@ class TeamMember(Base):
     name = Column(String, nullable=False)
     phone = Column(String, unique=True, nullable=False, index=True)
     is_active = Column(Boolean, default=True, nullable=False, index=True)
+    rotation_order = Column(Integer, nullable=True, index=True)  # Order in rotation (nullable for flexibility)
 
     # Timestamps
     created_at = Column(DateTime, default=func.now(), nullable=False)
@@ -74,6 +76,7 @@ class TeamMember(Base):
             "name": self.name,
             "phone": self.phone,
             "is_active": self.is_active,
+            "rotation_order": self.rotation_order,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }

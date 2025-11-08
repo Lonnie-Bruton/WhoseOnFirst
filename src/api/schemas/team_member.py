@@ -160,6 +160,11 @@ class TeamMemberResponse(TeamMemberBase):
         description="Whether the team member is active",
         examples=[True]
     )
+    rotation_order: Optional[int] = Field(
+        None,
+        description="Position in rotation sequence (lower numbers go first)",
+        examples=[0]
+    )
     created_at: datetime = Field(
         ...,
         description="Timestamp when the team member was created",
@@ -175,6 +180,45 @@ class TeamMemberResponse(TeamMemberBase):
                 "name": "John Doe",
                 "phone": "+15551234567",
                 "is_active": True,
+                "rotation_order": 0,
                 "created_at": "2025-01-01T00:00:00"
             }
         }
+
+
+class TeamMemberReorderRequest(BaseModel):
+    """
+    Schema for reordering team members in rotation.
+
+    Maps team member IDs to their new rotation order positions.
+    """
+    order_mapping: dict[int, int] = Field(
+        ...,
+        description="Mapping of team member ID to new rotation order position",
+        examples=[{1: 0, 2: 1, 3: 2}]
+    )
+
+    @field_validator('order_mapping')
+    @classmethod
+    def validate_order_mapping(cls, v: dict[int, int]) -> dict[int, int]:
+        """
+        Validate that order_mapping contains valid data.
+
+        Args:
+            v: Order mapping dictionary
+
+        Returns:
+            dict[int, int]: Validated mapping
+
+        Raises:
+            ValueError: If mapping is invalid
+        """
+        if not v:
+            raise ValueError('order_mapping cannot be empty')
+
+        # Validate all values are non-negative
+        for member_id, order in v.items():
+            if order < 0:
+                raise ValueError(f'Rotation order must be non-negative, got {order} for member {member_id}')
+
+        return v

@@ -203,21 +203,19 @@ class RotationAlgorithmService:
 
     def _get_team_members(self, active_only: bool) -> List:
         """
-        Get team members sorted by ID for consistent rotation order.
+        Get team members sorted by rotation_order for consistent rotation order.
+
+        Uses rotation_order if set, falls back to ID for members without rotation_order.
+        This ensures consistent, predictable rotation regardless of when members were added.
 
         Args:
             active_only: If True, only return active members
 
         Returns:
-            List of TeamMember objects sorted by ID
+            List of TeamMember objects sorted by rotation_order (then ID as fallback)
         """
-        if active_only:
-            members = self.team_member_repo.get_active()
-        else:
-            members = self.team_member_repo.get_all()
-
-        # Sort by ID for consistent, predictable rotation order
-        return sorted(members, key=lambda m: m.id)
+        # Use the new repository method that handles ordering correctly
+        return self.team_member_repo.get_ordered_for_rotation(active_only=active_only)
 
     def _get_week_start(self, date: datetime) -> datetime:
         """

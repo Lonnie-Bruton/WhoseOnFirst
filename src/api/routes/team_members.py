@@ -12,7 +12,8 @@ from src.api.dependencies import get_db
 from src.api.schemas.team_member import (
     TeamMemberCreate,
     TeamMemberUpdate,
-    TeamMemberResponse
+    TeamMemberResponse,
+    TeamMemberReorderRequest
 )
 from src.services import (
     TeamMemberService,
@@ -127,6 +128,54 @@ def create_team_member(
         )
 
 
+@router.put("/reorder", response_model=List[TeamMemberResponse])
+def reorder_team_members(
+    reorder_request: TeamMemberReorderRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    Update rotation order for multiple team members.
+
+    This endpoint allows you to specify the rotation order for team members,
+    which determines the sequence in which they rotate through shifts.
+
+    Args:
+        reorder_request: Mapping of team member IDs to their new rotation order positions
+        db: Database session (injected)
+
+    Returns:
+        List of updated team members with new rotation orders
+
+    Raises:
+        HTTPException: 404 if any member not found
+        HTTPException: 400 if order_mapping is invalid
+
+    Example:
+        PUT /api/v1/team-members/reorder
+        {
+            "order_mapping": {
+                "1": 0,
+                "2": 1,
+                "3": 2
+            }
+        }
+    """
+    service = TeamMemberService(db)
+    try:
+        updated_members = service.update_rotation_orders(reorder_request.order_mapping)
+        return updated_members
+    except MemberNotFoundError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Failed to update rotation orders: {str(e)}"
+        )
+
+
 @router.put("/{member_id}", response_model=TeamMemberResponse)
 def update_team_member(
     member_id: int,
@@ -235,6 +284,42 @@ def activate_team_member(
     try:
         member = service.activate(member_id)
         return member
+    except MemberNotFoundError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
+        )
+
+
+@router.delete("/{member_id}/permanent", status_code=status.HTTP_204_NO_CONTENT)
+def permanently_delete_team_member(
+    member_id: int,
+    db: Session = Depends(get_db)
+):
+    """
+    Permanently delete a team member (hard delete).
+
+    ⚠️ WARNING: This permanently removes the member from the database.
+    All schedule history and associations will be lost.
+    Use deactivate instead to preserve historical data.
+
+    Args:
+        member_id: Team member ID
+        db: Database session (injected)
+
+    Returns:
+        No content
+
+    Raises:
+        HTTPException: 404 if member not found
+
+    Example:
+        DELETE /api/v1/team-members/1/permanent
+    """
+    service = TeamMemberService(db)
+    try:
+        service.delete(member_id)
+        return None
     except MemberNotFoundError as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

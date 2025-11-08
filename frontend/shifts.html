@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shift Configuration - WhoseOnFirst</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/css/tabler.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" rel="stylesheet">
+    
+    <style>
+        .logo-svg {
+            width: 32px;
+            height: 32px;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <!-- Sidebar -->
+        <aside class="navbar navbar-vertical navbar-expand-lg" data-bs-theme="dark">
+            <div class="container-fluid">
+                <h1 class="navbar-brand navbar-brand-autodark">
+                    <a href="index.html">
+                        <svg class="logo-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="50" cy="50" r="45" fill="#206bc4" stroke="#ffffff" stroke-width="3"/>
+                            <circle cx="50" cy="50" r="35" fill="none" stroke="#ffffff" stroke-width="2"/>
+                            <line x1="50" y1="50" x2="50" y2="25" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/>
+                            <line x1="50" y1="50" x2="65" y2="50" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round"/>
+                            <circle cx="50" cy="70" r="5" fill="#fab005"/>
+                            <path d="M 50 75 L 45 85 M 50 75 L 55 85 M 50 75 L 50 80" stroke="#fab005" stroke-width="2" stroke-linecap="round"/>
+                            <circle cx="50" cy="50" r="3" fill="#fab005"/>
+                        </svg>
+                        <span class="navbar-brand-text">WhoseOnFirst</span>
+                    </a>
+                </h1>
+                <div class="navbar-collapse">
+                    <ul class="navbar-nav pt-lg-3">
+                        <li class="nav-item">
+                            <a class="nav-link" href="index.html">
+                                <span class="nav-link-icon"><i class="ti ti-layout-dashboard"></i></span>
+                                <span class="nav-link-title">Dashboard</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="team-members.html">
+                                <span class="nav-link-icon"><i class="ti ti-users-group"></i></span>
+                                <span class="nav-link-title">Team Members</span>
+                            </a>
+                        </li>
+                        <li class="nav-item active">
+                            <a class="nav-link" href="shifts.html">
+                                <span class="nav-link-icon"><i class="ti ti-clock-hour-3"></i></span>
+                                <span class="nav-link-title">Shift Configuration</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="schedule.html">
+                                <span class="nav-link-icon"><i class="ti ti-calendar-event"></i></span>
+                                <span class="nav-link-title">Schedule Generation</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="notifications.html">
+                                <span class="nav-link-icon"><i class="ti ti-bell-ringing"></i></span>
+                                <span class="nav-link-title">Notifications</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="page-wrapper">
+            <div class="page-header">
+                <div class="container-xl">
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <div class="page-pretitle">Configuration</div>
+                            <h2 class="page-title">Shift Configuration</h2>
+                        </div>
+                        <div class="col-auto">
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addShiftModal">
+                                <i class="ti ti-plus me-2"></i>
+                                Add Shift
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page-body">
+                <div class="container-xl">
+                    <!-- Info Alert -->
+                    <div class="alert alert-info mb-4">
+                        <div class="d-flex">
+                            <div>
+                                <i class="ti ti-info-circle me-2"></i>
+                            </div>
+                            <div>
+                                <h4 class="alert-title">Weekly Shift Template</h4>
+                                <div class="text-muted">
+                                    Define your weekly rotation pattern here. Each shift represents one assignment in your weekly schedule.
+                                    Shifts are assigned to team members in a circular rotation based on shift_number order.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Shifts Table -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3 class="card-title">
+                                        <i class="ti ti-list me-2"></i>
+                                        Configured Shifts
+                                    </h3>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table card-table table-vcenter">
+                                        <thead>
+                                            <tr>
+                                                <th>Shift #</th>
+                                                <th>Day(s) of Week</th>
+                                                <th>Duration</th>
+                                                <th>Start Time</th>
+                                                <th>Created</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="shiftsTable">
+                                            <tr>
+                                                <td colspan="6" class="text-center text-muted">
+                                                    <div class="py-4">
+                                                        <i class="ti ti-loader-2 icon-lg"></i>
+                                                        <p>Loading shifts...</p>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Example Pattern -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3 class="card-title">
+                                        <i class="ti ti-bulb me-2"></i>
+                                        Example Weekly Pattern
+                                    </h3>
+                                </div>
+                                <div class="card-body">
+                                    <p class="text-muted">A typical weekly rotation might look like:</p>
+                                    <div class="list-group list-group-flush">
+                                        <div class="list-group-item">
+                                            <strong>Shift 1:</strong> Monday, 24 hours, starts 08:00 CST
+                                        </div>
+                                        <div class="list-group-item">
+                                            <strong>Shift 2:</strong> Tuesday-Wednesday, 48 hours, starts 08:00 CST
+                                        </div>
+                                        <div class="list-group-item">
+                                            <strong>Shift 3:</strong> Thursday, 24 hours, starts 08:00 CST
+                                        </div>
+                                        <div class="list-group-item">
+                                            <strong>Shift 4:</strong> Friday, 24 hours, starts 08:00 CST
+                                        </div>
+                                        <div class="list-group-item">
+                                            <strong>Shift 5:</strong> Saturday, 24 hours, starts 08:00 CST
+                                        </div>
+                                        <div class="list-group-item">
+                                            <strong>Shift 6:</strong> Sunday, 24 hours, starts 08:00 CST
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <footer class="footer footer-transparent d-print-none">
+                <div class="container-xl">
+                    <div class="row text-center align-items-center">
+                        <div class="col-12 col-lg-auto mt-3 mt-lg-0">
+                            <ul class="list-inline list-inline-dots mb-0">
+                                <li class="list-inline-item">
+                                    <a href="https://github.com/Lonnie-Bruton/WhoseOnFirst" class="link-secondary" target="_blank">
+                                        <i class="ti ti-brand-github"></i>
+                                        WhoseOnFirst v0.2.0
+                                    </a>
+                                </li>
+                                <li class="list-inline-item">
+                                    Built with <span class="text-red">♥</span> using Tabler
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    <!-- Add Shift Modal -->
+    <div class="modal fade" id="addShiftModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Shift</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="addShiftForm">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label required">Shift Number</label>
+                            <input type="number" class="form-control" name="shift_number" min="1" max="7" required>
+                            <small class="form-hint">Sequential number (1-7) determining rotation order</small>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label required">Day(s) of Week</label>
+                            <input type="text" class="form-control" name="day_of_week" placeholder="e.g., Monday or Tuesday-Wednesday" required>
+                            <small class="form-hint">Single day or hyphenated range for 48h shifts</small>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label required">Duration (hours)</label>
+                            <select class="form-select" name="duration_hours" required>
+                                <option value="24">24 hours (Standard)</option>
+                                <option value="48">48 hours (Extended)</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label required">Start Time (CST)</label>
+                            <input type="time" class="form-control" name="start_time" value="08:00" required>
+                            <small class="form-hint">Time when shift begins (default: 08:00)</small>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="ti ti-plus me-2"></i>
+                            Add Shift
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Shift Modal -->
+    <div class="modal fade" id="editShiftModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Shift</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="editShiftForm">
+                    <input type="hidden" id="editShiftId">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label required">Shift Number</label>
+                            <input type="number" class="form-control" id="editShiftNumber" name="shift_number" min="1" max="7" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label required">Day(s) of Week</label>
+                            <input type="text" class="form-control" id="editDayOfWeek" name="day_of_week" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label required">Duration (hours)</label>
+                            <select class="form-select" id="editDuration" name="duration_hours" required>
+                                <option value="24">24 hours (Standard)</option>
+                                <option value="48">48 hours (Extended)</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label required">Start Time (CST)</label>
+                            <input type="time" class="form-control" id="editStartTime" name="start_time" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="ti ti-check me-2"></i>
+                            Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/js/tabler.min.js"></script>
+    <script>
+        const API_BASE = 'http://localhost:8000/api/v1';
+
+        // Load all shifts
+        async function loadShifts() {
+            try {
+                const response = await fetch(`${API_BASE}/shifts/`);
+                if (response.ok) {
+                    const shifts = await response.json();
+                    renderShifts(shifts);
+                } else {
+                    document.getElementById('shiftsTable').innerHTML = `
+                        <tr><td colspan="6" class="text-center text-danger">
+                            Error loading shifts. Please try again.
+                        </td></tr>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading shifts:', error);
+                document.getElementById('shiftsTable').innerHTML = `
+                    <tr><td colspan="6" class="text-center text-danger">
+                        Connection error. Is the backend running?
+                    </td></tr>
+                `;
+            }
+        }
+
+        // Render shifts table
+        function renderShifts(shifts) {
+            const tbody = document.getElementById('shiftsTable');
+            
+            if (shifts.length === 0) {
+                tbody.innerHTML = `
+                    <tr><td colspan="6" class="text-center text-muted">
+                        No shifts configured yet. Click "Add Shift" to create your first shift.
+                    </td></tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = shifts.map(shift => `
+                <tr>
+                    <td><strong>${shift.shift_number}</strong></td>
+                    <td>${shift.day_of_week}</td>
+                    <td><span class="badge ${shift.duration_hours === 48 ? 'bg-purple' : 'bg-blue'}">${shift.duration_hours}h</span></td>
+                    <td>${shift.start_time}</td>
+                    <td>${new Date(shift.created_at).toLocaleDateString()}</td>
+                    <td>
+                        <button class="btn btn-sm btn-ghost-primary" onclick="editShift(${shift.id})" title="Edit">
+                            <i class="ti ti-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-ghost-danger" onclick="deleteShift(${shift.id}, ${shift.shift_number})" title="Delete">
+                            <i class="ti ti-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Add new shift
+        document.getElementById('addShiftForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            
+            try {
+                const response = await fetch(`${API_BASE}/shifts/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        shift_number: parseInt(formData.get('shift_number')),
+                        day_of_week: formData.get('day_of_week'),
+                        duration_hours: parseInt(formData.get('duration_hours')),
+                        start_time: formData.get('start_time')
+                    })
+                });
+                
+                if (response.ok) {
+                    alert('✅ Shift added successfully!');
+                    bootstrap.Modal.getInstance(document.getElementById('addShiftModal')).hide();
+                    e.target.reset();
+                    loadShifts();
+                } else {
+                    const error = await response.json();
+                    alert('❌ Error: ' + (error.detail || 'Failed to add shift'));
+                }
+            } catch (error) {
+                alert('❌ Error: ' + error.message);
+            }
+        });
+
+        // Edit shift
+        async function editShift(id) {
+            try {
+                const response = await fetch(`${API_BASE}/shifts/${id}`);
+                if (response.ok) {
+                    const shift = await response.json();
+                    
+                    document.getElementById('editShiftId').value = shift.id;
+                    document.getElementById('editShiftNumber').value = shift.shift_number;
+                    document.getElementById('editDayOfWeek').value = shift.day_of_week;
+                    document.getElementById('editDuration').value = shift.duration_hours;
+                    document.getElementById('editStartTime').value = shift.start_time;
+                    
+                    new bootstrap.Modal(document.getElementById('editShiftModal')).show();
+                }
+            } catch (error) {
+                alert('❌ Error loading shift: ' + error.message);
+            }
+        }
+
+        // Save edited shift
+        document.getElementById('editShiftForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const shiftId = document.getElementById('editShiftId').value;
+            const formData = new FormData(e.target);
+            
+            try {
+                const response = await fetch(`${API_BASE}/shifts/${shiftId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        shift_number: parseInt(formData.get('shift_number')),
+                        day_of_week: formData.get('day_of_week'),
+                        duration_hours: parseInt(formData.get('duration_hours')),
+                        start_time: formData.get('start_time')
+                    })
+                });
+                
+                if (response.ok) {
+                    alert('✅ Shift updated successfully!');
+                    bootstrap.Modal.getInstance(document.getElementById('editShiftModal')).hide();
+                    loadShifts();
+                } else {
+                    const error = await response.json();
+                    alert('❌ Error: ' + (error.detail || 'Failed to update shift'));
+                }
+            } catch (error) {
+                alert('❌ Error: ' + error.message);
+            }
+        });
+
+        // Delete shift
+        async function deleteShift(id, shiftNumber) {
+            if (!confirm(`Delete Shift ${shiftNumber}? This will also delete all schedule assignments for this shift.`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/shifts/${id}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    alert('✅ Shift deleted successfully!');
+                    loadShifts();
+                } else {
+                    const error = await response.json();
+                    alert('❌ Error: ' + (error.detail || 'Failed to delete shift'));
+                }
+            } catch (error) {
+                alert('❌ Error: ' + error.message);
+            }
+        }
+
+        // Load shifts on page load
+        document.addEventListener('DOMContentLoaded', loadShifts);
+    </script>
+</body>
+</html>

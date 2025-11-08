@@ -227,3 +227,91 @@ class TeamMemberRepository(BaseRepository[TeamMember]):
         except SQLAlchemyError as e:
             self.db.rollback()
             raise Exception(f"Database error searching team members by name: {str(e)}")
+
+    def get_max_rotation_order(self) -> int:
+        """
+        Get the maximum rotation_order value.
+
+        Useful for assigning new members to the end of the rotation.
+
+        Returns:
+            Maximum rotation_order value, or 0 if no members exist
+
+        Raises:
+            Exception: If database operation fails
+        """
+        try:
+            max_order = (
+                self.db.query(self.model.rotation_order)
+                .filter(self.model.rotation_order.isnot(None))
+                .order_by(self.model.rotation_order.desc())
+                .first()
+            )
+            return max_order[0] if max_order and max_order[0] is not None else 0
+        except SQLAlchemyError as e:
+            self.db.rollback()
+            raise Exception(f"Database error getting max rotation order: {str(e)}")
+
+    def update_rotation_orders(self, order_mapping: dict) -> List[TeamMember]:
+        """
+        Update rotation_order for multiple team members.
+
+        Args:
+            order_mapping: Dictionary mapping team member ID to new rotation_order value
+                          Example: {1: 0, 2: 1, 3: 2}
+
+        Returns:
+            List of updated TeamMember instances
+
+        Raises:
+            Exception: If database operation fails
+        """
+        try:
+            updated_members = []
+            for member_id, new_order in order_mapping.items():
+                member = self.get_by_id(member_id)
+                if member:
+                    member.rotation_order = new_order
+                    updated_members.append(member)
+
+            self.db.commit()
+
+            # Refresh all updated members
+            for member in updated_members:
+                self.db.refresh(member)
+
+            return updated_members
+        except SQLAlchemyError as e:
+            self.db.rollback()
+            raise Exception(f"Database error updating rotation orders: {str(e)}")
+
+    def get_ordered_for_rotation(self, active_only: bool = True) -> List[TeamMember]:
+        """
+        Get team members ordered for rotation.
+
+        Orders by rotation_order first (if set), then by ID as fallback.
+        This ensures consistent rotation even if rotation_order is not set for all members.
+
+        Args:
+            active_only: If True, only return active members
+
+        Returns:
+            List of TeamMember instances sorted by rotation_order, then ID
+
+        Raises:
+            Exception: If database operation fails
+        """
+        try:
+            query = self.db.query(self.model)
+
+            if active_only:
+                query = query.filter(self.model.is_active == True)
+
+            # Order by rotation_order (nulls last), then by ID as fallback
+            return query.order_by(
+                self.model.rotation_order.nullslast(),
+                self.model.id
+            ).all()
+        except SQLAlchemyError as e:
+            self.db.rollback()
+            raise Exception(f"Database error getting ordered team members: {str(e)}")

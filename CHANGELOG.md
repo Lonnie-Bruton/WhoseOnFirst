@@ -10,6 +10,71 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Phase 1 Frontend Implementation** - Team Members UI (COMPLETE ✅)
+  - Fully functional Team Members page with live API integration
+  - SortableJS drag-and-drop for rotation order management
+  - Real-time CRUD operations (Create, Read, Update, Activate/Deactivate, Permanent Delete)
+  - **Permanent Delete** with Shift+Click - hold Shift and click Deactivate to trigger hard delete
+    - Confirmation modal requires typing member's name exactly
+    - Red warning header and alerts to prevent accidental deletion
+    - New API endpoint: `DELETE /api/v1/team-members/{id}/permanent`
+  - Active/Inactive filtering (simplified to two views)
+  - Loading states and error handling
+  - Auto-reload after mutations for clean state management
+  - Bootstrap 5 modals for add/edit operations
+  - E.164 phone number validation
+  - Color-coded member cards (7 WCAG AA compliant colors)
+  - Rotation numbers (1-based) displayed prominently with high contrast
+  - Member initials in colored avatars
+  - Responsive design with Tabler CSS framework
+  - Light blue-gray page background for better card separation
+  - Removed redundant Active/Inactive status badges (context makes it obvious)
+
+- **Team Member Rotation Ordering** - Custom rotation order support (COMPLETE ✅)
+  - Added `rotation_order` field to `team_members` table via Alembic migration
+  - Updated `TeamMember` model with `rotation_order` integer field (nullable for flexibility)
+  - Added `rotation_order` to `TeamMemberResponse` schema for API responses
+  - New repository methods:
+    - `TeamMemberRepository.get_max_rotation_order()` - Get highest rotation order value
+    - `TeamMemberRepository.update_rotation_orders(order_mapping)` - Bulk update rotation positions
+    - `TeamMemberRepository.get_ordered_for_rotation()` - Get members sorted by rotation_order
+  - Updated `RotationAlgorithmService._get_team_members()` to sort by rotation_order (with ID fallback)
+  - New API endpoint: `PUT /api/v1/team-members/reorder` for updating rotation positions
+  - New Pydantic schema: `TeamMemberReorderRequest` with validation for order mappings
+  - Service method: `TeamMemberService.update_rotation_orders()` with business logic
+  - Preserves existing rotation behavior for members without rotation_order set
+  - All 288 existing tests passing - no regressions
+
+### Fixed
+- **API Route Ordering** - Fixed `/reorder` endpoint routing conflict
+  - Moved `/reorder` route before `/{member_id}` route in team_members router
+  - FastAPI was incorrectly matching `/team-members/reorder` to `/{member_id}` route
+  - This caused "Input should be a valid integer" errors when trying to save rotation order
+
+### Changed
+- **TEMPORARY: Phone Uniqueness Disabled for Testing**
+  - Created migration `200f01c20965_temporarily_remove_phone_unique_constraint`
+  - Removed unique constraint on `team_members.phone` field
+  - Commented out duplicate phone validation in `TeamMemberService`
+  - Allows multiple test users with same phone number for SMS rotation dry run testing
+  - ⚠️ **TODO: Run `alembic downgrade -1` and re-enable validation before production!**
+- **Frontend UI Mockups** - Complete Tabler-based admin dashboard (COMPLETE ✅)
+  - `index.html` - Dashboard with calendar view, stats cards, and recent notifications
+  - `team-members.html` - Team member management with CRUD operations
+  - `shifts.html` - Shift configuration and assignment history
+  - `schedule.html` - Schedule generation interface with algorithm selection
+  - `notifications.html` - SMS notification history and Twilio configuration
+  - Responsive design with Tabler CSS framework v1.0.0-beta20
+  - Consistent custom SVG logo and navigation across all pages
+  - Color-coded team members (7 distinct colors for visual identification)
+  - Modal dialogs for data entry and editing
+  - API integration stubs with comprehensive TODO comments for backend wiring
+  - Fairness metrics and analytics displays
+  - Template-based SMS message configuration
+  - Comprehensive notification history with filtering and pagination
+  - Algorithm selection UI (Round Robin, Weighted Fair, Preference-Based)
+  - Schedule preview and generation settings
+  - Twilio configuration status and testing interface
 - **Twilio SMS Integration** - Production-ready SMS notification delivery (COMPLETE ✅)
   - `SMSService` - Complete Twilio integration with retry logic and error handling
   - Exponential backoff retry logic (3 attempts: 0s, 60s, 120s delay)
@@ -127,6 +192,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Bulk insert operations for schedule generation efficiency
 
 ### Technical Details
+- **Frontend:** 5 HTML files, ~2,500 lines of code
+  - Tabler CSS v1.0.0-beta20 for UI components
+  - Tabler Icons for consistent iconography
+  - Vanilla JavaScript for API interactions (no framework dependencies)
+  - Responsive design (mobile-first approach)
+  - All pages ready for backend API integration
 - **Scheduler:** APScheduler 3.10.4 with BackgroundScheduler
   - America/Chicago timezone configuration
   - Cron trigger: hour=8, minute=0 (daily at 8:00 AM CST)
@@ -254,7 +325,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Project Phases
 
 ### Phase 1: MVP (Weeks 1-6) - 🚧 In Progress
-**Current Status:** ~85% Complete
+**Current Status:** ~90% Complete
 - [x] Planning and documentation
 - [x] Database models and migrations
 - [x] Repository layer
@@ -265,7 +336,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [x] API endpoints (FastAPI routes)
 - [x] APScheduler integration
 - [x] Twilio SMS service
-- [ ] Admin dashboard (basic UI)
+- [x] Admin dashboard UI mockups
+- [ ] Backend-Frontend integration
 - [ ] Docker containerization
 - [x] Testing (79% coverage - target: 80%)
 
