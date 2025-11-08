@@ -9,9 +9,32 @@
     <link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" rel="stylesheet">
     
     <style>
+        /* Page background for better card separation */
+        .page-body {
+            background-color: #f1f5f9;
+        }
+
         .logo-svg {
             width: 32px;
             height: 32px;
+        }
+
+        /* Card styling consistent with team-members */
+        .card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Info alert styling */
+        .alert-info {
+            background-color: #dbeafe;
+            border: 1px solid #60a5fa;
+            color: #1e40af;
         }
     </style>
 </head>
@@ -103,6 +126,41 @@
                                 <div class="text-muted">
                                     Define your weekly rotation pattern here. Each shift represents one assignment in your weekly schedule.
                                     Shifts are assigned to team members in a circular rotation based on shift_number order.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Coverage Timeline -->
+                    <div class="row mb-4" id="coverageTimeline" style="display: none;">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3 class="card-title">
+                                        <i class="ti ti-calendar-stats me-2"></i>
+                                        Weekly Coverage
+                                    </h3>
+                                    <div class="card-actions">
+                                        <span id="coverageStatus" class="badge"></span>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <strong>Total Coverage:</strong>
+                                            <span id="totalHours" class="text-muted">0 / 168 hours</span>
+                                        </div>
+                                        <div class="progress">
+                                            <div id="coverageProgress" class="progress-bar" role="progressbar" style="width: 0%"></div>
+                                        </div>
+                                    </div>
+                                    <div id="coverageWarning" class="alert alert-warning" style="display: none;">
+                                        <i class="ti ti-alert-triangle me-2"></i>
+                                        <strong>Coverage Gap:</strong> <span id="gapHours"></span> hours unaccounted for in your weekly schedule.
+                                    </div>
+                                    <div id="weeklyTimeline" class="mt-3">
+                                        <!-- Timeline will be rendered here -->
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -220,20 +278,49 @@
                     <div class="modal-body">
                         <div class="mb-3">
                             <label class="form-label required">Shift Number</label>
-                            <input type="number" class="form-control" name="shift_number" min="1" max="7" required>
-                            <small class="form-hint">Sequential number (1-7) determining rotation order</small>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label required">Day(s) of Week</label>
-                            <input type="text" class="form-control" name="day_of_week" placeholder="e.g., Monday or Tuesday-Wednesday" required>
-                            <small class="form-hint">Single day or hyphenated range for 48h shifts</small>
+                            <input type="number" class="form-control" id="addShiftNumber" name="shift_number" min="1" max="7" required readonly>
+                            <small class="form-hint">Auto-assigned based on next available shift number</small>
                         </div>
                         <div class="mb-3">
                             <label class="form-label required">Duration (hours)</label>
-                            <select class="form-select" name="duration_hours" required>
+                            <select class="form-select" id="addDuration" name="duration_hours" required>
                                 <option value="24">24 hours (Standard)</option>
                                 <option value="48">48 hours (Extended)</option>
                             </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label required">Day(s) of Week</label>
+                            <div id="dayCheckboxes" class="d-flex flex-column gap-2">
+                                <div class="form-check">
+                                    <input class="form-check-input day-checkbox" type="checkbox" value="Monday" id="dayMonday">
+                                    <label class="form-check-label" for="dayMonday">Monday</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input day-checkbox" type="checkbox" value="Tuesday" id="dayTuesday">
+                                    <label class="form-check-label" for="dayTuesday">Tuesday</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input day-checkbox" type="checkbox" value="Wednesday" id="dayWednesday">
+                                    <label class="form-check-label" for="dayWednesday">Wednesday</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input day-checkbox" type="checkbox" value="Thursday" id="dayThursday">
+                                    <label class="form-check-label" for="dayThursday">Thursday</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input day-checkbox" type="checkbox" value="Friday" id="dayFriday">
+                                    <label class="form-check-label" for="dayFriday">Friday</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input day-checkbox" type="checkbox" value="Saturday" id="daySaturday">
+                                    <label class="form-check-label" for="daySaturday">Saturday</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input day-checkbox" type="checkbox" value="Sunday" id="daySunday">
+                                    <label class="form-check-label" for="daySunday">Sunday</label>
+                                </div>
+                            </div>
+                            <small class="form-hint" id="daySelectionHint">Select 1 day for 24-hour shifts</small>
                         </div>
                         <div class="mb-3">
                             <label class="form-label required">Start Time (CST)</label>
@@ -243,7 +330,7 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="btn btn-primary" id="addShiftBtn" style="font-weight: 500;">
                             <i class="ti ti-plus me-2"></i>
                             Add Shift
                         </button>
@@ -286,7 +373,7 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="btn btn-primary" id="editShiftBtn" style="font-weight: 500;">
                             <i class="ti ti-check me-2"></i>
                             Save Changes
                         </button>
@@ -296,17 +383,19 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/js/tabler.min.js"></script>
     <script>
         const API_BASE = 'http://localhost:8000/api/v1';
+        let allShifts = [];
 
         // Load all shifts
         async function loadShifts() {
             try {
                 const response = await fetch(`${API_BASE}/shifts/`);
                 if (response.ok) {
-                    const shifts = await response.json();
-                    renderShifts(shifts);
+                    allShifts = await response.json();
+                    renderShifts(allShifts);
                 } else {
                     document.getElementById('shiftsTable').innerHTML = `
                         <tr><td colspan="6" class="text-center text-danger">
@@ -327,21 +416,27 @@
         // Render shifts table
         function renderShifts(shifts) {
             const tbody = document.getElementById('shiftsTable');
-            
+
             if (shifts.length === 0) {
                 tbody.innerHTML = `
                     <tr><td colspan="6" class="text-center text-muted">
-                        No shifts configured yet. Click "Add Shift" to create your first shift.
+                        <div class="py-4">
+                            <i class="ti ti-clock-off icon-lg mb-2" style="font-size: 48px; color: #94a3b8;"></i>
+                            <p class="mb-0">No shifts configured yet. Click "Add Shift" to create your first shift.</p>
+                        </div>
                     </td></tr>
                 `;
                 return;
             }
 
+            // Sort by shift_number
+            shifts.sort((a, b) => a.shift_number - b.shift_number);
+
             tbody.innerHTML = shifts.map(shift => `
                 <tr>
                     <td><strong>${shift.shift_number}</strong></td>
                     <td>${shift.day_of_week}</td>
-                    <td><span class="badge ${shift.duration_hours === 48 ? 'bg-purple' : 'bg-blue'}">${shift.duration_hours}h</span></td>
+                    <td><span class="badge ${shift.duration_hours === 48 ? 'bg-purple-lt' : 'bg-blue-lt'}" style="color: ${shift.duration_hours === 48 ? '#6b21a8' : '#1e40af'}; font-weight: 600;">${shift.duration_hours}h</span></td>
                     <td>${shift.start_time}</td>
                     <td>${new Date(shift.created_at).toLocaleDateString()}</td>
                     <td>
@@ -354,36 +449,292 @@
                     </td>
                 </tr>
             `).join('');
+
+            // Update coverage timeline after rendering shifts
+            updateCoverageTimeline(shifts);
+        }
+
+        // Calculate and display coverage timeline
+        function updateCoverageTimeline(shifts) {
+            if (shifts.length === 0) {
+                document.getElementById('coverageTimeline').style.display = 'none';
+                return;
+            }
+
+            document.getElementById('coverageTimeline').style.display = 'block';
+
+            // Calculate total hours
+            const totalHours = shifts.reduce((sum, shift) => sum + shift.duration_hours, 0);
+            const gapHours = 168 - totalHours;
+            const coveragePercent = Math.round((totalHours / 168) * 100);
+
+            // Update total hours display
+            document.getElementById('totalHours').textContent = `${totalHours} / 168 hours`;
+
+            // Update progress bar
+            const progressBar = document.getElementById('coverageProgress');
+            progressBar.style.width = `${coveragePercent}%`;
+            progressBar.className = 'progress-bar';
+
+            if (coveragePercent === 100) {
+                progressBar.classList.add('bg-success');
+            } else if (coveragePercent >= 80) {
+                progressBar.classList.add('bg-warning');
+            } else {
+                progressBar.classList.add('bg-danger');
+            }
+
+            // Update status badge
+            const statusBadge = document.getElementById('coverageStatus');
+            if (totalHours === 168) {
+                statusBadge.textContent = 'Full Coverage';
+                statusBadge.className = 'badge bg-success';
+            } else if (totalHours > 168) {
+                statusBadge.textContent = 'Overlapping Coverage';
+                statusBadge.className = 'badge bg-warning';
+            } else {
+                statusBadge.textContent = 'Incomplete';
+                statusBadge.className = 'badge bg-danger';
+            }
+
+            // Show/hide warning
+            const warningDiv = document.getElementById('coverageWarning');
+            if (gapHours > 0) {
+                warningDiv.style.display = 'block';
+                document.getElementById('gapHours').textContent = gapHours;
+            } else {
+                warningDiv.style.display = 'none';
+            }
+
+            // Render timeline
+            renderWeeklyTimeline(shifts);
+        }
+
+        // Render weekly timeline visualization
+        function renderWeeklyTimeline(shifts) {
+            const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+            const dayAbbrev = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            const dayMap = {};
+
+            // Map shifts to days
+            shifts.forEach(shift => {
+                const shiftDays = shift.day_of_week.split('-');
+                shiftDays.forEach(day => {
+                    if (!dayMap[day.trim()]) {
+                        dayMap[day.trim()] = [];
+                    }
+                    dayMap[day.trim()].push(shift);
+                });
+            });
+
+            const timelineHtml = `
+                <div class="row g-2">
+                    ${days.map((day, index) => {
+                        const hasShift = dayMap[day] && dayMap[day].length > 0;
+                        const shift = hasShift ? dayMap[day][0] : null;
+                        const cardBorder = hasShift ? 'border-success' : 'border-danger';
+                        const iconClass = hasShift ? 'ti-check' : 'ti-x';
+                        const iconColor = hasShift ? 'text-success' : 'text-danger';
+                        const bgClass = hasShift ? 'bg-success-lt' : 'bg-light';
+
+                        return `
+                            <div class="col">
+                                <div class="card ${cardBorder}" style="border-width: 2px;">
+                                    <div class="card-body text-center p-3">
+                                        <div class="text-muted mb-2" style="font-size: 0.75rem; font-weight: 600;">
+                                            ${dayAbbrev[index].toUpperCase()}
+                                        </div>
+                                        <div class="mb-2">
+                                            <i class="ti ${iconClass} ${iconColor}" style="font-size: 2rem;"></i>
+                                        </div>
+                                        ${hasShift ? `
+                                            <div class="small">
+                                                <div class="badge ${shift.duration_hours === 48 ? 'bg-purple-lt' : 'bg-blue-lt'}"
+                                                     style="color: ${shift.duration_hours === 48 ? '#6b21a8' : '#1e40af'}; font-weight: 600;">
+                                                    ${shift.duration_hours}h
+                                                </div>
+                                            </div>
+                                            <div class="text-muted mt-1" style="font-size: 0.7rem;">
+                                                Shift ${shift.shift_number}
+                                            </div>
+                                        ` : `
+                                            <div class="small text-muted">
+                                                No shift
+                                            </div>
+                                        `}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+
+            document.getElementById('weeklyTimeline').innerHTML = timelineHtml;
+        }
+
+        // Get next available shift number
+        function getNextShiftNumber() {
+            if (allShifts.length === 0) return 1;
+            const usedNumbers = allShifts.map(s => s.shift_number).sort((a, b) => a - b);
+            for (let i = 1; i <= 7; i++) {
+                if (!usedNumbers.includes(i)) return i;
+            }
+            return 7; // Max is 7
+        }
+
+        // Initialize Add Shift Modal when opened
+        document.getElementById('addShiftModal').addEventListener('show.bs.modal', function() {
+            // Auto-populate shift number
+            document.getElementById('addShiftNumber').value = getNextShiftNumber();
+
+            // Reset form
+            document.getElementById('addShiftForm').reset();
+            document.getElementById('addShiftNumber').value = getNextShiftNumber();
+            document.getElementById('addDuration').value = '24';
+
+            // Reset checkboxes
+            document.querySelectorAll('.day-checkbox').forEach(cb => {
+                cb.checked = false;
+                cb.disabled = false;
+            });
+
+            updateDaySelectionHint();
+        });
+
+        // Days of week in order
+        const daysOrder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+        // Update hint based on duration selection
+        function updateDaySelectionHint() {
+            const duration = parseInt(document.getElementById('addDuration').value);
+            const hint = document.getElementById('daySelectionHint');
+
+            if (duration === 24) {
+                hint.textContent = 'Select 1 day for 24-hour shifts';
+            } else {
+                hint.textContent = 'Select 2 consecutive days for 48-hour shifts';
+            }
+        }
+
+        // Handle duration change
+        document.getElementById('addDuration').addEventListener('change', function() {
+            // Reset all checkboxes when duration changes
+            document.querySelectorAll('.day-checkbox').forEach(cb => {
+                cb.checked = false;
+            });
+            updateDaySelectionHint();
+        });
+
+        // Handle day checkbox selection
+        document.querySelectorAll('.day-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const duration = parseInt(document.getElementById('addDuration').value);
+                const checkedBoxes = Array.from(document.querySelectorAll('.day-checkbox:checked'));
+
+                if (duration === 24) {
+                    // Only allow 1 checkbox for 24h
+                    if (checkedBoxes.length > 1) {
+                        // Uncheck all except the most recently checked
+                        checkedBoxes.forEach(cb => {
+                            if (cb !== this) cb.checked = false;
+                        });
+                    }
+                } else if (duration === 48) {
+                    // Only allow 2 consecutive checkboxes for 48h
+                    if (checkedBoxes.length > 2) {
+                        // Uncheck all except the two most recent
+                        checkedBoxes.slice(0, -2).forEach(cb => cb.checked = false);
+                    }
+
+                    // Check if they are consecutive
+                    if (checkedBoxes.length === 2) {
+                        const indices = checkedBoxes.map(cb => daysOrder.indexOf(cb.value)).sort((a, b) => a - b);
+                        const areConsecutive = (indices[1] - indices[0] === 1) ||
+                                              (indices[0] === 0 && indices[1] === 6); // Sunday-Monday wrap
+
+                        if (!areConsecutive) {
+                            alert('⚠️ For 48-hour shifts, please select 2 consecutive days (e.g., Tuesday-Wednesday)');
+                            this.checked = false;
+                        }
+                    }
+                }
+            });
+        });
+
+        // Get selected days as string
+        function getSelectedDaysString() {
+            const checkedBoxes = Array.from(document.querySelectorAll('.day-checkbox:checked'));
+
+            if (checkedBoxes.length === 0) {
+                return '';
+            } else if (checkedBoxes.length === 1) {
+                return checkedBoxes[0].value;
+            } else {
+                // Sort by day order for 48h shifts
+                const days = checkedBoxes.map(cb => cb.value).sort((a, b) => {
+                    return daysOrder.indexOf(a) - daysOrder.indexOf(b);
+                });
+                return days.join('-');
+            }
         }
 
         // Add new shift
         document.getElementById('addShiftForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             const formData = new FormData(e.target);
-            
+            const btn = document.getElementById('addShiftBtn');
+
+            // Get selected days
+            const dayOfWeek = getSelectedDaysString();
+            if (!dayOfWeek) {
+                alert('⚠️ Please select at least one day of the week');
+                return;
+            }
+
+            // Validate day count matches duration
+            const duration = parseInt(formData.get('duration_hours'));
+            const selectedCount = document.querySelectorAll('.day-checkbox:checked').length;
+
+            if (duration === 24 && selectedCount !== 1) {
+                alert('⚠️ Please select exactly 1 day for 24-hour shifts');
+                return;
+            }
+
+            if (duration === 48 && selectedCount !== 2) {
+                alert('⚠️ Please select exactly 2 consecutive days for 48-hour shifts');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Adding...';
+
             try {
                 const response = await fetch(`${API_BASE}/shifts/`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         shift_number: parseInt(formData.get('shift_number')),
-                        day_of_week: formData.get('day_of_week'),
-                        duration_hours: parseInt(formData.get('duration_hours')),
+                        day_of_week: dayOfWeek,
+                        duration_hours: duration,
                         start_time: formData.get('start_time')
                     })
                 });
-                
+
                 if (response.ok) {
                     alert('✅ Shift added successfully!');
-                    bootstrap.Modal.getInstance(document.getElementById('addShiftModal')).hide();
-                    e.target.reset();
-                    loadShifts();
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 500);
                 } else {
                     const error = await response.json();
                     alert('❌ Error: ' + (error.detail || 'Failed to add shift'));
                 }
             } catch (error) {
                 alert('❌ Error: ' + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="ti ti-plus me-2"></i>Add Shift';
             }
         });
 
@@ -412,7 +763,11 @@
             e.preventDefault();
             const shiftId = document.getElementById('editShiftId').value;
             const formData = new FormData(e.target);
-            
+            const btn = document.getElementById('editShiftBtn');
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
+
             try {
                 const response = await fetch(`${API_BASE}/shifts/${shiftId}`, {
                     method: 'PUT',
@@ -424,17 +779,21 @@
                         start_time: formData.get('start_time')
                     })
                 });
-                
+
                 if (response.ok) {
                     alert('✅ Shift updated successfully!');
-                    bootstrap.Modal.getInstance(document.getElementById('editShiftModal')).hide();
-                    loadShifts();
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 500);
                 } else {
                     const error = await response.json();
                     alert('❌ Error: ' + (error.detail || 'Failed to update shift'));
                 }
             } catch (error) {
                 alert('❌ Error: ' + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="ti ti-check me-2"></i>Save Changes';
             }
         });
 
@@ -451,7 +810,9 @@
                 
                 if (response.ok) {
                     alert('✅ Shift deleted successfully!');
-                    loadShifts();
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 500);
                 } else {
                     const error = await response.json();
                     alert('❌ Error: ' + (error.detail || 'Failed to delete shift'));

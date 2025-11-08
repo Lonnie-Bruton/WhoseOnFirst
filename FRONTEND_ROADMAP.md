@@ -122,10 +122,11 @@ Build and test each page completely before moving to the next. This ensures:
 
 ---
 
-## Phase 2: Shifts Page (MEDIUM PRIORITY)
+## Phase 2: Shifts Page ✅ COMPLETE
 
 **File:** `frontend/shifts.html`
-**Estimated Time:** 3-4 hours
+**Status:** ✅ Complete (2025-11-08)
+**Actual Time:** ~3 hours
 **Dependencies:** None (independent of team members)
 
 ### Why Second?
@@ -135,32 +136,44 @@ Build and test each page completely before moving to the next. This ensures:
 
 ### Tasks:
 
-#### 2.1 Load and Display Shifts
-- [ ] Fetch from `GET /api/v1/shifts/`
-- [ ] Render shifts table with all fields
-- [ ] Show shift number, day(s), duration badge (24h/48h), start time
-- [ ] Handle empty state
-- [ ] Sort by shift_number
+#### 2.1 Load and Display Shifts ✅
+- [x] Fetch from `GET /api/v1/shifts/`
+- [x] Render shifts table with all fields
+- [x] Show shift number, day(s), duration badge (24h/48h), start time
+- [x] Handle empty state
+- [x] Sort by shift_number
+- [x] Improved duration badges with WCAG AA compliant colors
 
-#### 2.2 Create New Shift
-- [ ] Wire up "Add Shift" modal form
-- [ ] Validate shift number (1-7)
-- [ ] Validate duration (24 or 48 hours)
-- [ ] POST to `/api/v1/shifts/`
-- [ ] Show duplicate shift_number error if applicable
-- [ ] Reload shifts list after creation
+#### 2.2 Create New Shift ✅
+- [x] Wire up "Add Shift" modal form
+- [x] Auto-populate shift number with next available (1-7)
+- [x] Day selector with checkboxes instead of text input
+- [x] Smart validation: 1 day for 24h, 2 consecutive for 48h
+- [x] Validate duration (24 or 48 hours)
+- [x] POST to `/api/v1/shifts/`
+- [x] Show duplicate shift_number error if applicable
+- [x] Reload shifts list after creation
 
-#### 2.3 Edit Existing Shift
-- [ ] Load shift data into edit modal
-- [ ] PUT to `/api/v1/shifts/{id}`
-- [ ] Update table after successful edit
-- [ ] Handle validation errors
+#### 2.3 Edit Existing Shift ✅
+- [x] Load shift data into edit modal
+- [x] PUT to `/api/v1/shifts/{id}`
+- [x] Update table after successful edit
+- [x] Handle validation errors
 
-#### 2.4 Delete Shift
-- [ ] Show confirmation dialog (warn about cascade delete)
-- [ ] DELETE to `/api/v1/shifts/{id}`
-- [ ] Remove from table after deletion
-- [ ] Handle error if shift has schedules assigned
+#### 2.4 Delete Shift ✅
+- [x] Show confirmation dialog (warn about cascade delete)
+- [x] DELETE to `/api/v1/shifts/{id}`
+- [x] Remove from table after deletion
+- [x] Handle error if shift has schedules assigned
+
+#### 2.5 Weekly Coverage Timeline (BONUS FEATURE!) ✅
+- [x] Calculate total weekly coverage (0-168 hours)
+- [x] Show progress bar (green/yellow/red based on coverage)
+- [x] Display coverage status badge (Full/Incomplete/Overlapping)
+- [x] Show warning alert when gaps exist
+- [x] Mini card layout for each day of the week
+- [x] Visual checkmarks/X for covered/uncovered days
+- [x] Color-coded duration badges matching main table
 
 ### Acceptance Criteria:
 - ✅ Can create standard 6-shift weekly rotation
