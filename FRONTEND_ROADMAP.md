@@ -197,10 +197,11 @@ Build and test each page completely before moving to the next. This ensures:
 
 ---
 
-## Phase 3: Schedule Generation Page (HIGH PRIORITY)
+## Phase 3: Schedule Generation Page ✅ COMPLETE
 
 **File:** `frontend/schedule.html`
-**Estimated Time:** 6-8 hours
+**Status:** ✅ Complete (2025-11-08)
+**Actual Time:** ~4 hours
 **Dependencies:** Team Members + Shifts must exist
 
 ### Why Third?
@@ -211,38 +212,48 @@ Build and test each page completely before moving to the next. This ensures:
 
 ### Tasks:
 
-#### 3.1 Display Current Team Order
-- [ ] Fetch from `GET /api/v1/team-members/?active_only=true`
-- [ ] Show numbered list of members in rotation order
-- [ ] Display rotation_order value for each member
-- [ ] Update list when members are reordered on team-members page
+#### 3.1 Display Current Team Order ✅
+- [x] Fetch from `GET /api/v1/team-members/?active_only=true`
+- [x] Show numbered list of members in rotation order (integrated into 14-day preview)
+- [x] Display rotation_order value for each member
+- [x] Update list when members are reordered on team-members page
+- **Note:** Merged into 14-day preview instead of separate card (better UX)
 
-#### 3.2 Schedule Generation Form
-- [ ] Set default start date to next Monday
-- [ ] Wire up weeks dropdown (1, 2, 4, 8, 12 weeks)
-- [ ] Wire up force regenerate checkbox
-- [ ] Validate start date is not in the past
-- [ ] POST to `/api/v1/schedules/generate`
-- [ ] Show loading spinner during generation
-- [ ] Display success message with count of schedules created
+#### 3.2 Schedule Generation Form ✅
+- [x] Set default start date to next Monday
+- [x] Wire up weeks dropdown (1, 2, 4, 8, 12 weeks)
+- [x] Wire up force regenerate checkbox
+- [x] Validate start date is not in the past
+- [x] POST to `/api/v1/schedules/generate`
+- [x] Show loading spinner during generation
+- [x] Display success message with count of schedules created
 
-#### 3.3 Display Schedule Status
-- [ ] Fetch from `GET /api/v1/schedules/upcoming?weeks=4`
-- [ ] Show coverage period (X weeks)
-- [ ] Show date range (start - end)
-- [ ] Show total assignments count
-- [ ] Update after generation
+#### 3.3 Display Schedule Status ✅
+- [x] Fetch from `GET /api/v1/schedules/upcoming?weeks=4`
+- [x] Show coverage period (X weeks)
+- [x] Show date range (start - end)
+- [x] Show total assignments count
+- [x] Update after generation
 
-#### 3.4 Display Quick Stats
-- [ ] Fetch active members count
-- [ ] Fetch shifts count from `GET /api/v1/shifts/`
-- [ ] Show upcoming schedules count
+#### 3.4 Display Quick Stats ✅
+- [x] Fetch active members count
+- [x] Fetch shifts count from `GET /api/v1/shifts/`
+- [x] Show upcoming schedules count
 
-#### 3.5 Error Handling
-- [ ] Handle "no team members" error
-- [ ] Handle "no shifts configured" error
-- [ ] Handle "schedules already exist" error (without force)
-- [ ] Clear error messages
+#### 3.5 Error Handling ✅
+- [x] Handle "no team members" error
+- [x] Handle "no shifts configured" error
+- [x] Handle "schedules already exist" error (without force)
+- [x] Clear error messages
+
+#### 3.6 14-Day Preview (BONUS FEATURE!) ✅
+- [x] Day-by-day mini cards showing rotation pattern
+- [x] Color-coded member avatars matching team colors
+- [x] 48-hour shifts display on BOTH days they cover
+- [x] Date range checking logic for multi-day shifts
+- [x] Duration badges (purple for 48h, blue for 24h)
+- [x] Responsive grid layout
+- [x] Visual "no coverage" indicators
 
 ### Acceptance Criteria:
 - ✅ Can generate schedules for 4 weeks

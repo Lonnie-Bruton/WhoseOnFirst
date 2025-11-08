@@ -57,6 +57,71 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Responsive design with Tabler CSS framework
   - Light blue-gray page background consistent with Team Members page
 
+- **Phase 3 Frontend Implementation** - Schedule Generation UI (COMPLETE ✅)
+  - Fully functional Schedule Generation page with live API integration
+  - **Create Schedule Card** with smart defaults:
+    - Auto-populated start date (next Monday)
+    - Week duration selector (1, 2, 4, 8, 12 weeks)
+    - Force regenerate option for overwriting existing schedules
+    - Clear error messages when team members or shifts are missing
+  - **Schedule Status Card** showing real-time stats:
+    - Active team members count
+    - Configured shifts count
+    - Upcoming schedules count
+    - Coverage period (X weeks)
+    - Date range (start - end)
+    - Visual progress indicator
+  - **14-Day Preview Card** (full-width display):
+    - Day-by-day mini cards showing rotation pattern
+    - Each day shows assigned member, shift number, and duration badge
+    - Color-coded member avatars matching team member colors
+    - **48-hour shift fix**: Multi-day shifts now correctly display on ALL days they cover
+    - Date range checking: `currentDate >= schedStart && currentDate < schedEnd`
+    - Purple badges for 48h shifts, blue badges for 24h shifts
+    - Visual "No coverage" indicators for gaps
+    - Responsive grid layout (2-6 cards per row depending on screen size)
+  - **View All Schedules Modal** with comprehensive table:
+    - Full schedule listing with member names, shift details, date ranges
+    - Duration badges color-coded by shift length
+    - Scrollable modal for large datasets
+    - Clean Tabler table styling
+  - **Multi-source data integration**:
+    - Combines data from `/api/v1/schedules/`, `/api/v1/team-members/`, and `/api/v1/shifts/`
+    - Client-side data matching by IDs (team_member_id, shift_id)
+    - Handles missing nested objects from API (only returns IDs, not full objects)
+  - Auto-reload after schedule generation
+  - Loading states and error handling
+  - Bootstrap 5 modals and responsive design
+  - Light blue-gray page background consistent with other pages
+
+- **Dashboard UI Upgrade** - Live data integration (COMPLETE ✅)
+  - Removed "Generate Schedule" and "Send Test SMS" buttons (use dedicated pages instead)
+  - Removed SMS notification history table (moved to Notifications page)
+  - **Live Stats Cards**:
+    - Active Team Members count (fetched from API)
+    - Current On-Call member with phone number and end time (fetched from active schedules)
+    - SMS stats (placeholder - awaiting notification log API)
+    - Delivery rate (placeholder - awaiting notification log API)
+  - **Dynamic Calendar**:
+    - Auto-generated from real schedule data via `/api/v1/schedules/upcoming`
+    - Shows current month only (not hardcoded)
+    - Weekend highlighting (light gray background)
+    - Empty cells for days outside current month
+    - 48-hour shift indicators with "(48h)" label
+    - Color-coded badges matching team member colors
+    - First names only for cleaner display
+    - **Phone number on hover** - Tooltip shows full name and phone number
+    - Pointer cursor on badges for better UX
+  - **Dynamic Team Legend**:
+    - Auto-generated from active team members
+    - Color boxes matching calendar badges
+    - Sorted by member ID for consistency
+  - **Multi-source data fetching**:
+    - Combines `/api/v1/team-members/`, `/api/v1/schedules/upcoming?weeks=8`, and `/api/v1/shifts/`
+    - Parallel fetching for better performance
+    - Client-side matching by IDs (team_member_id, shift_id)
+  - **Focused design**: Calendar-centric view for quick on-call status overview
+
 - **Team Member Rotation Ordering** - Custom rotation order support (COMPLETE ✅)
   - Added `rotation_order` field to `team_members` table via Alembic migration
   - Updated `TeamMember` model with `rotation_order` integer field (nullable for flexibility)
@@ -73,10 +138,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - All 288 existing tests passing - no regressions
 
 ### Fixed
+- **Rotation Algorithm Direction** - Fixed rotation to move forward through shifts (CRITICAL FIX)
+  - Changed formula in `src/services/rotation_algorithm.py:152` from `(shift_index + week_offset)` to `(shift_index - week_offset)`
+  - Old behavior: Person moved BACKWARD through shifts each week (Shift 2 → Shift 1)
+  - New behavior: Person moves FORWARD through shifts each week (Shift 2 → Shift 3)
+  - Now correctly implements: "Each week, person on Shift N moves to Shift N+1"
+  - Updated test `test_circular_rotation_pattern` to match corrected algorithm
+  - All 30 rotation algorithm tests passing
+
+- **Auto-Assign Rotation Order on Member Creation** - New members now get rotation numbers automatically
+  - Added auto-assignment logic in `TeamMemberService.create()` method
+  - New members get `rotation_order = max_existing_order + 1` automatically
+  - Only applies to active members (inactive members have `rotation_order = null`)
+  - Matches existing `activate()` method behavior for consistency
+  - Fixes bug where manually added members (like Lance B) didn't show rotation number
+
 - **API Route Ordering** - Fixed `/reorder` endpoint routing conflict
   - Moved `/reorder` route before `/{member_id}` route in team_members router
   - FastAPI was incorrectly matching `/team-members/reorder` to `/{member_id}` route
   - This caused "Input should be a valid integer" errors when trying to save rotation order
+
+- **Schedule Preview Not Showing Upcoming Schedules** - Fixed date range filtering issue
+  - Fixed `get_upcoming_weeks()` in `schedule_repository.py` to normalize start date to midnight
+  - Previous behavior: Used `datetime.now()` which excluded schedules starting at 8:00 AM if checked after 8 AM
+  - New behavior: Normalizes to start of day with `.replace(hour=0, minute=0, second=0, microsecond=0)`
+  - This ensures all schedules starting today are included in the query
+  - Fixed API validation limit in `/api/v1/schedules/upcoming` from 52 to 104 weeks
+  - Allows frontend to fetch up to 2 years of schedules for preview and status cards
+  - Resolves issue where status card showed wrong week count and preview showed no schedules
 
 ### Changed
 - **TEMPORARY: Phone Uniqueness Disabled for Testing**

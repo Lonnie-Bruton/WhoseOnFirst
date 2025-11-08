@@ -99,6 +99,11 @@ class TeamMemberService:
         #     )
 
         try:
+            # Auto-assign rotation_order if not provided and member is active
+            if member_data.get("is_active", True) and "rotation_order" not in member_data:
+                max_order = self.repository.get_max_rotation_order()
+                member_data["rotation_order"] = 0 if max_order is None else max_order + 1
+
             member = self.repository.create(member_data)
 
             # TODO: Phase 2 - Trigger schedule regeneration
@@ -281,7 +286,8 @@ class TeamMemberService:
         historical data and schedule assignments.
 
         When deactivating, rotation_order is set to null since inactive
-        members should not be in the rotation.
+        members should not be in the rotation. All remaining active members
+        are renumbered to maintain consecutive rotation_order values (0, 1, 2, ...).
 
         Args:
             member_id: ID of the team member to deactivate
@@ -301,6 +307,12 @@ class TeamMemberService:
         deactivated = self.repository.deactivate(member_id)
         self.repository.update(member_id, {"rotation_order": None})
         self.db.refresh(deactivated)
+
+        # Renumber remaining active members to maintain consecutive order
+        active_members = self.repository.get_ordered_for_rotation()
+        order_mapping = {str(m.id): i for i, m in enumerate(active_members)}
+        if order_mapping:
+            self.repository.update_rotation_orders(order_mapping)
 
         # TODO: Phase 2 - Trigger schedule regeneration
         # schedule_service = ScheduleService(self.db)

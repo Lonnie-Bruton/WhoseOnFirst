@@ -57,8 +57,8 @@ def get_upcoming_schedules(
     weeks: int = Query(
         4,
         ge=1,
-        le=52,
-        description="Number of weeks to retrieve (1-52)"
+        le=104,
+        description="Number of weeks to retrieve (1-104)"
     ),
     db: Session = Depends(get_db)
 ):

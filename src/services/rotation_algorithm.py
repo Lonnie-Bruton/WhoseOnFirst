@@ -147,8 +147,9 @@ class RotationAlgorithmService:
 
             # Assign members to shifts for this week
             for shift_index, shift in enumerate(shifts):
-                # Circular rotation: each week, everyone moves forward one position
-                member_index = (shift_index + week_offset) % len(members)
+                # Circular rotation: each week, person on Shift N moves to Shift N+1
+                # This means we subtract the week offset (person moves UP shifts each week)
+                member_index = (shift_index - week_offset) % len(members)
                 member = members[member_index]
 
                 # Calculate shift start datetime

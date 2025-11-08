@@ -128,8 +128,10 @@ class TestRotationAlgorithmBasic:
 
             for i, entry in enumerate(week_entries):
                 # Calculate expected member index with rotation
+                # Each week, person on Shift N moves to Shift N+1
+                # So member at index (i - week_offset) gets shift i
                 week_index = list(weeks.keys()).index(week_num)
-                expected_member_index = (i + week_index) % len(member_ids)
+                expected_member_index = (i - week_index) % len(member_ids)
                 expected_member_id = member_ids[expected_member_index]
 
                 assert entry["team_member_id"] == expected_member_id

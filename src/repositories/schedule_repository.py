@@ -184,7 +184,8 @@ class ScheduleRepository(BaseRepository[Schedule]):
             Exception: If database operation fails
         """
         try:
-            start_date = datetime.now()
+            # Normalize to start of day to include all schedules starting today
+            start_date = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
             end_date = start_date + timedelta(weeks=num_weeks)
 
             return self.get_by_date_range(start_date, end_date)

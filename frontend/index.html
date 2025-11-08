@@ -196,18 +196,7 @@
                             <div class="page-pretitle">Overview</div>
                             <h2 class="page-title">Dashboard</h2>
                         </div>
-                        <div class="col-auto ms-auto d-print-none">
-                            <div class="btn-list">
-                                <button class="btn btn-primary d-none d-sm-inline-block" id="generateSchedule">
-                                    <i class="ti ti-calendar-plus me-2"></i>
-                                    Generate Schedule
-                                </button>
-                                <button class="btn btn-outline-primary" id="triggerNotifications">
-                                    <i class="ti ti-send me-2"></i>
-                                    Send Test SMS
-                                </button>
-                            </div>
-                        </div>
+                        <!-- Removed action buttons - use dedicated pages instead -->
                     </div>
                 </div>
             </div>
@@ -507,46 +496,7 @@
                         </div>
                     </div>
 
-                    <!-- Recent Notifications -->
-                    <div class="row mt-4">
-                        <div class="col-12">
-                            <div class="card">
-                                <div class="card-header">
-                                    <h3 class="card-title">
-                                        <i class="ti ti-bell-ringing me-2"></i>
-                                        Recent SMS Notifications
-                                    </h3>
-                                </div>
-                                <div class="table-responsive">
-                                    <table class="table card-table table-vcenter">
-                                        <thead>
-                                            <tr>
-                                                <th>Timestamp</th>
-                                                <th>Team Member</th>
-                                                <th>Phone</th>
-                                                <th>Status</th>
-                                                <th>Twilio SID</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr>
-                                                <td><span class="text-muted">Nov 6, 8:00 AM</span></td>
-                                                <td>
-                                                    <div class="d-flex align-items-center">
-                                                        <span class="avatar avatar-sm me-2 team-color-1"></span>
-                                                        Lonnie Bruton
-                                                    </div>
-                                                </td>
-                                                <td>+1918701XXXX</td>
-                                                <td><span class="badge bg-success">Delivered</span></td>
-                                                <td><code>SMb23d057a...</code></td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <!-- SMS notification history moved to Notifications page -->
                 </div>
             </div>
 
@@ -579,73 +529,209 @@
     <script>
         const API_BASE = 'http://localhost:8000/api/v1';
 
+        // Team member color mapping (1-7)
+        const TEAM_COLORS = [
+            'team-color-1', 'team-color-2', 'team-color-3', 'team-color-4',
+            'team-color-5', 'team-color-6', 'team-color-7'
+        ];
+
+        // Get color class for team member
+        function getTeamColor(memberId, allMembers) {
+            const sorted = [...allMembers].sort((a, b) => a.id - b.id);
+            const index = sorted.findIndex(m => m.id === memberId);
+            return TEAM_COLORS[index % TEAM_COLORS.length];
+        }
+
+        // Get first name only
+        function getFirstName(fullName) {
+            return fullName.split(' ')[0];
+        }
+
+        // Format date for display
+        function formatDate(date) {
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        }
+
+        // Format time for display
+        function formatTime(date) {
+            return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+        }
+
         // Load dashboard data
         async function loadDashboardData() {
             try {
-                const membersResponse = await fetch(`${API_BASE}/team-members/?active_only=true`);
-                if (membersResponse.ok) {
-                    const members = await membersResponse.json();
-                    document.getElementById('activeMembers').textContent = members.length;
+                // Fetch all data in parallel
+                const [membersRes, schedulesRes, shiftsRes] = await Promise.all([
+                    fetch(`${API_BASE}/team-members/`),
+                    fetch(`${API_BASE}/schedules/upcoming?weeks=8`),
+                    fetch(`${API_BASE}/shifts/`)
+                ]);
+
+                if (!membersRes.ok || !schedulesRes.ok || !shiftsRes.ok) {
+                    throw new Error('Failed to fetch data');
                 }
+
+                const allMembers = await membersRes.json();
+                const activeMembers = allMembers.filter(m => m.is_active);
+                const schedules = await schedulesRes.json();
+                const shifts = await shiftsRes.json();
+
+                // Update active members count
+                document.getElementById('activeMembers').textContent = activeMembers.length;
+
+                // Update current on-call
+                updateCurrentOnCall(schedules, allMembers, shifts);
+
+                // Build calendar for current month
+                buildCalendar(schedules, allMembers, shifts);
+
+                // Update SMS history (placeholder for now)
+                // TODO: Wire up when notification log API is available
+
             } catch (error) {
                 console.error('Error loading dashboard data:', error);
             }
         }
 
-        // Generate schedule
-        document.getElementById('generateSchedule').addEventListener('click', async function() {
-            if (!confirm('Generate new schedules? This will create schedules for the next 4 weeks.')) {
-                return;
-            }
-            
-            this.disabled = true;
-            this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Generating...';
-            
-            try {
-                const response = await fetch(`${API_BASE}/schedules/generate`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ weeks: 4 })
-                });
-                
-                if (response.ok) {
-                    alert('Schedules generated successfully!');
-                    location.reload();
-                } else {
-                    const error = await response.json();
-                    alert('Error: ' + (error.detail || 'Failed to generate schedules'));
-                }
-            } catch (error) {
-                alert('Error: ' + error.message);
-            } finally {
-                this.disabled = false;
-                this.innerHTML = '<i class="ti ti-calendar-plus me-2"></i>Generate Schedule';
-            }
-        });
+        // Update current on-call card
+        function updateCurrentOnCall(schedules, members, shifts) {
+            const now = new Date();
 
-        // Trigger test notification
-        document.getElementById('triggerNotifications').addEventListener('click', async function() {
-            this.disabled = true;
-            this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Sending...';
-            
-            try {
-                const response = await fetch(`${API_BASE}/schedules/notifications/trigger`, {
-                    method: 'POST'
-                });
-                
-                if (response.ok) {
-                    const result = await response.json();
-                    alert(`✅ Sent ${result.successful} SMS notification(s) successfully!`);
-                } else {
-                    alert('❌ Failed to send notifications.');
+            // Find active schedule
+            const activeSchedule = schedules.find(s => {
+                const start = new Date(s.start_datetime);
+                const end = new Date(s.end_datetime);
+                return now >= start && now < end;
+            });
+
+            if (activeSchedule) {
+                const member = members.find(m => m.id === activeSchedule.team_member_id);
+                const shift = shifts.find(s => s.id === activeSchedule.shift_id);
+
+                if (member && shift) {
+                    const endDate = new Date(activeSchedule.end_datetime);
+                    const colorClass = getTeamColor(member.id, members);
+
+                    document.querySelector('.h2.mb-2.text-primary').innerHTML = `
+                        <span class="on-call-badge ${colorClass}">${member.name}</span>
+                    `;
+
+                    // Show phone number and end time
+                    document.querySelector('.h2.mb-2.text-primary').nextElementSibling.innerHTML = `
+                        <div>${member.phone}</div>
+                        <div class="text-muted">Until ${endDate.toLocaleDateString('en-US', { weekday: 'short' })} ${formatTime(endDate)} CST</div>
+                    `;
                 }
-            } catch (error) {
-                alert('❌ Error: ' + error.message);
-            } finally {
-                this.disabled = false;
-                this.innerHTML = '<i class="ti ti-send me-2"></i>Send Test SMS';
+            } else {
+                document.querySelector('.h2.mb-2.text-primary').innerHTML =
+                    '<span class="text-muted">No active assignment</span>';
+                document.querySelector('.h2.mb-2.text-primary').nextElementSibling.textContent = '';
             }
-        });
+        }
+
+        // Build calendar for current month
+        function buildCalendar(schedules, members, shifts) {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth();
+
+            // Update calendar title
+            const monthName = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            document.querySelector('.card-header h3').innerHTML = `
+                <i class="ti ti-calendar me-2"></i>
+                ${monthName} On-Call Schedule
+            `;
+
+            // Get first and last day of month
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const daysInMonth = lastDay.getDate();
+            const startDayOfWeek = firstDay.getDay(); // 0 = Sunday
+
+            // Build calendar grid
+            const calendarGrid = document.querySelector('.calendar-grid:not(.mb-2)');
+            calendarGrid.innerHTML = '';
+
+            // Add empty cells for days before month starts
+            for (let i = 0; i < startDayOfWeek; i++) {
+                const emptyCell = document.createElement('div');
+                emptyCell.className = 'calendar-day';
+                emptyCell.style.opacity = '0.4';
+                calendarGrid.appendChild(emptyCell);
+            }
+
+            // Add days of month
+            for (let day = 1; day <= daysInMonth; day++) {
+                const date = new Date(year, month, day);
+                const dayOfWeek = date.getDay();
+                const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+
+                const dayCell = document.createElement('div');
+                dayCell.className = `calendar-day${isWeekend ? ' weekend' : ''}`;
+
+                const header = document.createElement('div');
+                header.className = 'calendar-day-header';
+                header.textContent = day;
+                dayCell.appendChild(header);
+
+                // Find schedule for this day
+                const daySchedule = schedules.find(s => {
+                    const start = new Date(s.start_datetime);
+                    const end = new Date(s.end_datetime);
+                    // Check if this date falls within the schedule range
+                    return date >= new Date(start.toDateString()) && date < new Date(end.toDateString());
+                });
+
+                if (daySchedule) {
+                    const member = members.find(m => m.id === daySchedule.team_member_id);
+                    const shift = shifts.find(s => s.id === daySchedule.shift_id);
+
+                    if (member && shift) {
+                        const badge = document.createElement('div');
+                        const colorClass = getTeamColor(member.id, members);
+                        badge.className = `on-call-badge ${colorClass}`;
+
+                        let displayName = getFirstName(member.name);
+                        if (shift.duration_hours === 48) {
+                            displayName += ' (48h)';
+                        }
+
+                        badge.textContent = displayName;
+                        // Add phone number on hover
+                        badge.title = `${member.name}\n${member.phone}`;
+                        badge.style.cursor = 'pointer';
+                        dayCell.appendChild(badge);
+                    }
+                }
+
+                calendarGrid.appendChild(dayCell);
+            }
+
+            // Update legend with actual team members
+            updateLegend(members);
+        }
+
+        // Update team legend
+        function updateLegend(members) {
+            const legend = document.querySelector('.team-legend');
+            legend.innerHTML = '';
+
+            const sorted = [...members].filter(m => m.is_active).sort((a, b) => a.id - b.id);
+            sorted.forEach(member => {
+                const item = document.createElement('div');
+                item.className = 'legend-item';
+
+                const colorBox = document.createElement('div');
+                colorBox.className = `legend-color ${getTeamColor(member.id, members)}`;
+
+                const name = document.createElement('span');
+                name.textContent = member.name;
+
+                item.appendChild(colorBox);
+                item.appendChild(name);
+                legend.appendChild(item);
+            });
+        }
 
         document.addEventListener('DOMContentLoaded', loadDashboardData);
     </script>
