@@ -31,14 +31,23 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
 
-        /* Team member color matching */
-        .team-color-1 { background-color: #206bc4; }
-        .team-color-2 { background-color: #d63939; }
-        .team-color-3 { background-color: #00a854; }
-        .team-color-4 { background-color: #fab005; }
-        .team-color-5 { background-color: #ae3ec9; }
-        .team-color-6 { background-color: #00b8d4; }
-        .team-color-7 { background-color: #f76707; }
+        /* Team Member Colors - 16 unique WCAG AA compliant colors */
+        .team-color-1  { background-color: #1e40af; color: white; } /* Blue */
+        .team-color-2  { background-color: #dc2626; color: white; } /* Red */
+        .team-color-3  { background-color: #059669; color: white; } /* Green */
+        .team-color-4  { background-color: #d97706; color: white; } /* Amber */
+        .team-color-5  { background-color: #9333ea; color: white; } /* Purple */
+        .team-color-6  { background-color: #0891b2; color: white; } /* Cyan */
+        .team-color-7  { background-color: #ea580c; color: white; } /* Orange */
+        .team-color-8  { background-color: #be185d; color: white; } /* Pink */
+        .team-color-9  { background-color: #0f766e; color: white; } /* Teal */
+        .team-color-10 { background-color: #a16207; color: white; } /* Yellow */
+        .team-color-11 { background-color: #6b21a8; color: white; } /* Deep Purple */
+        .team-color-12 { background-color: #b91c1c; color: white; } /* Dark Red */
+        .team-color-13 { background-color: #1e3a8a; color: white; } /* Navy */
+        .team-color-14 { background-color: #15803d; color: white; } /* Forest Green */
+        .team-color-15 { background-color: #c2410c; color: white; } /* Rust */
+        .team-color-16 { background-color: #7e22ce; color: white; } /* Violet */
     </style>
 </head>
 <body>
@@ -321,10 +330,12 @@
     <script>
         const API_BASE = 'http://localhost:8000/api/v1';
 
-        // Team member color mapping
+        // Team member color mapping (1-16 unique colors)
         const TEAM_COLORS = [
-            'team-color-1', 'team-color-2', 'team-color-3', 'team-color-4',
-            'team-color-5', 'team-color-6', 'team-color-7'
+            'team-color-1',  'team-color-2',  'team-color-3',  'team-color-4',
+            'team-color-5',  'team-color-6',  'team-color-7',  'team-color-8',
+            'team-color-9',  'team-color-10', 'team-color-11', 'team-color-12',
+            'team-color-13', 'team-color-14', 'team-color-15', 'team-color-16'
         ];
 
         // Get color class for team member

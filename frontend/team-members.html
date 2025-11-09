@@ -14,14 +14,23 @@
             background-color: #f1f5f9;
         }
 
-        /* Team member color palette - optimized for accessibility (WCAG AA) */
-        .team-color-1 { background-color: #1e40af; color: white; } /* Blue - 4.6:1 contrast */
-        .team-color-2 { background-color: #dc2626; color: white; } /* Red - 5.3:1 contrast */
-        .team-color-3 { background-color: #059669; color: white; } /* Green - 4.5:1 contrast */
-        .team-color-4 { background-color: #d97706; color: white; } /* Amber - 4.5:1 contrast */
-        .team-color-5 { background-color: #9333ea; color: white; } /* Purple - 5.2:1 contrast */
-        .team-color-6 { background-color: #0891b2; color: white; } /* Cyan - 4.5:1 contrast */
-        .team-color-7 { background-color: #ea580c; color: white; } /* Orange - 4.7:1 contrast */
+        /* Team member color palette - 16 unique WCAG AA compliant colors */
+        .team-color-1  { background-color: #1e40af; color: white; } /* Blue */
+        .team-color-2  { background-color: #dc2626; color: white; } /* Red */
+        .team-color-3  { background-color: #059669; color: white; } /* Green */
+        .team-color-4  { background-color: #d97706; color: white; } /* Amber */
+        .team-color-5  { background-color: #9333ea; color: white; } /* Purple */
+        .team-color-6  { background-color: #0891b2; color: white; } /* Cyan */
+        .team-color-7  { background-color: #ea580c; color: white; } /* Orange */
+        .team-color-8  { background-color: #be185d; color: white; } /* Pink */
+        .team-color-9  { background-color: #0f766e; color: white; } /* Teal */
+        .team-color-10 { background-color: #a16207; color: white; } /* Yellow */
+        .team-color-11 { background-color: #6b21a8; color: white; } /* Deep Purple */
+        .team-color-12 { background-color: #b91c1c; color: white; } /* Dark Red */
+        .team-color-13 { background-color: #1e3a8a; color: white; } /* Navy */
+        .team-color-14 { background-color: #15803d; color: white; } /* Forest Green */
+        .team-color-15 { background-color: #c2410c; color: white; } /* Rust */
+        .team-color-16 { background-color: #7e22ce; color: white; } /* Violet */
 
         /* Member cards - enhanced shadows and white background */
         .member-card {
@@ -407,7 +416,7 @@
                         ` : ''}
                         <div class="card-body" style="padding: 1.5rem;">
                             <div class="d-flex align-items-center mb-3">
-                                <span class="avatar avatar-lg me-3 team-color-${(index % 7) + 1} avatar-initials">
+                                <span class="avatar avatar-lg me-3 team-color-${(index % 16) + 1} avatar-initials">
                                     ${getInitials(member.name)}
                                 </span>
                                 <div class="flex-fill">
