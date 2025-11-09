@@ -171,7 +171,7 @@
                 
                 <!-- Custom Logo -->
                 <h1 class="navbar-brand navbar-brand-autodark">
-                    <a href="." class="logo-container">
+                    <a href="." class="logo-container" id="appLogo" title="WhoseOnFirst">
                         <svg class="logo-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
                             <!-- Base Circle -->
                             <circle cx="50" cy="50" r="45" fill="#206bc4" stroke="#ffffff" stroke-width="3"/>
@@ -680,9 +680,9 @@
 
             // If no one is currently on call, show N/A for all
             if (!primarySchedule) {
-                document.getElementById('primaryOnCall').innerHTML = '<span class="text-muted">N/A - Schedule not started</span>';
-                document.getElementById('secondaryOnCall').innerHTML = '<span class="text-muted">N/A</span>';
-                document.getElementById('tertiaryOnCall').innerHTML = '<span class="text-muted">N/A</span>';
+                document.getElementById('primaryOnCall').innerHTML = '<span class="text-muted">Who\'s on first? Nobody yet - schedule hasn\'t started</span>';
+                document.getElementById('secondaryOnCall').innerHTML = '<span class="text-muted">What\'s on second? Not yet!</span>';
+                document.getElementById('tertiaryOnCall').innerHTML = '<span class="text-muted">I Don\'t Know\'s on third...</span>';
                 return;
             }
 
@@ -902,14 +902,41 @@
             });
         }
 
+        // Easter egg: Shift-click logo to see the inspiration
+        function handleLogoClick(e) {
+            if (e.shiftKey) {
+                e.preventDefault();
+                window.open(
+                    'https://www.youtube.com/watch?v=sYOUFGfK4bU',
+                    'WhosOnFirst',
+                    'width=800,height=600,menubar=no,toolbar=no,location=no,status=no'
+                );
+            }
+        }
+
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', () => {
+            // Console easter egg for developers
+            console.log(
+                '%c🎭 WhoseOnFirst%c\n\n' +
+                'Who\'s on first?\n' +
+                'What\'s on second?\n' +
+                'I Don\'t Know\'s on third!\n\n' +
+                '💡 Tip: Shift-click the logo to see our inspiration\n\n' +
+                'Built with ❤️ and a love for classic comedy',
+                'font-size: 20px; font-weight: bold; color: #206bc4;',
+                'font-size: 12px; color: #666;'
+            );
+
             loadDashboardData();
 
             // Wire up navigation buttons
             document.getElementById('prevMonth').addEventListener('click', navigatePrevMonth);
             document.getElementById('nextMonth').addEventListener('click', navigateNextMonth);
             document.getElementById('todayBtn').addEventListener('click', navigateToday);
+
+            // Wire up logo easter egg
+            document.getElementById('appLogo').addEventListener('click', handleLogoClick);
         });
     </script>
 </body>
