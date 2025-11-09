@@ -61,6 +61,14 @@
             margin-bottom: 8px;
             color: #666;
         }
+        .calendar-day.today {
+            border: 3px solid #206bc4;
+            box-shadow: 0 0 0 3px rgba(32, 107, 196, 0.1);
+        }
+        .calendar-day.today .calendar-day-header {
+            color: #206bc4;
+            font-weight: 700;
+        }
         .on-call-badge {
             color: white;
             padding: 6px 10px;
@@ -301,14 +309,20 @@
                         <div class="col-12">
                             <div class="card">
                                 <div class="card-header">
-                                    <h3 class="card-title">
+                                    <h3 class="card-title" id="calendarTitle">
                                         <i class="ti ti-calendar me-2"></i>
                                         November 2025 On-Call Schedule
                                     </h3>
                                     <div class="card-actions">
-                                        <a href="#" class="btn btn-primary btn-sm">
-                                            <i class="ti ti-refresh"></i>
-                                        </a>
+                                        <button id="prevMonth" class="btn btn-sm me-1" title="Previous Month">
+                                            <i class="ti ti-chevron-left"></i>
+                                        </button>
+                                        <button id="todayBtn" class="btn btn-sm btn-primary me-1" title="Go to Today">
+                                            Today
+                                        </button>
+                                        <button id="nextMonth" class="btn btn-sm" title="Next Month">
+                                            <i class="ti ti-chevron-right"></i>
+                                        </button>
                                     </div>
                                 </div>
                                 <div class="card-body">
@@ -540,6 +554,10 @@
             'team-color-13', 'team-color-14', 'team-color-15', 'team-color-16'
         ];
 
+        // Calendar state
+        let currentViewDate = new Date();
+        let cachedData = null;
+
         // Get color class for team member
         function getTeamColor(memberId, allMembers) {
             const sorted = [...allMembers].sort((a, b) => a.id - b.id);
@@ -577,7 +595,7 @@
                 // Fetch all data in parallel
                 const [membersRes, schedulesRes, shiftsRes] = await Promise.all([
                     fetch(`${API_BASE}/team-members/`),
-                    fetch(`${API_BASE}/schedules/upcoming?weeks=8`),
+                    fetch(`${API_BASE}/schedules/upcoming?weeks=12`),  // Fetch more weeks for navigation
                     fetch(`${API_BASE}/shifts/`)
                 ]);
 
@@ -590,6 +608,9 @@
                 const schedules = await schedulesRes.json();
                 const shifts = await shiftsRes.json();
 
+                // Cache the data for navigation
+                cachedData = { members: allMembers, schedules, shifts };
+
                 // Update active members count
                 document.getElementById('activeMembers').textContent = activeMembers.length;
 
@@ -599,11 +620,32 @@
                 // Build calendar for current month
                 buildCalendar(schedules, allMembers, shifts);
 
-                // Update SMS history (placeholder for now)
-                // TODO: Wire up when notification log API is available
-
             } catch (error) {
                 console.error('Error loading dashboard data:', error);
+            }
+        }
+
+        // Navigate to previous month
+        function navigatePrevMonth() {
+            currentViewDate = new Date(currentViewDate.getFullYear(), currentViewDate.getMonth() - 1, 1);
+            if (cachedData) {
+                buildCalendar(cachedData.schedules, cachedData.members, cachedData.shifts);
+            }
+        }
+
+        // Navigate to next month
+        function navigateNextMonth() {
+            currentViewDate = new Date(currentViewDate.getFullYear(), currentViewDate.getMonth() + 1, 1);
+            if (cachedData) {
+                buildCalendar(cachedData.schedules, cachedData.members, cachedData.shifts);
+            }
+        }
+
+        // Navigate to today
+        function navigateToday() {
+            currentViewDate = new Date();
+            if (cachedData) {
+                buildCalendar(cachedData.schedules, cachedData.members, cachedData.shifts);
             }
         }
 
@@ -611,21 +653,24 @@
         function updateOnCallChain(schedules, members, shifts) {
             const now = new Date();
 
-            // Sort schedules by start time to find current/next primary
+            // Sort schedules by start time to find current primary
             const sortedSchedules = [...schedules].sort((a, b) =>
                 new Date(a.start_datetime) - new Date(b.start_datetime)
             );
 
-            // Find current/next primary on-call
+            // Find CURRENT primary on-call (must be active NOW)
             let primarySchedule = sortedSchedules.find(s => {
                 const start = new Date(s.start_datetime);
                 const end = new Date(s.end_datetime);
                 return now >= start && now < end;
             });
 
-            // If no active, get next upcoming
+            // If no one is currently on call, show N/A for all
             if (!primarySchedule) {
-                primarySchedule = sortedSchedules.find(s => new Date(s.start_datetime) > now);
+                document.getElementById('primaryOnCall').innerHTML = '<span class="text-muted">N/A - Schedule not started</span>';
+                document.getElementById('secondaryOnCall').innerHTML = '<span class="text-muted">N/A</span>';
+                document.getElementById('tertiaryOnCall').innerHTML = '<span class="text-muted">N/A</span>';
+                return;
             }
 
             // Calculate secondary and tertiary based on rotation_order (not schedule time)
@@ -634,26 +679,24 @@
             let secondaryMember = null;
             let tertiaryMember = null;
 
-            if (primarySchedule) {
-                const primaryMember = members.find(m => m.id === primarySchedule.team_member_id);
+            const primaryMember = members.find(m => m.id === primarySchedule.team_member_id);
 
-                if (primaryMember) {
-                    // Get active members sorted by rotation_order
-                    const activeMembers = members
-                        .filter(m => m.is_active)
-                        .sort((a, b) => a.rotation_order - b.rotation_order);
+            if (primaryMember) {
+                // Get active members sorted by rotation_order
+                const activeMembers = members
+                    .filter(m => m.is_active)
+                    .sort((a, b) => a.rotation_order - b.rotation_order);
 
-                    const teamSize = activeMembers.length;
-                    const primaryRotationIndex = activeMembers.findIndex(m => m.id === primaryMember.id);
+                const teamSize = activeMembers.length;
+                const primaryRotationIndex = activeMembers.findIndex(m => m.id === primaryMember.id);
 
-                    // Secondary is previous person in rotation (wraps around)
-                    const secondaryRotationIndex = (primaryRotationIndex - 1 + teamSize) % teamSize;
-                    secondaryMember = activeMembers[secondaryRotationIndex];
+                // Secondary is previous person in rotation (wraps around)
+                const secondaryRotationIndex = (primaryRotationIndex - 1 + teamSize) % teamSize;
+                secondaryMember = activeMembers[secondaryRotationIndex];
 
-                    // Tertiary is 2 positions back in rotation (wraps around)
-                    const tertiaryRotationIndex = (primaryRotationIndex - 2 + teamSize) % teamSize;
-                    tertiaryMember = activeMembers[tertiaryRotationIndex];
-                }
+                // Tertiary is 2 positions back in rotation (wraps around)
+                const tertiaryRotationIndex = (primaryRotationIndex - 2 + teamSize) % teamSize;
+                tertiaryMember = activeMembers[tertiaryRotationIndex];
             }
 
             // Render Primary
@@ -736,15 +779,15 @@
             `;
         }
 
-        // Build calendar for current month
+        // Build calendar for viewed month
         function buildCalendar(schedules, members, shifts) {
-            const now = new Date();
-            const year = now.getFullYear();
-            const month = now.getMonth();
+            const today = new Date();
+            const year = currentViewDate.getFullYear();
+            const month = currentViewDate.getMonth();
 
             // Update calendar title
-            const monthName = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-            document.querySelector('.card-header h3').innerHTML = `
+            const monthName = currentViewDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            document.getElementById('calendarTitle').innerHTML = `
                 <i class="ti ti-calendar me-2"></i>
                 ${monthName} On-Call Schedule
             `;
@@ -773,8 +816,13 @@
                 const dayOfWeek = date.getDay();
                 const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
 
+                // Check if this is today
+                const isToday = date.getDate() === today.getDate() &&
+                               date.getMonth() === today.getMonth() &&
+                               date.getFullYear() === today.getFullYear();
+
                 const dayCell = document.createElement('div');
-                dayCell.className = `calendar-day${isWeekend ? ' weekend' : ''}`;
+                dayCell.className = `calendar-day${isWeekend ? ' weekend' : ''}${isToday ? ' today' : ''}`;
 
                 const header = document.createElement('div');
                 header.className = 'calendar-day-header';
@@ -840,7 +888,15 @@
             });
         }
 
-        document.addEventListener('DOMContentLoaded', loadDashboardData);
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadDashboardData();
+
+            // Wire up navigation buttons
+            document.getElementById('prevMonth').addEventListener('click', navigatePrevMonth);
+            document.getElementById('nextMonth').addEventListener('click', navigateNextMonth);
+            document.getElementById('todayBtn').addEventListener('click', navigateToday);
+        });
     </script>
 </body>
 </html>
