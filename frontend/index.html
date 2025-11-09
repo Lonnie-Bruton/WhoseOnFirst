@@ -605,10 +605,10 @@
         // Load dashboard data
         async function loadDashboardData() {
             try {
-                // Fetch all data in parallel
+                // Fetch all data in parallel - get all schedules and filter client-side
                 const [membersRes, schedulesRes, shiftsRes] = await Promise.all([
                     fetch(`${API_BASE}/team-members/`),
-                    fetch(`${API_BASE}/schedules/upcoming?weeks=12`),  // Fetch more weeks for navigation
+                    fetch(`${API_BASE}/schedules/`),  // Get all schedules
                     fetch(`${API_BASE}/shifts/`)
                 ]);
 
