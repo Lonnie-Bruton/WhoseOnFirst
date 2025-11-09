@@ -570,7 +570,7 @@
         function updateOnCallChain(schedules, members, shifts) {
             const now = new Date();
 
-            // Sort schedules by start time
+            // Sort schedules by start time to find current/next primary
             const sortedSchedules = [...schedules].sort((a, b) =>
                 new Date(a.start_datetime) - new Date(b.start_datetime)
             );
@@ -587,32 +587,42 @@
                 primarySchedule = sortedSchedules.find(s => new Date(s.start_datetime) > now);
             }
 
-            // Calculate secondary and tertiary based on rotation
-            // Secondary = next shift after primary (1 position ahead in sorted list)
-            // Tertiary = 2 shifts after primary (2 positions ahead in sorted list)
-            let secondarySchedule = null;
-            let tertiarySchedule = null;
+            // Calculate secondary and tertiary based on rotation_order (not schedule time)
+            // Secondary = person before primary in rotation order (backup)
+            // Tertiary = person 2 positions before primary in rotation order (escalation)
+            let secondaryMember = null;
+            let tertiaryMember = null;
 
             if (primarySchedule) {
-                const primaryIndex = sortedSchedules.findIndex(s => s.id === primarySchedule.id);
+                const primaryMember = members.find(m => m.id === primarySchedule.team_member_id);
 
-                // Secondary is next shift (wraps around if needed)
-                const secondaryIndex = (primaryIndex + 1) % sortedSchedules.length;
-                secondarySchedule = sortedSchedules[secondaryIndex];
+                if (primaryMember) {
+                    // Get active members sorted by rotation_order
+                    const activeMembers = members
+                        .filter(m => m.is_active)
+                        .sort((a, b) => a.rotation_order - b.rotation_order);
 
-                // Tertiary is 2 shifts ahead (wraps around if needed)
-                const tertiaryIndex = (primaryIndex + 2) % sortedSchedules.length;
-                tertiarySchedule = sortedSchedules[tertiaryIndex];
+                    const teamSize = activeMembers.length;
+                    const primaryRotationIndex = activeMembers.findIndex(m => m.id === primaryMember.id);
+
+                    // Secondary is previous person in rotation (wraps around)
+                    const secondaryRotationIndex = (primaryRotationIndex - 1 + teamSize) % teamSize;
+                    secondaryMember = activeMembers[secondaryRotationIndex];
+
+                    // Tertiary is 2 positions back in rotation (wraps around)
+                    const tertiaryRotationIndex = (primaryRotationIndex - 2 + teamSize) % teamSize;
+                    tertiaryMember = activeMembers[tertiaryRotationIndex];
+                }
             }
 
             // Render Primary
             renderOnCallPerson('primaryOnCall', primarySchedule, members, shifts, now, 'Primary');
 
-            // Render Secondary
-            renderOnCallPerson('secondaryOnCall', secondarySchedule, members, shifts, now, 'Secondary');
+            // Render Secondary (use member info, not schedule)
+            renderOnCallPersonFromMember('secondaryOnCall', secondaryMember, 'Secondary');
 
-            // Render Tertiary
-            renderOnCallPerson('tertiaryOnCall', tertiarySchedule, members, shifts, now, 'Tertiary');
+            // Render Tertiary (use member info, not schedule)
+            renderOnCallPersonFromMember('tertiaryOnCall', tertiaryMember, 'Tertiary');
         }
 
         // Helper to render on-call person card
@@ -654,6 +664,32 @@
                 </div>
                 <div class="text-muted small">${member.phone}</div>
                 <div class="text-muted small">${timeInfo}</div>
+            `;
+        }
+
+        // Helper to render on-call person from member (for secondary/tertiary based on rotation)
+        function renderOnCallPersonFromMember(elementId, member, label) {
+            const container = document.getElementById(elementId);
+
+            if (!member) {
+                container.innerHTML = '<span class="text-muted">N/A</span>';
+                return;
+            }
+
+            const allMembers = Array.from(document.querySelectorAll('.calendar-day'))
+                .map(el => el.dataset.memberId)
+                .filter(id => id)
+                .map(id => parseInt(id));
+
+            const colorClass = getTeamColor(member.id, [member]);
+
+            container.innerHTML = `
+                <div class="d-flex align-items-center mb-1">
+                    <span class="avatar avatar-sm me-2 ${colorClass}"></span>
+                    <strong>${member.name}</strong>
+                </div>
+                <div class="text-muted small">${member.phone}</div>
+                <div class="text-muted small">Rotation backup</div>
             `;
         }
 
