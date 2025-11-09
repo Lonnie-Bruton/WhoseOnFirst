@@ -3,12 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Notifications - WhoseOnFirst</title>
-    
+    <title>WhoseOnFirst - Notifications</title>
+
+    <!-- Tabler CSS -->
     <link href="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/css/tabler.min.css" rel="stylesheet">
+    <!-- Tabler Icons -->
     <link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" rel="stylesheet">
-    
+
     <style>
+        /* Custom Logo Styles */
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .logo-svg {
+            width: 32px;
+            height: 32px;
+        }
+
+        /* Enhanced Cards */
+        .stat-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        /* Team member color matching */
         .team-color-1 { background-color: #206bc4; }
         .team-color-2 { background-color: #d63939; }
         .team-color-3 { background-color: #00a854; }
@@ -16,38 +39,6 @@
         .team-color-5 { background-color: #ae3ec9; }
         .team-color-6 { background-color: #00b8d4; }
         .team-color-7 { background-color: #f76707; }
-        
-        .logo-svg {
-            width: 32px;
-            height: 32px;
-        }
-        
-        .notification-item {
-            transition: background 0.2s;
-            cursor: pointer;
-        }
-        
-        .notification-item:hover {
-            background: #f8f9fa;
-        }
-        
-        .sms-preview {
-            background: #f8f9fa;
-            border-left: 3px solid #206bc4;
-            padding: 12px;
-            border-radius: 6px;
-            font-family: system-ui, -apple-system, sans-serif;
-            font-size: 14px;
-        }
-        
-        .stat-card {
-            transition: all 0.2s;
-        }
-        
-        .stat-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
     </style>
 </head>
 <body>
@@ -55,8 +46,13 @@
         <!-- Sidebar -->
         <aside class="navbar navbar-vertical navbar-expand-lg" data-bs-theme="dark">
             <div class="container-fluid">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar-menu">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Custom Logo -->
                 <h1 class="navbar-brand navbar-brand-autodark">
-                    <a href="index.html">
+                    <a href="." class="logo-container">
                         <svg class="logo-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
                             <circle cx="50" cy="50" r="45" fill="#206bc4" stroke="#ffffff" stroke-width="3"/>
                             <circle cx="50" cy="50" r="35" fill="none" stroke="#ffffff" stroke-width="2"/>
@@ -69,35 +65,46 @@
                         <span class="navbar-brand-text">WhoseOnFirst</span>
                     </a>
                 </h1>
-                <div class="navbar-collapse">
+
+                <div class="collapse navbar-collapse" id="sidebar-menu">
                     <ul class="navbar-nav pt-lg-3">
                         <li class="nav-item">
                             <a class="nav-link" href="index.html">
-                                <span class="nav-link-icon"><i class="ti ti-layout-dashboard"></i></span>
+                                <span class="nav-link-icon">
+                                    <i class="ti ti-layout-dashboard"></i>
+                                </span>
                                 <span class="nav-link-title">Dashboard</span>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="team-members.html">
-                                <span class="nav-link-icon"><i class="ti ti-users-group"></i></span>
+                                <span class="nav-link-icon">
+                                    <i class="ti ti-users-group"></i>
+                                </span>
                                 <span class="nav-link-title">Team Members</span>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="shifts.html">
-                                <span class="nav-link-icon"><i class="ti ti-clock-hour-3"></i></span>
+                                <span class="nav-link-icon">
+                                    <i class="ti ti-clock-hour-3"></i>
+                                </span>
                                 <span class="nav-link-title">Shift Configuration</span>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="schedule.html">
-                                <span class="nav-link-icon"><i class="ti ti-calendar-event"></i></span>
+                                <span class="nav-link-icon">
+                                    <i class="ti ti-calendar-event"></i>
+                                </span>
                                 <span class="nav-link-title">Schedule Generation</span>
                             </a>
                         </li>
                         <li class="nav-item active">
                             <a class="nav-link" href="notifications.html">
-                                <span class="nav-link-icon"><i class="ti ti-bell-ringing"></i></span>
+                                <span class="nav-link-icon">
+                                    <i class="ti ti-bell-ringing"></i>
+                                </span>
                                 <span class="nav-link-title">Notifications</span>
                             </a>
                         </li>
@@ -108,19 +115,16 @@
 
         <!-- Main Content -->
         <div class="page-wrapper">
-            <div class="page-header">
+            <!-- Page Header -->
+            <div class="page-header d-print-none">
                 <div class="container-xl">
                     <div class="row g-2 align-items-center">
                         <div class="col">
                             <div class="page-pretitle">SMS Management</div>
                             <h2 class="page-title">Notifications</h2>
                         </div>
-                        <div class="col-auto">
+                        <div class="col-auto ms-auto d-print-none">
                             <div class="btn-list">
-                                <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#settingsModal">
-                                    <i class="ti ti-settings me-2"></i>
-                                    Settings
-                                </button>
                                 <button class="btn btn-primary" id="sendTestSMS">
                                     <i class="ti ti-send me-2"></i>
                                     Send Test SMS
@@ -131,6 +135,7 @@
                 </div>
             </div>
 
+            <!-- Page Body -->
             <div class="page-body">
                 <div class="container-xl">
                     <!-- Stats Cards -->
@@ -146,7 +151,7 @@
                                             </span>
                                         </div>
                                     </div>
-                                    <div class="h1 mb-3">342</div>
+                                    <div class="h1 mb-3" id="totalSent">-</div>
                                     <div class="d-flex mb-2">
                                         <div class="text-muted">All time notifications</div>
                                     </div>
@@ -164,12 +169,9 @@
                                             </span>
                                         </div>
                                     </div>
-                                    <div class="h1 mb-3">42</div>
+                                    <div class="h1 mb-3" id="thisMonth">-</div>
                                     <div class="d-flex mb-2">
-                                        <div class="text-green">
-                                            <i class="ti ti-trending-up me-1"></i>
-                                            +8% from last month
-                                        </div>
+                                        <div class="text-muted">Current month</div>
                                     </div>
                                 </div>
                             </div>
@@ -186,10 +188,10 @@
                                         </div>
                                     </div>
                                     <div class="d-flex align-items-baseline">
-                                        <div class="h1 mb-0 me-2">98.5%</div>
-                                    </div>
-                                    <div class="d-flex mb-2">
-                                        <div class="text-success">Excellent</div>
+                                        <div class="h1 mb-0 me-2" id="deliveryRate">-</div>
+                                        <div class="me-auto">
+                                            <span class="text-muted" id="deliveryLabel">Calculating...</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -205,7 +207,7 @@
                                             </span>
                                         </div>
                                     </div>
-                                    <div class="h1 mb-3">5</div>
+                                    <div class="h1 mb-3" id="failedCount">-</div>
                                     <div class="d-flex mb-2">
                                         <div class="text-muted">Requires attention</div>
                                     </div>
@@ -214,108 +216,33 @@
                         </div>
                     </div>
 
-                    <!-- SMS Template Preview -->
+                    <!-- SMS Template (Read-Only) -->
                     <div class="row mb-4">
-                        <div class="col-md-6">
+                        <div class="col-12">
                             <div class="card">
                                 <div class="card-header">
                                     <h3 class="card-title">
-                                        <i class="ti ti-message-circle me-2"></i>
+                                        <i class="ti ti-file-text me-2"></i>
                                         Current SMS Template
                                     </h3>
-                                    <div class="card-actions">
-                                        <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#editTemplateModal">
-                                            <i class="ti ti-edit"></i>
-                                            Edit
-                                        </button>
-                                    </div>
                                 </div>
                                 <div class="card-body">
-                                    <div class="sms-preview">
-                                        <div class="mb-2">
-                                            <strong>📱 WhoseOnFirst Alert</strong>
-                                        </div>
-                                        <div>
-                                            Hi {name}, you are now on-call starting at {start_time} CST until {end_time} CST.
-                                        </div>
-                                        <div class="mt-2 text-muted small">
+                                    <div class="alert alert-info mb-3">
+                                        <i class="ti ti-info-circle me-2"></i>
+                                        This template is automatically sent to team members at 8:00 AM CST when their shift starts.
+                                    </div>
+                                    <div class="border p-3 rounded bg-light">
+                                        <div class="mb-2"><strong>Send Time:</strong> 8:00 AM CST</div>
+                                        <div class="mb-2"><strong>Status:</strong> <span class="badge bg-success">Active</span></div>
+                                        <hr>
+                                        <div class="font-monospace">
+                                            <strong>WhoseOnFirst Alert</strong><br><br>
+                                            Hi {name}, you are now on-call starting at {start_time} CST until {end_time} CST.<br><br>
                                             Your shift lasts {duration}. Thank you for being available!
                                         </div>
                                     </div>
-                                    <div class="mt-3">
-                                        <div class="row">
-                                            <div class="col-6">
-                                                <div class="text-muted small">Send Time</div>
-                                                <strong>8:00 AM CST</strong>
-                                            </div>
-                                            <div class="col-6">
-                                                <div class="text-muted small">Status</div>
-                                                <span class="badge bg-success">Active</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-md-6">
-                            <div class="card">
-                                <div class="card-header">
-                                    <h3 class="card-title">
-                                        <i class="ti ti-clock me-2"></i>
-                                        Notification Schedule
-                                    </h3>
-                                </div>
-                                <div class="card-body">
-                                    <div class="list-group list-group-flush">
-                                        <div class="list-group-item">
-                                            <div class="row align-items-center">
-                                                <div class="col-auto">
-                                                    <span class="avatar bg-blue-lt">
-                                                        <i class="ti ti-sunrise"></i>
-                                                    </span>
-                                                </div>
-                                                <div class="col">
-                                                    <strong>Daily Shift Start</strong>
-                                                    <div class="text-muted small">8:00 AM CST</div>
-                                                </div>
-                                                <div class="col-auto">
-                                                    <span class="badge bg-success">Enabled</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="list-group-item">
-                                            <div class="row align-items-center">
-                                                <div class="col-auto">
-                                                    <span class="avatar bg-purple-lt">
-                                                        <i class="ti ti-bell"></i>
-                                                    </span>
-                                                </div>
-                                                <div class="col">
-                                                    <strong>Reminder Notifications</strong>
-                                                    <div class="text-muted small">1 hour before shift</div>
-                                                </div>
-                                                <div class="col-auto">
-                                                    <span class="badge bg-secondary">Disabled</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="list-group-item">
-                                            <div class="row align-items-center">
-                                                <div class="col-auto">
-                                                    <span class="avatar bg-orange-lt">
-                                                        <i class="ti ti-calendar"></i>
-                                                    </span>
-                                                </div>
-                                                <div class="col">
-                                                    <strong>Weekly Summary</strong>
-                                                    <div class="text-muted small">Monday 9:00 AM</div>
-                                                </div>
-                                                <div class="col-auto">
-                                                    <span class="badge bg-secondary">Disabled</span>
-                                                </div>
-                                            </div>
-                                        </div>
+                                    <div class="text-muted mt-2">
+                                        <small>Template variables: {name}, {start_time}, {end_time}, {duration}</small>
                                     </div>
                                 </div>
                             </div>
@@ -332,215 +259,32 @@
                                         Notification History
                                     </h3>
                                     <div class="card-actions">
-                                        <div class="dropdown">
-                                            <button class="btn btn-sm" data-bs-toggle="dropdown">
-                                                <i class="ti ti-filter"></i>
-                                                Filter
-                                            </button>
-                                            <div class="dropdown-menu dropdown-menu-end">
-                                                <a class="dropdown-item" href="#">All Notifications</a>
-                                                <a class="dropdown-item" href="#">Delivered Only</a>
-                                                <a class="dropdown-item" href="#">Failed Only</a>
-                                                <a class="dropdown-item" href="#">Today</a>
-                                                <a class="dropdown-item" href="#">This Week</a>
-                                                <a class="dropdown-item" href="#">This Month</a>
-                                            </div>
-                                        </div>
+                                        <button class="btn btn-sm btn-outline-primary" id="refreshHistory">
+                                            <i class="ti ti-refresh"></i>
+                                            Refresh
+                                        </button>
                                     </div>
                                 </div>
                                 <div class="table-responsive">
-                                    <table class="table card-table table-vcenter">
+                                    <table class="table card-table table-vcenter" id="notificationTable">
                                         <thead>
                                             <tr>
                                                 <th>Timestamp</th>
                                                 <th>Recipient</th>
                                                 <th>Phone</th>
-                                                <th>Message</th>
                                                 <th>Status</th>
                                                 <th>Twilio SID</th>
-                                                <th>Actions</th>
                                             </tr>
                                         </thead>
-                                        <tbody id="notificationsTable">
-                                            <!-- TODO: Load from API -->
-                                            <tr class="notification-item">
-                                                <td><span class="text-muted">Nov 6, 8:00 AM</span></td>
-                                                <td>
-                                                    <div class="d-flex align-items-center">
-                                                        <span class="avatar avatar-sm me-2 team-color-1"></span>
-                                                        Lonnie Bruton
-                                                    </div>
-                                                </td>
-                                                <td><code>+19187019771</code></td>
-                                                <td>
-                                                    <span class="text-truncate d-inline-block" style="max-width: 200px;">
-                                                        Hi Lonnie, you are now on-call starting at 8:00 AM CST...
-                                                    </span>
-                                                </td>
-                                                <td><span class="badge bg-success">Delivered</span></td>
-                                                <td><code class="text-muted small">SMb23d057a...</code></td>
-                                                <td>
-                                                    <button class="btn btn-sm btn-ghost-primary" title="View Details">
-                                                        <i class="ti ti-eye"></i>
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                            <tr class="notification-item">
-                                                <td><span class="text-muted">Nov 5, 8:00 AM</span></td>
-                                                <td>
-                                                    <div class="d-flex align-items-center">
-                                                        <span class="avatar avatar-sm me-2 team-color-5"></span>
-                                                        Paul Brown
-                                                    </div>
-                                                </td>
-                                                <td><code>+19185551234</code></td>
-                                                <td>
-                                                    <span class="text-truncate d-inline-block" style="max-width: 200px;">
-                                                        Hi Paul, you are now on-call starting at 8:00 AM CST...
-                                                    </span>
-                                                </td>
-                                                <td><span class="badge bg-success">Delivered</span></td>
-                                                <td><code class="text-muted small">SM8a4f123b...</code></td>
-                                                <td>
-                                                    <button class="btn btn-sm btn-ghost-primary" title="View Details">
-                                                        <i class="ti ti-eye"></i>
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                            <tr class="notification-item">
-                                                <td><span class="text-muted">Nov 4, 8:00 AM</span></td>
-                                                <td>
-                                                    <div class="d-flex align-items-center">
-                                                        <span class="avatar avatar-sm me-2 team-color-4"></span>
-                                                        John Doe
-                                                    </div>
-                                                </td>
-                                                <td><code>+19185559999</code></td>
-                                                <td>
-                                                    <span class="text-truncate d-inline-block" style="max-width: 200px;">
-                                                        Hi John, you are now on-call starting at 8:00 AM CST...
-                                                    </span>
-                                                </td>
-                                                <td><span class="badge bg-success">Delivered</span></td>
-                                                <td><code class="text-muted small">SM7c9e456d...</code></td>
-                                                <td>
-                                                    <button class="btn btn-sm btn-ghost-primary" title="View Details">
-                                                        <i class="ti ti-eye"></i>
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                            <tr class="notification-item">
-                                                <td><span class="text-muted">Nov 3, 8:00 AM</span></td>
-                                                <td>
-                                                    <div class="d-flex align-items-center">
-                                                        <span class="avatar avatar-sm me-2 team-color-3"></span>
-                                                        Steve Wilson
-                                                    </div>
-                                                </td>
-                                                <td><code>+19185558888</code></td>
-                                                <td>
-                                                    <span class="text-truncate d-inline-block" style="max-width: 200px;">
-                                                        Hi Steve, you are now on-call starting at 8:00 AM CST...
-                                                    </span>
-                                                </td>
-                                                <td><span class="badge bg-red">Failed</span></td>
-                                                <td><code class="text-muted small">-</code></td>
-                                                <td>
-                                                    <button class="btn btn-sm btn-ghost-danger" title="Retry">
-                                                        <i class="ti ti-refresh"></i>
-                                                    </button>
-                                                </td>
+                                        <tbody id="historyTableBody">
+                                            <tr>
+                                                <td colspan="5" class="text-center text-muted">Loading notification history...</td>
                                             </tr>
                                         </tbody>
                                     </table>
                                 </div>
-                                <div class="card-footer d-flex align-items-center">
-                                    <p class="m-0 text-muted">Showing 4 of 342 notifications</p>
-                                    <ul class="pagination m-0 ms-auto">
-                                        <li class="page-item disabled">
-                                            <a class="page-link" href="#" tabindex="-1">
-                                                <i class="ti ti-chevron-left"></i>
-                                            </a>
-                                        </li>
-                                        <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                                        <li class="page-item"><a class="page-link" href="#">2</a></li>
-                                        <li class="page-item"><a class="page-link" href="#">3</a></li>
-                                        <li class="page-item">
-                                            <a class="page-link" href="#">
-                                                <i class="ti ti-chevron-right"></i>
-                                            </a>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Twilio Configuration Status -->
-                    <div class="row mt-4">
-                        <div class="col-12">
-                            <div class="card">
-                                <div class="card-header">
-                                    <h3 class="card-title">
-                                        <i class="ti ti-brand-telegram me-2"></i>
-                                        Twilio Configuration
-                                    </h3>
-                                </div>
-                                <div class="card-body">
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <div class="mb-3">
-                                                <label class="form-label text-muted">Account SID</label>
-                                                <div class="input-group">
-                                                    <input type="password" class="form-control" value="AC1234567890abcdef" disabled>
-                                                    <button class="btn" type="button">
-                                                        <i class="ti ti-eye"></i>
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="mb-3">
-                                                <label class="form-label text-muted">From Phone Number</label>
-                                                <input type="text" class="form-control" value="+1 (918) 555-0100" disabled>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-md-4">
-                                            <div class="d-flex align-items-center">
-                                                <span class="avatar avatar-sm bg-success-lt me-2">
-                                                    <i class="ti ti-check"></i>
-                                                </span>
-                                                <div>
-                                                    <div class="text-muted small">Connection Status</div>
-                                                    <strong class="text-success">Connected</strong>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <div class="d-flex align-items-center">
-                                                <span class="avatar avatar-sm bg-blue-lt me-2">
-                                                    <i class="ti ti-credit-card"></i>
-                                                </span>
-                                                <div>
-                                                    <div class="text-muted small">Account Balance</div>
-                                                    <strong>$24.50</strong>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <div class="d-flex align-items-center">
-                                                <span class="avatar avatar-sm bg-green-lt me-2">
-                                                    <i class="ti ti-chart-line"></i>
-                                                </span>
-                                                <div>
-                                                    <div class="text-muted small">Last Test</div>
-                                                    <strong>2 hours ago</strong>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
+                                <div class="card-footer">
+                                    <div class="text-muted" id="historyCount">Showing 0 notifications</div>
                                 </div>
                             </div>
                         </div>
@@ -571,112 +315,174 @@
         </div>
     </div>
 
-    <!-- Notification Settings Modal -->
-    <div class="modal fade" id="settingsModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Notification Settings</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">Daily Notification Time (CST)</label>
-                        <input type="time" class="form-control" value="08:00">
-                        <small class="form-hint">Time when daily on-call notifications are sent</small>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="enableReminders">
-                            <label class="form-check-label" for="enableReminders">
-                                Enable reminder notifications (1 hour before shift)
-                            </label>
-                        </div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="enableWeeklySummary">
-                            <label class="form-check-label" for="enableWeeklySummary">
-                                Send weekly schedule summary
-                            </label>
-                        </div>
-                    </div>
-                    
-                    <hr>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Twilio Account SID</label>
-                        <input type="password" class="form-control" placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx">
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Twilio Auth Token</label>
-                        <input type="password" class="form-control" placeholder="••••••••••••••••••••••••••••••••">
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">From Phone Number</label>
-                        <input type="tel" class="form-control" placeholder="+19185551234">
-                        <small class="form-hint">Your Twilio phone number in E.164 format</small>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" id="saveSettings">
-                        <i class="ti ti-check me-2"></i>
-                        Save Settings
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Edit Template Modal -->
-    <div class="modal fade" id="editTemplateModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Edit SMS Template</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">Template Name</label>
-                        <input type="text" class="form-control" value="Default On-Call Notification">
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Message Template</label>
-                        <textarea class="form-control" rows="5">Hi {name}, you are now on-call starting at {start_time} CST until {end_time} CST. Your shift lasts {duration}. Thank you for being available!</textarea>
-                        <small class="form-hint">
-                            Available variables: {name}, {start_time}, {end_time}, {duration}
-                        </small>
-                    </div>
-                    
-                    <div class="alert alert-info mb-0">
-                        <i class="ti ti-info-circle me-2"></i>
-                        <strong>Preview:</strong> Hi Lonnie, you are now on-call starting at 8:00 AM CST until 8:00 AM CST. Your shift lasts 24 hours. Thank you for being available!
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary">
-                        <i class="ti ti-check me-2"></i>
-                        Save Template
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
+    <!-- Tabler JS -->
     <script src="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/js/tabler.min.js"></script>
+
     <script>
         const API_BASE = 'http://localhost:8000/api/v1';
 
+        // Team member color mapping
+        const TEAM_COLORS = [
+            'team-color-1', 'team-color-2', 'team-color-3', 'team-color-4',
+            'team-color-5', 'team-color-6', 'team-color-7'
+        ];
+
+        // Get color class for team member
+        function getTeamColor(memberId, allMembers) {
+            const sorted = [...allMembers].sort((a, b) => a.id - b.id);
+            const index = sorted.findIndex(m => m.id === memberId);
+            return TEAM_COLORS[index % TEAM_COLORS.length];
+        }
+
+        // Format date/time
+        function formatDateTime(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
+            });
+        }
+
+        // Mask phone number
+        function maskPhone(phone) {
+            if (!phone || phone.length < 4) return phone;
+            return phone.slice(0, -4) + 'XXXX';
+        }
+
+        // Load notification stats
+        async function loadStats() {
+            try {
+                const response = await fetch(`${API_BASE}/notifications/stats?days=30`);
+                if (!response.ok) {
+                    throw new Error('Failed to fetch stats');
+                }
+
+                const stats = await response.json();
+
+                document.getElementById('totalSent').textContent = stats.total_sent;
+                document.getElementById('thisMonth').textContent = stats.this_month;
+                document.getElementById('deliveryRate').textContent = stats.delivery_rate.toFixed(1) + '%';
+                document.getElementById('failedCount').textContent = stats.failed_count;
+
+                // Update delivery label based on rate
+                const label = document.getElementById('deliveryLabel');
+                if (stats.delivery_rate >= 95) {
+                    label.textContent = 'Excellent';
+                    label.className = 'text-green';
+                } else if (stats.delivery_rate >= 85) {
+                    label.textContent = 'Good';
+                    label.className = 'text-blue';
+                } else {
+                    label.textContent = 'Needs attention';
+                    label.className = 'text-orange';
+                }
+
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        // Load notification history
+        async function loadHistory() {
+            try {
+                const [notificationsRes, schedulesRes, membersRes] = await Promise.all([
+                    fetch(`${API_BASE}/notifications/recent?limit=50`),
+                    fetch(`${API_BASE}/schedules/upcoming?weeks=8`),
+                    fetch(`${API_BASE}/team-members/`)
+                ]);
+
+                if (!notificationsRes.ok) {
+                    throw new Error('Failed to fetch notifications');
+                }
+
+                const notifications = await notificationsRes.json();
+                const schedules = await schedulesRes.json();
+                const members = await membersRes.json();
+
+                const tbody = document.getElementById('historyTableBody');
+
+                if (notifications.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No notifications sent yet</td></tr>';
+                    document.getElementById('historyCount').textContent = 'Showing 0 notifications';
+                    return;
+                }
+
+                tbody.innerHTML = '';
+
+                notifications.forEach(notification => {
+                    const schedule = schedules.find(s => s.id === notification.schedule_id);
+                    const member = schedule ? members.find(m => m.id === schedule.team_member_id) : null;
+
+                    const row = document.createElement('tr');
+
+                    // Timestamp
+                    const timestampCell = document.createElement('td');
+                    timestampCell.innerHTML = `<span class="text-muted">${formatDateTime(notification.sent_at)}</span>`;
+                    row.appendChild(timestampCell);
+
+                    // Recipient
+                    const recipientCell = document.createElement('td');
+                    if (member) {
+                        const colorClass = getTeamColor(member.id, members);
+                        recipientCell.innerHTML = `
+                            <div class="d-flex align-items-center">
+                                <span class="avatar avatar-sm me-2 ${colorClass}"></span>
+                                ${member.name}
+                            </div>
+                        `;
+                    } else {
+                        recipientCell.textContent = 'Unknown';
+                    }
+                    row.appendChild(recipientCell);
+
+                    // Phone
+                    const phoneCell = document.createElement('td');
+                    phoneCell.textContent = member ? maskPhone(member.phone) : '-';
+                    row.appendChild(phoneCell);
+
+                    // Status
+                    const statusCell = document.createElement('td');
+                    let badgeClass = 'bg-secondary';
+                    if (notification.status === 'sent' || notification.status === 'delivered') {
+                        badgeClass = 'bg-success';
+                    } else if (notification.status === 'failed' || notification.status === 'undelivered') {
+                        badgeClass = 'bg-danger';
+                    } else if (notification.status === 'pending') {
+                        badgeClass = 'bg-warning';
+                    }
+                    statusCell.innerHTML = `<span class="badge ${badgeClass}">${notification.status}</span>`;
+                    row.appendChild(statusCell);
+
+                    // Twilio SID
+                    const sidCell = document.createElement('td');
+                    if (notification.twilio_sid) {
+                        sidCell.innerHTML = `<code>${notification.twilio_sid.substring(0, 15)}...</code>`;
+                    } else {
+                        sidCell.textContent = '-';
+                    }
+                    row.appendChild(sidCell);
+
+                    tbody.appendChild(row);
+                });
+
+                document.getElementById('historyCount').textContent = `Showing ${notifications.length} notifications`;
+
+            } catch (error) {
+                console.error('Error loading history:', error);
+                const tbody = document.getElementById('historyTableBody');
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Error loading notification history</td></tr>';
+            }
+        }
+
         // Send test SMS
         document.getElementById('sendTestSMS').addEventListener('click', async function() {
+            if (!confirm('Send test SMS to all team members on-call today?')) {
+                return;
+            }
+
             this.disabled = true;
             this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Sending...';
 
@@ -687,10 +493,14 @@
 
                 if (response.ok) {
                     const result = await response.json();
-                    alert(`✅ Successfully sent ${result.successful} test SMS!`);
+                    alert(`✅ Sent ${result.successful || 0} SMS notification(s) successfully!`);
+
+                    // Reload data
+                    loadStats();
+                    loadHistory();
                 } else {
                     const error = await response.json();
-                    alert('❌ Error: ' + (error.detail || 'Failed to send SMS'));
+                    alert('❌ Failed to send notifications: ' + (error.detail || 'Unknown error'));
                 }
             } catch (error) {
                 alert('❌ Error: ' + error.message);
@@ -700,40 +510,15 @@
             }
         });
 
-        // Save settings
-        document.getElementById('saveSettings').addEventListener('click', function() {
-            // TODO: Implement settings save
-            alert('✅ Settings saved! (API integration pending)');
-            bootstrap.Modal.getInstance(document.getElementById('settingsModal')).hide();
+        // Refresh history
+        document.getElementById('refreshHistory').addEventListener('click', function() {
+            loadHistory();
         });
 
-        // TODO: Load notification history from API
-        async function loadNotifications() {
-            try {
-                // const response = await fetch(`${API_BASE}/notifications/`);
-                // const notifications = await response.json();
-                // renderNotifications(notifications);
-                console.log('TODO: Implement notification history loading');
-            } catch (error) {
-                console.error('Error loading notifications:', error);
-            }
-        }
-
-        // TODO: Load notification stats
-        async function loadStats() {
-            try {
-                // const response = await fetch(`${API_BASE}/notifications/stats`);
-                // const stats = await response.json();
-                // updateStats(stats);
-                console.log('TODO: Implement notification stats');
-            } catch (error) {
-                console.error('Error loading stats:', error);
-            }
-        }
-
+        // Load data on page load
         document.addEventListener('DOMContentLoaded', function() {
-            loadNotifications();
             loadStats();
+            loadHistory();
         });
     </script>
 </body>

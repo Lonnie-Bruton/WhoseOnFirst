@@ -12,7 +12,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 # Import routers
-from src.api.routes import team_members, shifts, schedules
+from src.api.routes import team_members, shifts, schedules, notifications
 from src.scheduler import get_schedule_manager
 
 
@@ -139,4 +139,9 @@ app.include_router(
     schedules.router,
     prefix="/api/v1/schedules",
     tags=["schedules"]
+)
+app.include_router(
+    notifications.router,
+    prefix="/api/v1/notifications",
+    tags=["notifications"]
 )
