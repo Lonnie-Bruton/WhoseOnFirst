@@ -7,12 +7,15 @@ on-call rotation and SMS notification system.
 
 from contextlib import asynccontextmanager
 import logging
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 
 # Import routers
-from src.api.routes import team_members, shifts, schedules, notifications
+from src.api.routes import team_members, shifts, schedules, notifications, auth
 from src.scheduler import get_schedule_manager
 
 
@@ -67,7 +70,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="WhoseOnFirst API",
     description="Automated on-call rotation and SMS notification system for technical teams",
-    version="0.2.0",
+    version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
     openapi_url="/openapi.json",
@@ -90,18 +93,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Root endpoint
-@app.get("/", tags=["root"])
-async def root():
+# API info endpoint (moved from root to avoid conflict with frontend)
+@app.get("/api", tags=["root"])
+async def api_info():
     """
-    Root endpoint returning API information.
+    API information endpoint.
 
     Returns:
         dict: API name and version
     """
     return {
         "name": "WhoseOnFirst API",
-        "version": "0.2.0",
+        "version": "1.0.0",
         "description": "On-call rotation and SMS notification system",
         "docs": "/docs",
         "redoc": "/redoc"
@@ -126,6 +129,11 @@ async def health_check():
 
 # Include API routers
 app.include_router(
+    auth.router,
+    prefix="/api/v1/auth",
+    tags=["authentication"]
+)
+app.include_router(
     team_members.router,
     prefix="/api/v1/team-members",
     tags=["team-members"]
@@ -145,3 +153,46 @@ app.include_router(
     prefix="/api/v1/notifications",
     tags=["notifications"]
 )
+
+# Mount static files (frontend) - MUST be after API routes to avoid conflicts
+# Serve frontend from the frontend directory
+frontend_path = Path(__file__).parent.parent / "frontend"
+if frontend_path.exists():
+    app.mount("/static", StaticFiles(directory=str(frontend_path)), name="static")
+    logger.info(f"Serving frontend from: {frontend_path}")
+
+    # Serve index.html for root and catch-all SPA routing
+    @app.get("/", response_class=FileResponse)
+    @app.get("/{full_path:path}", response_class=FileResponse)
+    async def serve_frontend(full_path: str = ""):
+        """
+        Serve frontend HTML files for SPA routing.
+        Returns index.html for root, or specific HTML files if they exist.
+        """
+        # Map common routes to their HTML files
+        route_map = {
+            "": "index.html",
+            "login.html": "login.html",
+            "team-members.html": "team-members.html",
+            "shifts.html": "shifts.html",
+            "schedule.html": "schedule.html",
+            "notifications.html": "notifications.html",
+            "help.html": "help.html",
+            "change-password.html": "change-password.html"
+        }
+
+        # Check if it's a direct HTML file request
+        if full_path in route_map:
+            file_path = frontend_path / route_map[full_path]
+            if file_path.exists():
+                return FileResponse(file_path)
+
+        # Check if the file exists directly
+        file_path = frontend_path / full_path
+        if file_path.exists() and file_path.is_file():
+            return FileResponse(file_path)
+
+        # Default to index.html for SPA routes
+        return FileResponse(frontend_path / "index.html")
+else:
+    logger.warning(f"Frontend directory not found: {frontend_path}")

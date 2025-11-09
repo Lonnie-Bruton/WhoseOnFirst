@@ -21,6 +21,7 @@ from src.services import (
     MemberNotFoundError,
     InvalidPhoneError
 )
+from src.api.routes.auth import require_auth, require_admin
 
 
 router = APIRouter()
@@ -32,7 +33,8 @@ def list_team_members(
         False,
         description="Filter to only active team members"
     ),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user = Depends(require_auth)
 ):
     """
     List all team members.
@@ -58,7 +60,8 @@ def list_team_members(
 @router.get("/{member_id}", response_model=TeamMemberResponse)
 def get_team_member(
     member_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user = Depends(require_auth)
 ):
     """
     Get a specific team member by ID.
@@ -90,7 +93,8 @@ def get_team_member(
 @router.post("/", response_model=TeamMemberResponse, status_code=status.HTTP_201_CREATED)
 def create_team_member(
     member_data: TeamMemberCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user = Depends(require_admin)
 ):
     """
     Create a new team member.
@@ -131,7 +135,8 @@ def create_team_member(
 @router.put("/reorder", response_model=List[TeamMemberResponse])
 def reorder_team_members(
     reorder_request: TeamMemberReorderRequest,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user = Depends(require_admin)
 ):
     """
     Update rotation order for multiple team members.
@@ -180,7 +185,8 @@ def reorder_team_members(
 def update_team_member(
     member_id: int,
     member_data: TeamMemberUpdate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user = Depends(require_admin)
 ):
     """
     Update an existing team member.
@@ -226,7 +232,8 @@ def update_team_member(
 @router.delete("/{member_id}", status_code=status.HTTP_204_NO_CONTENT)
 def deactivate_team_member(
     member_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user = Depends(require_admin)
 ):
     """
     Deactivate a team member (soft delete).
@@ -260,7 +267,8 @@ def deactivate_team_member(
 @router.post("/{member_id}/activate", response_model=TeamMemberResponse)
 def activate_team_member(
     member_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user = Depends(require_admin)
 ):
     """
     Reactivate a deactivated team member.
@@ -294,7 +302,8 @@ def activate_team_member(
 @router.delete("/{member_id}/permanent", status_code=status.HTTP_204_NO_CONTENT)
 def permanently_delete_team_member(
     member_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user = Depends(require_admin)
 ):
     """
     Permanently delete a team member (hard delete).

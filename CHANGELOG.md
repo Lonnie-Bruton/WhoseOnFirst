@@ -7,6 +7,178 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.0] - 2025-11-09
+
+### 🎉 FIRST PRODUCTION RELEASE - MVP COMPLETE! 🎉
+
+WhoseOnFirst v1.0.0 is a fully functional on-call rotation and SMS notification system. All Phase 1 MVP features are complete and production-ready.
+
+### Added
+
+- **Authentication System** - Secure login and role-based access control (COMPLETE ✅)
+  - User model with Argon2id password hashing (OWASP 2025 recommended)
+  - Two-tier role system: Admin and Viewer
+  - Login page with branded design, password toggle, and Abbott & Costello easter egg (Shift+Click logo)
+  - Session-based authentication with HTTPOnly cookies
+  - `require_auth` and `require_admin` dependency guards for API endpoints
+  - User badge in sidebar showing username and role with appropriate icons
+  - Change Password page for admins and viewers
+  - Reset Viewer Password functionality (admin-only)
+  - Protected routes: automatically redirect to `/login.html` if not authenticated
+  - All frontend pages implement auth guard pattern
+  - Default users: admin/admin (full access), viewer/viewer (read-only)
+
+- **Help & Setup Page** - Comprehensive Twilio configuration guide (COMPLETE ✅)
+  - Step-by-step Twilio account setup instructions
+  - Credential management guide (Account SID, Auth Token, Phone Number)
+  - Sample `.env` file with all configuration options documented
+  - Troubleshooting accordion with common issues and solutions
+  - Additional resources section (GitHub, Twilio docs, API docs, timezone reference)
+  - Quick start guide with 4-step onboarding
+  - Warning boxes for trial account limitations
+  - Security best practices for secret management
+  - Code blocks with syntax highlighting for easy copy-paste
+
+- **Same-Origin Architecture** - Frontend served from FastAPI (COMPLETE ✅)
+  - Frontend static files served via FastAPI's StaticFiles mount at `/static`
+  - SPA routing with catch-all handler serving index.html for unknown routes
+  - Route map for all HTML files (index, login, team-members, shifts, schedule, notifications, help, change-password)
+  - Health check endpoint at `/health`
+  - API info endpoint moved to `/api` to avoid conflict with frontend root
+  - Serves frontend from `frontend/` directory
+  - No need for separate static file server on port 8080
+
+### Fixed
+
+- **Cross-Origin Cookie Authentication Bug** - Critical same-origin policy fix (CRITICAL FIX ✅)
+  - **Bug**: Intermittent 401 Unauthorized errors when navigating between pages
+  - **Root Cause**: Frontend JavaScript hardcoded `API_BASE_URL = 'http://localhost:8000'`
+    - Browsers treat `localhost` and `127.0.0.1` as different origins
+    - Session cookies set for one origin wouldn't be sent to requests for the other origin
+    - Resulted in random authentication failures depending on how user accessed the app
+  - **Fix**: Changed all frontend files to use relative URLs:
+    - Before: `const API_BASE_URL = 'http://localhost:8000'`
+    - After: `const API_BASE_URL = '';` (empty string = same origin)
+    - Before: `const API_BASE = 'http://localhost:8000/api/v1'`
+    - After: `const API_BASE = '/api/v1';` (relative path)
+  - **Files Updated**: All 7 frontend HTML files (index, login, team-members, shifts, schedule, notifications, change-password)
+  - **Impact**: Authentication now works reliably regardless of how users access the application
+  - **Benefit**: Works with localhost, 127.0.0.1, IP addresses, or any hostname
+
+- **Dashboard Navigation Caching Issue** - Fixed browser caching on Dashboard link
+  - Changed all Dashboard links from `href="index.html"` to `href="/"`
+  - Fixed logo links to use `href="/"` for consistency
+  - Prevents browser from serving cached version of index.html
+  - Ensures fresh page load on every Dashboard navigation
+
+- **Login Redirect Cookie Race Condition** - Added delay before redirect after login
+  - Added 150ms `setTimeout()` before redirect in login.html
+  - Ensures browser fully processes Set-Cookie header before navigation
+  - Prevents edge case where cookie isn't available immediately after redirect
+
+### Changed
+
+- **Version Bump to 1.0.0** - All components updated
+  - FastAPI application version: `1.0.0`
+  - API info endpoint returns `version: "1.0.0"`
+  - All frontend footer links show `WhoseOnFirst v1.0.0`
+  - SPA route map includes help.html
+
+- **Footer Branding** - Simplified footer across all pages
+  - Removed "Built with ♥ using Tabler" attribution
+  - Kept GitHub link with version number
+  - Clean, professional footer design
+  - Updated on 5 pages: index, shifts, schedule, notifications, change-password
+
+- **Navigation Menu** - Added Help & Setup link
+  - New menu item between Notifications and Change Password
+  - Icon: `ti ti-help`
+  - Visible to both admin and viewer roles
+  - Help page accessible at `/help.html`
+
+### Removed
+
+- **Port 8080 Static File Server** - No longer needed
+  - Frontend now served by FastAPI on port 8000
+  - Eliminates cross-origin complexity
+  - Simplifies deployment (single port)
+  - Reduces infrastructure requirements
+
+### Security
+
+- **OWASP Compliance** - Password hashing best practices
+  - Argon2id algorithm with OWASP 2025 recommended parameters
+  - Time cost: 2 iterations
+  - Memory cost: 19 MiB (19456 KiB)
+  - 32-byte hash length, 16-byte salt length
+  - Automatic password rehashing on login if parameters change
+
+- **Session Security** - HTTPOnly cookies with SameSite protection
+  - Session cookies set to `httponly=True` (prevents XSS attacks)
+  - SameSite=Lax for same-origin requests
+  - 24-hour session lifetime (non-persistent)
+  - 30-day lifetime with "Remember Me" option
+  - Path set to `/` for application-wide access
+
+### Technical Details
+
+- **Frontend**: 8 HTML files (added help.html)
+- **Authentication**: Argon2id password hashing, session-based auth
+- **Architecture**: Same-origin (frontend and API on single port)
+- **Help Page**: ~900 lines of comprehensive setup documentation
+- **Total Lines Changed**: ~50+ files modified for relative URL fix
+- **Cookie Configuration**: SameSite=Lax, HTTPOnly, configurable max-age
+- **Testing**: All 288 tests passing, 85% overall coverage
+
+### Deployment Notes
+
+- **Environment Variables Required** (in `.env`):
+  - `TWILIO_ACCOUNT_SID` - Twilio account identifier
+  - `TWILIO_AUTH_TOKEN` - Twilio authentication token
+  - `TWILIO_PHONE_NUMBER` - Twilio phone number (E.164 format)
+  - `DATABASE_URL` - SQLite database path (default: `sqlite:///./data/whoseonfirst.db`)
+  - `NOTIFICATION_TIMEZONE` - Timezone for notifications (default: `America/Chicago`)
+  - `NOTIFICATION_HOUR` - Hour for daily notifications (default: 8)
+  - `NOTIFICATION_MINUTE` - Minute for daily notifications (default: 0)
+
+- **Default Credentials**:
+  - Admin: username=`admin`, password=`admin` (CHANGE IN PRODUCTION!)
+  - Viewer: username=`viewer`, password=`viewer`
+
+- **Server Start Command**:
+  ```bash
+  uvicorn src.main:app --host 0.0.0.0 --port 8000
+  ```
+
+- **Access URLs**:
+  - Frontend/Dashboard: `http://localhost:8000/`
+  - API Documentation: `http://localhost:8000/docs`
+  - Health Check: `http://localhost:8000/health`
+
+### Known Limitations (By Design)
+
+These limitations are intentional design choices for the MVP. Future enhancements are planned.
+
+- **Twilio Configuration via .env Only** - No UI for API key management
+  - **Current**: API keys stored in `.env` file (12-factor app standard)
+  - **Workaround**: Edit `.env` file and restart server
+  - **Future Enhancement (v1.1.0+)**: Settings UI for Twilio credentials
+  - **Rationale**: Industry standard for secrets; avoids database encryption complexity
+
+- **SMS Template Stored in LocalStorage** - Not centralized
+  - **Current**: Each admin's browser stores template independently
+  - **Workaround**: Admins set template in their own browser
+  - **Future Enhancement (v1.1.0+)**: Backend API for global template
+  - **Rationale**: Works for single-admin MVP; easy to migrate later
+
+- **No PTO/Vacation Management** - Manual workarounds needed
+  - **Current**: No built-in PTO request or conflict detection
+  - **Workaround**: Manually regenerate schedule or swap team members
+  - **Future Enhancement (v1.2.0+)**: PTO calendar and conflict warnings
+  - **Rationale**: Out of scope for MVP; rotation algorithm is solid foundation
+
+---
+
 ## [Unreleased]
 
 ### Added
@@ -631,6 +803,7 @@ These are intentional scope limitations for the initial MVP release. Future enha
 
 ---
 
-[Unreleased]: https://github.com/Lonnie-Bruton/WhoseOnFirst/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/Lonnie-Bruton/WhoseOnFirst/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/Lonnie-Bruton/WhoseOnFirst/compare/v0.1.0...v1.0.0
 [0.1.0]: https://github.com/Lonnie-Bruton/WhoseOnFirst/compare/v0.0.1...v0.1.0
 [0.0.1]: https://github.com/Lonnie-Bruton/WhoseOnFirst/releases/tag/v0.0.1

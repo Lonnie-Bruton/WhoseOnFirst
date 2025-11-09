@@ -18,6 +18,7 @@ from .team_member_repository import TeamMemberRepository
 from .shift_repository import ShiftRepository
 from .schedule_repository import ScheduleRepository
 from .notification_log_repository import NotificationLogRepository
+from .user_repository import UserRepository
 
 # Export all repositories
 __all__ = [
@@ -26,4 +27,5 @@ __all__ = [
     "ShiftRepository",
     "ScheduleRepository",
     "NotificationLogRepository",
+    "UserRepository",
 ]

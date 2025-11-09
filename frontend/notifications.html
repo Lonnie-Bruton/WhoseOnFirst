@@ -61,7 +61,7 @@
 
                 <!-- Custom Logo -->
                 <h1 class="navbar-brand navbar-brand-autodark">
-                    <a href="." class="logo-container">
+                    <a href="/" class="logo-container">
                         <svg class="logo-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
                             <circle cx="50" cy="50" r="45" fill="#206bc4" stroke="#ffffff" stroke-width="3"/>
                             <circle cx="50" cy="50" r="35" fill="none" stroke="#ffffff" stroke-width="2"/>
@@ -77,15 +77,28 @@
 
                 <div class="collapse navbar-collapse" id="sidebar-menu">
                     <ul class="navbar-nav pt-lg-3">
+                        <!-- User Info Badge -->
+                        <li class="nav-item mb-3" style="opacity: 0.7;">
+                            <div class="nav-link d-flex align-items-center pe-none">
+                                <span class="avatar avatar-sm bg-primary me-2" id="userRoleIcon">
+                                    <i class="ti ti-user"></i>
+                                </span>
+                                <div class="d-flex flex-column">
+                                    <small class="text-white" id="usernameDisplay" style="font-weight: 500;">Loading...</small>
+                                    <small class="text-muted" id="userRoleDisplay" style="font-size: 0.7rem;">...</small>
+                                </div>
+                            </div>
+                        </li>
+
                         <li class="nav-item">
-                            <a class="nav-link" href="index.html">
+                            <a class="nav-link" href="/">
                                 <span class="nav-link-icon">
                                     <i class="ti ti-layout-dashboard"></i>
                                 </span>
                                 <span class="nav-link-title">Dashboard</span>
                             </a>
                         </li>
-                        <li class="nav-item">
+                        <li class="nav-item admin-only">
                             <a class="nav-link" href="team-members.html">
                                 <span class="nav-link-icon">
                                     <i class="ti ti-users-group"></i>
@@ -93,7 +106,7 @@
                                 <span class="nav-link-title">Team Members</span>
                             </a>
                         </li>
-                        <li class="nav-item">
+                        <li class="nav-item admin-only">
                             <a class="nav-link" href="shifts.html">
                                 <span class="nav-link-icon">
                                     <i class="ti ti-clock-hour-3"></i>
@@ -101,7 +114,7 @@
                                 <span class="nav-link-title">Shift Configuration</span>
                             </a>
                         </li>
-                        <li class="nav-item">
+                        <li class="nav-item admin-only">
                             <a class="nav-link" href="schedule.html">
                                 <span class="nav-link-icon">
                                     <i class="ti ti-calendar-event"></i>
@@ -109,12 +122,34 @@
                                 <span class="nav-link-title">Schedule Generation</span>
                             </a>
                         </li>
-                        <li class="nav-item active">
+                        <li class="nav-item active admin-only">
                             <a class="nav-link" href="notifications.html">
                                 <span class="nav-link-icon">
                                     <i class="ti ti-bell-ringing"></i>
                                 </span>
                                 <span class="nav-link-title">Notifications</span>
+                            </a>
+                        </li>
+
+                        <!-- Separator -->
+                        <li class="nav-item mt-4">
+                            <div style="border-top: 1px solid rgba(255,255,255,0.1); margin: 0 16px;"></div>
+                        </li>
+
+                        <li class="nav-item admin-only">
+                            <a class="nav-link" href="change-password.html">
+                                <span class="nav-link-icon">
+                                    <i class="ti ti-key"></i>
+                                </span>
+                                <span class="nav-link-title">Change Password</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-danger" href="#" id="logoutBtn">
+                                <span class="nav-link-icon">
+                                    <i class="ti ti-logout"></i>
+                                </span>
+                                <span class="nav-link-title">Logout</span>
                             </a>
                         </li>
                     </ul>
@@ -134,7 +169,7 @@
                         </div>
                         <div class="col-auto ms-auto d-print-none">
                             <div class="btn-list">
-                                <button class="btn btn-primary" id="sendTestSMS">
+                                <button class="btn btn-primary admin-only" id="sendTestSMS">
                                     <i class="ti ti-send me-2"></i>
                                     Send Test SMS
                                 </button>
@@ -235,7 +270,7 @@
                                         SMS Template
                                     </h3>
                                     <div class="card-actions">
-                                        <button class="btn btn-sm btn-primary" id="editTemplateBtn">
+                                        <button class="btn btn-sm btn-primary admin-only" id="editTemplateBtn">
                                             <i class="ti ti-edit"></i>
                                             Edit Template
                                         </button>
@@ -275,7 +310,7 @@
                                             </div>
                                         </div>
                                         <div class="d-flex gap-2">
-                                            <button class="btn btn-success" id="saveTemplateBtn">
+                                            <button class="btn btn-success admin-only" id="saveTemplateBtn">
                                                 <i class="ti ti-check"></i>
                                                 Save Template
                                             </button>
@@ -283,7 +318,7 @@
                                                 <i class="ti ti-x"></i>
                                                 Cancel
                                             </button>
-                                            <button class="btn btn-outline-primary ms-auto" id="resetTemplateBtn">
+                                            <button class="btn btn-outline-primary ms-auto admin-only" id="resetTemplateBtn">
                                                 <i class="ti ti-refresh"></i>
                                                 Reset to Default
                                             </button>
@@ -346,11 +381,8 @@
                                 <li class="list-inline-item">
                                     <a href="https://github.com/Lonnie-Bruton/WhoseOnFirst" class="link-secondary" target="_blank">
                                         <i class="ti ti-brand-github"></i>
-                                        WhoseOnFirst v0.2.0
+                                        WhoseOnFirst v1.0.0
                                     </a>
-                                </li>
-                                <li class="list-inline-item">
-                                    Built with <span class="text-red">♥</span> using Tabler
                                 </li>
                             </ul>
                         </div>
@@ -364,7 +396,9 @@
     <script src="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/js/tabler.min.js"></script>
 
     <script>
-        const API_BASE = 'http://localhost:8000/api/v1';
+        const API_BASE_URL = '';  // Use same origin as current page
+        const API_BASE = '/api/v1';
+        let currentUser = null;
 
         // Team member color mapping (1-16 unique colors)
         const TEAM_COLORS = [
@@ -402,7 +436,9 @@
         // Load notification stats
         async function loadStats() {
             try {
-                const response = await fetch(`${API_BASE}/notifications/stats?days=30`);
+                const response = await fetch(`${API_BASE}/notifications/stats?days=30`, {
+                    credentials: 'include'
+                });
                 if (!response.ok) {
                     throw new Error('Failed to fetch stats');
                 }
@@ -436,9 +472,9 @@
         async function loadHistory() {
             try {
                 const [notificationsRes, schedulesRes, membersRes] = await Promise.all([
-                    fetch(`${API_BASE}/notifications/recent?limit=50`),
-                    fetch(`${API_BASE}/schedules/upcoming?weeks=8`),
-                    fetch(`${API_BASE}/team-members/`)
+                    fetch(`${API_BASE}/notifications/recent?limit=50`, { credentials: 'include' }),
+                    fetch(`${API_BASE}/schedules/upcoming?weeks=8`, { credentials: 'include' }),
+                    fetch(`${API_BASE}/team-members/`, { credentials: 'include' })
                 ]);
 
                 if (!notificationsRes.ok) {
@@ -524,44 +560,6 @@
             }
         }
 
-        // Send test SMS
-        document.getElementById('sendTestSMS').addEventListener('click', async function() {
-            if (!confirm('Send test SMS to all team members on-call today?')) {
-                return;
-            }
-
-            this.disabled = true;
-            this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Sending...';
-
-            try {
-                const response = await fetch(`${API_BASE}/schedules/notifications/trigger`, {
-                    method: 'POST'
-                });
-
-                if (response.ok) {
-                    const result = await response.json();
-                    alert(`✅ Sent ${result.successful || 0} SMS notification(s) successfully!`);
-
-                    // Reload data
-                    loadStats();
-                    loadHistory();
-                } else {
-                    const error = await response.json();
-                    alert('❌ Failed to send notifications: ' + (error.detail || 'Unknown error'));
-                }
-            } catch (error) {
-                alert('❌ Error: ' + error.message);
-            } finally {
-                this.disabled = false;
-                this.innerHTML = '<i class="ti ti-send me-2"></i>Send Test SMS';
-            }
-        });
-
-        // Refresh history
-        document.getElementById('refreshHistory').addEventListener('click', function() {
-            loadHistory();
-        });
-
         // SMS Template Management
         const DEFAULT_TEMPLATE = `WhoseOnFirst Alert
 
@@ -590,66 +588,175 @@ Your shift lasts {duration}. Thank you for being available!`;
             document.getElementById('smsCount').textContent = `(${smsCount} SMS)`;
         }
 
-        // Edit Template Button
-        document.getElementById('editTemplateBtn').addEventListener('click', function() {
-            const currentTemplate = loadTemplate();
-            document.getElementById('templateEditor').value = currentTemplate;
-            updateCharacterCount();
+        // Main data loading function (called after auth check)
+        async function loadNotificationsData() {
+            loadTemplate();
+            await loadStats();
+            await loadHistory();
+        }
 
-            document.getElementById('templateReadView').style.display = 'none';
-            document.getElementById('templateEditView').style.display = 'block';
-            this.style.display = 'none';
-        });
+        // Authentication guard - FIRST thing to execute on page load
+        window.addEventListener('DOMContentLoaded', async function() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/v1/auth/me`, {
+                    credentials: 'include'
+                });
 
-        // Save Template Button
-        document.getElementById('saveTemplateBtn').addEventListener('click', function() {
-            const newTemplate = document.getElementById('templateEditor').value.trim();
-
-            if (!newTemplate) {
-                alert('Template cannot be empty');
-                return;
-            }
-
-            // Validate template has at least one variable
-            if (!newTemplate.includes('{')) {
-                if (!confirm('Warning: Template has no variables. Continue anyway?')) {
+                if (!response.ok) {
+                    // Not authenticated - redirect immediately
+                    window.location.href = '/login.html';
                     return;
                 }
+
+                currentUser = await response.json();
+
+                // Update user info display
+                document.getElementById('usernameDisplay').textContent = currentUser.username;
+
+                // Set role display and icon based on user role
+                const roleIcon = document.getElementById('userRoleIcon').querySelector('i');
+                if (currentUser.role === 'admin') {
+                    document.getElementById('userRoleDisplay').textContent = 'Administrator';
+                    roleIcon.className = 'ti ti-shield-check';
+                } else {
+                    document.getElementById('userRoleDisplay').textContent = 'Viewer';
+                    roleIcon.className = 'ti ti-eye';
+                }
+
+                // Hide admin-only features for viewers
+                if (currentUser.role === 'viewer') {
+                    const adminButtons = document.querySelectorAll('.admin-only');
+                    adminButtons.forEach(btn => btn.style.display = 'none');
+
+                    // Disable template editing
+                    document.getElementById('templateEditor').disabled = true;
+                }
+
+                // Wire up logout button
+                document.getElementById('logoutBtn').addEventListener('click', async function(e) {
+                    e.preventDefault();
+                    try {
+                        await fetch(`${API_BASE_URL}/api/v1/auth/logout`, {
+                            method: 'POST',
+                            credentials: 'include'
+                        });
+                    } catch (error) {
+                        console.error('Logout error:', error);
+                    }
+                    window.location.href = '/login.html';
+                });
+
+                // Load all data
+                await loadNotificationsData();
+
+                // Setup event listeners
+                setupEventListeners(currentUser);
+            } catch (error) {
+                console.error('Auth check failed:', error);
+                window.location.href = '/login.html';
+            }
+        });
+
+        function setupEventListeners(user) {
+            // Send test SMS (admin only)
+            const sendTestBtn = document.getElementById('sendTestSMS');
+            if (sendTestBtn && user.role === 'admin') {
+                sendTestBtn.addEventListener('click', async function() {
+                    if (!confirm('Send test SMS to all team members on-call today?')) {
+                        return;
+                    }
+
+                    this.disabled = true;
+                    this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Sending...';
+
+                    try {
+                        const response = await fetch(`${API_BASE}/schedules/notifications/trigger`, {
+                            method: 'POST',
+                            credentials: 'include'
+                        });
+
+                        if (response.ok) {
+                            const result = await response.json();
+                            alert(`✅ Sent ${result.successful || 0} SMS notification(s) successfully!`);
+
+                            // Reload data
+                            loadStats();
+                            loadHistory();
+                        } else {
+                            const error = await response.json();
+                            alert('❌ Failed to send notifications: ' + (error.detail || 'Unknown error'));
+                        }
+                    } catch (error) {
+                        alert('❌ Error: ' + error.message);
+                    } finally {
+                        this.disabled = false;
+                        this.innerHTML = '<i class="ti ti-send me-2"></i>Send Test SMS';
+                    }
+                });
             }
 
-            saveTemplate(newTemplate);
+            // Refresh history
+            document.getElementById('refreshHistory').addEventListener('click', function() {
+                loadHistory();
+            });
 
-            document.getElementById('templateReadView').style.display = 'block';
-            document.getElementById('templateEditView').style.display = 'none';
-            document.getElementById('editTemplateBtn').style.display = 'inline-block';
+            // Template editing (admin only)
+            if (user.role === 'admin') {
+                // Edit Template Button
+                document.getElementById('editTemplateBtn').addEventListener('click', function() {
+                    const currentTemplate = loadTemplate();
+                    document.getElementById('templateEditor').value = currentTemplate;
+                    updateCharacterCount();
 
-            alert('✅ Template saved successfully!');
-        });
+                    document.getElementById('templateReadView').style.display = 'none';
+                    document.getElementById('templateEditView').style.display = 'block';
+                    this.style.display = 'none';
+                });
 
-        // Cancel Template Button
-        document.getElementById('cancelTemplateBtn').addEventListener('click', function() {
-            document.getElementById('templateReadView').style.display = 'block';
-            document.getElementById('templateEditView').style.display = 'none';
-            document.getElementById('editTemplateBtn').style.display = 'inline-block';
-        });
+                // Save Template Button
+                document.getElementById('saveTemplateBtn').addEventListener('click', function() {
+                    const newTemplate = document.getElementById('templateEditor').value.trim();
 
-        // Reset Template Button
-        document.getElementById('resetTemplateBtn').addEventListener('click', function() {
-            if (confirm('Reset to default template? This cannot be undone.')) {
-                document.getElementById('templateEditor').value = DEFAULT_TEMPLATE;
-                updateCharacterCount();
+                    if (!newTemplate) {
+                        alert('Template cannot be empty');
+                        return;
+                    }
+
+                    // Validate template has at least one variable
+                    if (!newTemplate.includes('{')) {
+                        if (!confirm('Warning: Template has no variables. Continue anyway?')) {
+                            return;
+                        }
+                    }
+
+                    saveTemplate(newTemplate);
+
+                    document.getElementById('templateReadView').style.display = 'block';
+                    document.getElementById('templateEditView').style.display = 'none';
+                    document.getElementById('editTemplateBtn').style.display = 'inline-block';
+
+                    alert('✅ Template saved successfully!');
+                });
+
+                // Cancel Template Button
+                document.getElementById('cancelTemplateBtn').addEventListener('click', function() {
+                    document.getElementById('templateReadView').style.display = 'block';
+                    document.getElementById('templateEditView').style.display = 'none';
+                    document.getElementById('editTemplateBtn').style.display = 'inline-block';
+                });
+
+                // Reset Template Button
+                document.getElementById('resetTemplateBtn').addEventListener('click', function() {
+                    if (confirm('Reset to default template? This cannot be undone.')) {
+                        document.getElementById('templateEditor').value = DEFAULT_TEMPLATE;
+                        updateCharacterCount();
+                    }
+                });
+
+                // Character counter
+                document.getElementById('templateEditor').addEventListener('input', updateCharacterCount);
             }
-        });
-
-        // Character counter
-        document.getElementById('templateEditor').addEventListener('input', updateCharacterCount);
-
-        // Load data on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            loadTemplate();
-            loadStats();
-            loadHistory();
-        });
+        }
     </script>
 </body>
 </html>

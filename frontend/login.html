@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - WhoseOnFirst</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/css/tabler.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" rel="stylesheet">
+
+    <style>
+        .login-page {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #206bc4 0%, #1a5ba8 100%);
+            position: relative;
+        }
+
+        /* Subtle pattern overlay */
+        .login-page::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: radial-gradient(circle at 2px 2px, rgba(255, 255, 255, 0.05) 1px, transparent 0);
+            background-size: 32px 32px;
+            pointer-events: none;
+        }
+
+        .login-container {
+            position: relative;
+            z-index: 1;
+            max-width: 450px;
+            width: 100%;
+            padding: 2rem;
+        }
+
+        .login-logo {
+            text-align: center;
+            margin-bottom: 3rem;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .logo-svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 1rem;
+            transition: transform 0.3s ease;
+        }
+
+        .login-logo:hover .logo-svg {
+            transform: scale(1.05);
+        }
+
+        .login-logo h1 {
+            color: white;
+            font-weight: 700;
+            font-size: 2.25rem;
+            margin: 0;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .login-logo p {
+            color: rgba(255, 255, 255, 0.85);
+            margin-top: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .login-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-body {
+            padding: 2.5rem;
+        }
+
+        .error-message {
+            display: none;
+        }
+
+        .password-toggle {
+            cursor: pointer;
+        }
+
+        /* Easter egg console message styling */
+        .console-message {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+            max-width: 400px;
+            display: none;
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .console-message.show {
+            display: block;
+        }
+    </style>
+</head>
+<body class="login-page">
+    <div class="login-container">
+        <!-- Logo with Easter Egg -->
+        <div class="login-logo" id="loginLogo">
+            <svg class="logo-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="50" cy="50" r="45" fill="#ffffff" stroke="rgba(255,255,255,0.3)" stroke-width="3"/>
+                <circle cx="50" cy="50" r="35" fill="none" stroke="#206bc4" stroke-width="2"/>
+                <line x1="50" y1="50" x2="50" y2="25" stroke="#206bc4" stroke-width="3" stroke-linecap="round"/>
+                <line x1="50" y1="50" x2="65" y2="50" stroke="#206bc4" stroke-width="2.5" stroke-linecap="round"/>
+                <circle cx="50" cy="70" r="5" fill="#fab005"/>
+                <path d="M 50 75 L 45 85 M 50 75 L 55 85 M 50 75 L 50 80" stroke="#fab005" stroke-width="2" stroke-linecap="round"/>
+                <circle cx="50" cy="50" r="3" fill="#fab005"/>
+            </svg>
+            <h1>WhoseOnFirst</h1>
+            <p>On-Call Rotation Management</p>
+        </div>
+
+        <!-- Login Card -->
+        <div class="card login-card">
+            <div class="card-body">
+                <h2 class="card-title text-center mb-4">Sign in to your account</h2>
+
+                <!-- Error Alert -->
+                <div id="errorAlert" class="alert alert-danger error-message" role="alert">
+                    <div class="d-flex align-items-center">
+                        <i class="ti ti-alert-triangle me-2"></i>
+                        <div id="errorMessage">Invalid username or password</div>
+                    </div>
+                </div>
+
+                <!-- Login Form -->
+                <form id="loginForm">
+                    <div class="mb-3">
+                        <label class="form-label" for="username">Username</label>
+                        <input type="text" class="form-control" id="username" name="username" placeholder="Enter username" required autofocus>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="password">Password</label>
+                        <div class="input-group input-group-flat">
+                            <input type="password" class="form-control" id="password" name="password" placeholder="Enter password" required>
+                            <span class="input-group-text password-toggle" id="togglePassword">
+                                <i class="ti ti-eye" id="eyeIcon"></i>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="form-footer">
+                        <button type="submit" class="btn btn-primary w-100" id="loginButton">
+                            <span id="loginButtonText">Sign in</span>
+                            <span id="loginSpinner" class="spinner-border spinner-border-sm ms-2" role="status" style="display: none;"></span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center mt-4">
+            <small style="color: rgba(255, 255, 255, 0.7);">
+                <i class="ti ti-shield-lock me-1"></i>
+                Secure authentication
+            </small>
+        </div>
+    </div>
+
+    <!-- Easter Egg Console Message -->
+    <div class="console-message" id="easterEggMessage">
+        <div class="d-flex align-items-start">
+            <i class="ti ti-baseball text-primary me-2" style="font-size: 1.5rem;"></i>
+            <div>
+                <strong class="text-primary">Abbott & Costello Easter Egg!</strong>
+                <p class="mb-0 mt-1 small text-muted">
+                    "Who's on first, What's on second, I Don't Know is on third!"<br>
+                    Check the browser console for the full routine. 🎭
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/js/tabler.min.js"></script>
+    <script>
+        const API_BASE_URL = '';  // Use same origin as current page
+
+        // Easter Egg: Shift+Click on logo
+        document.getElementById('loginLogo').addEventListener('click', function(e) {
+            if (e.shiftKey) {
+                // Show toast notification
+                const message = document.getElementById('easterEggMessage');
+                message.classList.add('show');
+                setTimeout(() => {
+                    message.classList.remove('show');
+                }, 5000);
+
+                // Print Abbott & Costello routine to console
+                console.log('%c🎭 Abbott & Costello - Who\'s on First? 🎭', 'font-size: 20px; font-weight: bold; color: #206bc4;');
+                console.log('%c─────────────────────────────────────────────────────', 'color: #206bc4;');
+                console.log('%cAbbott: "Well, let me tell you the guys\' names on our team..."', 'font-style: italic;');
+                console.log('%cCostello: "I\'m asking YOU who\'s on first."', 'color: #666;');
+                console.log('%cAbbott: "That\'s the man\'s name!"', 'font-style: italic;');
+                console.log('%cCostello: "That\'s who\'s name?"', 'color: #666;');
+                console.log('%cAbbott: "Yes."', 'font-style: italic;');
+                console.log('%cCostello: "Well go ahead and tell me!"', 'color: #666;');
+                console.log('%cAbbott: "Who."', 'font-style: italic;');
+                console.log('%cCostello: "The guy on first!"', 'color: #666;');
+                console.log('%cAbbott: "Who is on first!"', 'font-style: italic;');
+                console.log('%cCostello: "I\'m asking you who\'s on first!"', 'color: #666;');
+                console.log('%cAbbott: "That\'s the man\'s name."', 'font-style: italic;');
+                console.log('%c\n🎭 The Players 🎭', 'font-weight: bold; color: #206bc4;');
+                console.log('%c• First Base: Who', 'color: #059669;');
+                console.log('%c• Second Base: What', 'color: #059669;');
+                console.log('%c• Third Base: I Don\'t Know', 'color: #059669;');
+                console.log('%c• Pitcher: Tomorrow', 'color: #d97706;');
+                console.log('%c• Catcher: Today', 'color: #d97706;');
+                console.log('%c• Shortstop: I Don\'t Care', 'color: #9333ea;');
+                console.log('%c• Left Field: Why', 'color: #9333ea;');
+                console.log('%c• Center Field: Because', 'color: #9333ea;');
+                console.log('%c─────────────────────────────────────────────────────', 'color: #206bc4;');
+                console.log('%c"Who\'s on First?" - A timeless classic! 😄', 'font-size: 12px; color: #666;');
+            }
+        });
+
+        // Password toggle functionality
+        document.getElementById('togglePassword').addEventListener('click', function() {
+            const passwordInput = document.getElementById('password');
+            const eyeIcon = document.getElementById('eyeIcon');
+
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                eyeIcon.className = 'ti ti-eye-off';
+            } else {
+                passwordInput.type = 'password';
+                eyeIcon.className = 'ti ti-eye';
+            }
+        });
+
+        // Show error message
+        function showError(message) {
+            const errorAlert = document.getElementById('errorAlert');
+            const errorMessage = document.getElementById('errorMessage');
+            errorMessage.textContent = message;
+            errorAlert.style.display = 'block';
+        }
+
+        // Hide error message
+        function hideError() {
+            document.getElementById('errorAlert').style.display = 'none';
+        }
+
+        // Set loading state
+        function setLoading(isLoading) {
+            const button = document.getElementById('loginButton');
+            const buttonText = document.getElementById('loginButtonText');
+            const spinner = document.getElementById('loginSpinner');
+
+            button.disabled = isLoading;
+            buttonText.textContent = isLoading ? 'Signing in...' : 'Sign in';
+            spinner.style.display = isLoading ? 'inline-block' : 'none';
+        }
+
+        // Handle login form submission
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            hideError();
+            setLoading(true);
+
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/v1/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        username: username,
+                        password: password,
+                        remember_me: false  // Default to session-only cookies
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+
+                    // Store user info in localStorage
+                    localStorage.setItem('user', JSON.stringify({
+                        username: data.username,
+                        role: data.role
+                    }));
+
+                    // Small delay to ensure session cookie is fully processed by browser
+                    // before redirecting (prevents race condition)
+                    setTimeout(() => {
+                        window.location.replace('/');
+                    }, 150);
+                } else {
+                    const error = await response.json();
+                    showError(error.detail || 'Invalid username or password');
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                showError('Unable to connect to server. Please try again.');
+            } finally {
+                setLoading(false);
+            }
+        });
+
+        // Check if already logged in
+        window.addEventListener('DOMContentLoaded', async function() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/v1/auth/me`, {
+                    credentials: 'include'
+                });
+
+                if (response.ok) {
+                    // Already logged in, redirect to dashboard with full page reload
+                    window.location.replace('/');
+                }
+            } catch (error) {
+                // Not logged in, stay on login page
+                console.log('Not authenticated');
+            }
+        });
+    </script>
+</body>
+</html>

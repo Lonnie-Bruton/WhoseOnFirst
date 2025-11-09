@@ -15,6 +15,7 @@ from src.api.schemas.notification import (
     NotificationStatsResponse
 )
 from src.repositories.notification_log_repository import NotificationLogRepository
+from src.api.routes.auth import require_auth, require_admin
 
 
 router = APIRouter()
@@ -28,7 +29,8 @@ def get_recent_notifications(
         le=100,
         description="Number of recent notifications to retrieve (1-100)"
     ),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user = Depends(require_auth)
 ):
     """
     Get recent notification logs.
@@ -58,7 +60,8 @@ def get_notification_stats(
         le=365,
         description="Number of days to calculate stats for (1-365)"
     ),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user = Depends(require_auth)
 ):
     """
     Get notification statistics and success metrics.
@@ -109,7 +112,8 @@ def get_failed_notifications(
         le=168,
         description="Number of hours to look back (1-168)"
     ),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user = Depends(require_auth)
 ):
     """
     Get failed notification attempts.
@@ -134,7 +138,8 @@ def get_failed_notifications(
 @router.get("/{notification_id}", response_model=NotificationLogResponse)
 def get_notification_by_id(
     notification_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user = Depends(require_auth)
 ):
     """
     Get a specific notification log by ID.

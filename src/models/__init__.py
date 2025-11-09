@@ -9,6 +9,7 @@ from .team_member import TeamMember
 from .shift import Shift
 from .schedule import Schedule
 from .notification_log import NotificationLog
+from .user import User, UserRole
 
 # Export all models and database utilities
 __all__ = [
@@ -24,4 +25,6 @@ __all__ = [
     "Shift",
     "Schedule",
     "NotificationLog",
+    "User",
+    "UserRole",
 ]

@@ -171,7 +171,7 @@
                 
                 <!-- Custom Logo -->
                 <h1 class="navbar-brand navbar-brand-autodark">
-                    <a href="." class="logo-container" id="appLogo" title="WhoseOnFirst">
+                    <a href="/" class="logo-container" id="appLogo" title="WhoseOnFirst">
                         <svg class="logo-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
                             <!-- Base Circle -->
                             <circle cx="50" cy="50" r="45" fill="#206bc4" stroke="#ffffff" stroke-width="3"/>
@@ -192,6 +192,19 @@
                 
                 <div class="collapse navbar-collapse" id="sidebar-menu">
                     <ul class="navbar-nav pt-lg-3">
+                        <!-- User Info Badge -->
+                        <li class="nav-item mb-3" style="opacity: 0.7;">
+                            <div class="nav-link d-flex align-items-center pe-none">
+                                <span class="avatar avatar-sm bg-primary me-2" id="userRoleIcon">
+                                    <i class="ti ti-user"></i>
+                                </span>
+                                <div class="d-flex flex-column">
+                                    <small class="text-white" id="usernameDisplay" style="font-weight: 500;">Loading...</small>
+                                    <small class="text-muted" id="userRoleDisplay" style="font-size: 0.7rem;">...</small>
+                                </div>
+                            </div>
+                        </li>
+
                         <li class="nav-item active">
                             <a class="nav-link" href="index.html">
                                 <span class="nav-link-icon">
@@ -200,7 +213,7 @@
                                 <span class="nav-link-title">Dashboard</span>
                             </a>
                         </li>
-                        <li class="nav-item">
+                        <li class="nav-item admin-only">
                             <a class="nav-link" href="team-members.html">
                                 <span class="nav-link-icon">
                                     <i class="ti ti-users-group"></i>
@@ -208,7 +221,7 @@
                                 <span class="nav-link-title">Team Members</span>
                             </a>
                         </li>
-                        <li class="nav-item">
+                        <li class="nav-item admin-only">
                             <a class="nav-link" href="shifts.html">
                                 <span class="nav-link-icon">
                                     <i class="ti ti-clock-hour-3"></i>
@@ -216,7 +229,7 @@
                                 <span class="nav-link-title">Shift Configuration</span>
                             </a>
                         </li>
-                        <li class="nav-item">
+                        <li class="nav-item admin-only">
                             <a class="nav-link" href="schedule.html">
                                 <span class="nav-link-icon">
                                     <i class="ti ti-calendar-event"></i>
@@ -224,12 +237,34 @@
                                 <span class="nav-link-title">Schedule Generation</span>
                             </a>
                         </li>
-                        <li class="nav-item">
+                        <li class="nav-item admin-only">
                             <a class="nav-link" href="notifications.html">
                                 <span class="nav-link-icon">
                                     <i class="ti ti-bell-ringing"></i>
                                 </span>
                                 <span class="nav-link-title">Notifications</span>
+                            </a>
+                        </li>
+
+                        <!-- Separator -->
+                        <li class="nav-item mt-4">
+                            <div style="border-top: 1px solid rgba(255,255,255,0.1); margin: 0 16px;"></div>
+                        </li>
+
+                        <li class="nav-item admin-only">
+                            <a class="nav-link" href="change-password.html">
+                                <span class="nav-link-icon">
+                                    <i class="ti ti-key"></i>
+                                </span>
+                                <span class="nav-link-title">Change Password</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-danger" href="#" id="logoutBtn">
+                                <span class="nav-link-icon">
+                                    <i class="ti ti-logout"></i>
+                                </span>
+                                <span class="nav-link-title">Logout</span>
                             </a>
                         </li>
                     </ul>
@@ -350,176 +385,19 @@
                                         <div class="calendar-header">Sat</div>
                                     </div>
                                     
-                                    <!-- Calendar Days with Team Colors -->
+                                    <!-- Calendar Days - Dynamically loaded -->
                                     <div class="calendar-grid">
-                                        <!-- Previous month days -->
-                                        <div class="calendar-day weekend" style="opacity: 0.4;"></div>
-                                        <div class="calendar-day weekend" style="opacity: 0.4;"></div>
-                                        <div class="calendar-day weekend" style="opacity: 0.4;"></div>
-                                        <div class="calendar-day weekend" style="opacity: 0.4;"></div>
-                                        <div class="calendar-day weekend" style="opacity: 0.4;"></div>
-                                        
-                                        <!-- November starts -->
-                                        <div class="calendar-day">
-                                            <div class="calendar-day-header">1</div>
-                                            <div class="on-call-badge team-color-1">Lonnie</div>
-                                        </div>
-                                        <div class="calendar-day weekend">
-                                            <div class="calendar-day-header">2</div>
-                                            <div class="on-call-badge team-color-2">Dave</div>
-                                        </div>
-                                        
-                                        <!-- Week 2 -->
-                                        <div class="calendar-day weekend">
-                                            <div class="calendar-day-header">3</div>
-                                            <div class="on-call-badge team-color-3">Steve</div>
-                                        </div>
-                                        <div class="calendar-day">
-                                            <div class="calendar-day-header">4</div>
-                                            <div class="on-call-badge team-color-4">John</div>
-                                        </div>
-                                        <div class="calendar-day">
-                                            <div class="calendar-day-header">5</div>
-                                            <div class="on-call-badge team-color-5">Paul (48h)</div>
-                                        </div>
-                                        <div class="calendar-day">
-                                            <div class="calendar-day-header">6</div>
-                                            <div class="on-call-badge team-color-5">Paul (48h)</div>
-                                        </div>
-                                        <div class="calendar-day">
-                                            <div class="calendar-day-header">7</div>
-                                            <div class="on-call-badge team-color-6">Matt</div>
-                                        </div>
-                                        <div class="calendar-day">
-                                            <div class="calendar-day-header">8</div>
-                                            <div class="on-call-badge team-color-7">Sam</div>
-                                        </div>
-                                        <div class="calendar-day weekend">
-                                            <div class="calendar-day-header">9</div>
-                                            <div class="on-call-badge team-color-1">Lonnie</div>
-                                        </div>
-                                        
-                                        <!-- Continue for rest of November... -->
-                                        <div class="calendar-day weekend">
-                                            <div class="calendar-day-header">10</div>
-                                            <div class="on-call-badge team-color-2">Dave</div>
-                                        </div>
-                                        <div class="calendar-day">
-                                            <div class="calendar-day-header">11</div>
-                                            <div class="on-call-badge team-color-3">Steve</div>
-                                        </div>
-                                        <div class="calendar-day">
-                                            <div class="calendar-day-header">12</div>
-                                            <div class="on-call-badge team-color-4">John</div>
-                                        </div>
-                                        <div class="calendar-day">
-                                            <div class="calendar-day-header">13</div>
-                                            <div class="on-call-badge team-color-4">John</div>
-                                        </div>
-                                        <div class="calendar-day">
-                                            <div class="calendar-day-header">14</div>
-                                            <div class="on-call-badge team-color-5">Paul</div>
-                                        </div>
-                                        <div class="calendar-day">
-                                            <div class="calendar-day-header">15</div>
-                                            <div class="on-call-badge team-color-6">Matt</div>
-                                        </div>
-                                        <div class="calendar-day weekend">
-                                            <div class="calendar-day-header">16</div>
-                                            <div class="on-call-badge team-color-7">Sam</div>
-                                        </div>
-                                        
-                                        <!-- Week 4 -->
-                                        <div class="calendar-day weekend">
-                                            <div class="calendar-day-header">17</div>
-                                            <div class="on-call-badge team-color-1">Lonnie</div>
-                                        </div>
-                                        <div class="calendar-day">
-                                            <div class="calendar-day-header">18</div>
-                                            <div class="on-call-badge team-color-2">Dave</div>
-                                        </div>
-                                        <div class="calendar-day">
-                                            <div class="calendar-day-header">19</div>
-                                            <div class="on-call-badge team-color-3">Steve</div>
-                                        </div>
-                                        <div class="calendar-day">
-                                            <div class="calendar-day-header">20</div>
-                                            <div class="on-call-badge team-color-3">Steve</div>
-                                        </div>
-                                        <div class="calendar-day">
-                                            <div class="calendar-day-header">21</div>
-                                            <div class="on-call-badge team-color-4">John</div>
-                                        </div>
-                                        <div class="calendar-day">
-                                            <div class="calendar-day-header">22</div>
-                                            <div class="on-call-badge team-color-5">Paul</div>
-                                        </div>
-                                        <div class="calendar-day weekend">
-                                            <div class="calendar-day-header">23</div>
-                                            <div class="on-call-badge team-color-6">Matt</div>
-                                        </div>
-                                        
-                                        <!-- Week 5 -->
-                                        <div class="calendar-day weekend">
-                                            <div class="calendar-day-header">24</div>
-                                            <div class="on-call-badge team-color-7">Sam</div>
-                                        </div>
-                                        <div class="calendar-day">
-                                            <div class="calendar-day-header">25</div>
-                                            <div class="on-call-badge team-color-1">Lonnie</div>
-                                        </div>
-                                        <div class="calendar-day">
-                                            <div class="calendar-day-header">26</div>
-                                            <div class="on-call-badge team-color-2">Dave</div>
-                                        </div>
-                                        <div class="calendar-day">
-                                            <div class="calendar-day-header">27</div>
-                                            <div class="on-call-badge team-color-2">Dave</div>
-                                        </div>
-                                        <div class="calendar-day">
-                                            <div class="calendar-day-header">28</div>
-                                            <div class="on-call-badge team-color-3">Steve</div>
-                                        </div>
-                                        <div class="calendar-day">
-                                            <div class="calendar-day-header">29</div>
-                                            <div class="on-call-badge team-color-4">John</div>
-                                        </div>
-                                        <div class="calendar-day weekend">
-                                            <div class="calendar-day-header">30</div>
-                                            <div class="on-call-badge team-color-5">Paul</div>
+                                        <div class="text-center py-5" style="grid-column: 1 / -1;">
+                                            <div class="spinner-border text-primary" role="status">
+                                                <span class="visually-hidden">Loading...</span>
+                                            </div>
+                                            <p class="text-muted mt-2">Loading calendar data...</p>
                                         </div>
                                     </div>
-                                    
-                                    <!-- Team Legend -->
+
+                                    <!-- Team Legend - Dynamically loaded -->
                                     <div class="team-legend">
-                                        <div class="legend-item">
-                                            <div class="legend-color team-color-1"></div>
-                                            <span>Lonnie Bruton</span>
-                                        </div>
-                                        <div class="legend-item">
-                                            <div class="legend-color team-color-2"></div>
-                                            <span>Dave Smith</span>
-                                        </div>
-                                        <div class="legend-item">
-                                            <div class="legend-color team-color-3"></div>
-                                            <span>Steve Wilson</span>
-                                        </div>
-                                        <div class="legend-item">
-                                            <div class="legend-color team-color-4"></div>
-                                            <span>John Doe</span>
-                                        </div>
-                                        <div class="legend-item">
-                                            <div class="legend-color team-color-5"></div>
-                                            <span>Paul Brown</span>
-                                        </div>
-                                        <div class="legend-item">
-                                            <div class="legend-color team-color-6"></div>
-                                            <span>Matt Davis</span>
-                                        </div>
-                                        <div class="legend-item">
-                                            <div class="legend-color team-color-7"></div>
-                                            <span>Sam Miller</span>
-                                        </div>
+                                        <span class="text-muted">Loading team members...</span>
                                     </div>
                                 </div>
                             </div>
@@ -539,11 +417,8 @@
                                 <li class="list-inline-item">
                                     <a href="https://github.com/Lonnie-Bruton/WhoseOnFirst" class="link-secondary" target="_blank">
                                         <i class="ti ti-brand-github"></i>
-                                        WhoseOnFirst v0.2.0
+                                        WhoseOnFirst v1.0.0
                                     </a>
-                                </li>
-                                <li class="list-inline-item">
-                                    Built with <span class="text-red">♥</span> using Tabler
                                 </li>
                             </ul>
                         </div>
@@ -557,7 +432,9 @@
     <script src="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/js/tabler.min.js"></script>
     
     <script>
-        const API_BASE = 'http://localhost:8000/api/v1';
+        const API_BASE_URL = '';  // Use same origin as current page
+        const API_BASE = '/api/v1';
+        let currentUser = null;
 
         // Team member color mapping (1-16 unique colors)
         const TEAM_COLORS = [
@@ -607,9 +484,9 @@
             try {
                 // Fetch all data in parallel - get all schedules and filter client-side
                 const [membersRes, schedulesRes, shiftsRes] = await Promise.all([
-                    fetch(`${API_BASE}/team-members/`),
-                    fetch(`${API_BASE}/schedules/`),  // Get all schedules
-                    fetch(`${API_BASE}/shifts/`)
+                    fetch(`${API_BASE}/team-members/`, { credentials: 'include' }),
+                    fetch(`${API_BASE}/schedules/`, { credentials: 'include' }),  // Get all schedules
+                    fetch(`${API_BASE}/shifts/`, { credentials: 'include' })
                 ]);
 
                 if (!membersRes.ok || !schedulesRes.ok || !shiftsRes.ok) {
@@ -914,29 +791,79 @@
             }
         }
 
-        // Initialize on page load
-        document.addEventListener('DOMContentLoaded', () => {
-            // Console easter egg for developers
-            console.log(
-                '%c🎭 WhoseOnFirst%c\n\n' +
-                'Who\'s on first?\n' +
-                'What\'s on second?\n' +
-                'I Don\'t Know\'s on third!\n\n' +
-                '💡 Tip: Shift-click the logo to see our inspiration\n\n' +
-                'Built with ❤️ and a love for classic comedy',
-                'font-size: 20px; font-weight: bold; color: #206bc4;',
-                'font-size: 12px; color: #666;'
-            );
+        // Authentication guard - MUST run before anything else
+        window.addEventListener('DOMContentLoaded', async function() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/v1/auth/me`, {
+                    credentials: 'include'
+                });
 
-            loadDashboardData();
+                if (!response.ok) {
+                    window.location.href = '/login.html';
+                    return;
+                }
 
-            // Wire up navigation buttons
-            document.getElementById('prevMonth').addEventListener('click', navigatePrevMonth);
-            document.getElementById('nextMonth').addEventListener('click', navigateNextMonth);
-            document.getElementById('todayBtn').addEventListener('click', navigateToday);
+                currentUser = await response.json();
 
-            // Wire up logo easter egg
-            document.getElementById('appLogo').addEventListener('click', handleLogoClick);
+                // Update user info display
+                document.getElementById('usernameDisplay').textContent = currentUser.username;
+
+                // Set role display and icon based on user role
+                const roleIcon = document.getElementById('userRoleIcon').querySelector('i');
+                if (currentUser.role === 'admin') {
+                    document.getElementById('userRoleDisplay').textContent = 'Administrator';
+                    roleIcon.className = 'ti ti-shield-check';
+                } else {
+                    document.getElementById('userRoleDisplay').textContent = 'Viewer';
+                    roleIcon.className = 'ti ti-eye';
+                }
+
+                // Hide admin-only menu items for viewers
+                if (currentUser.role === 'viewer') {
+                    const adminOnlyElements = document.querySelectorAll('.admin-only');
+                    adminOnlyElements.forEach(el => el.style.display = 'none');
+                }
+
+                // Wire up logout button
+                document.getElementById('logoutBtn').addEventListener('click', async function(e) {
+                    e.preventDefault();
+                    try {
+                        await fetch(`${API_BASE_URL}/api/v1/auth/logout`, {
+                            method: 'POST',
+                            credentials: 'include'
+                        });
+                    } catch (error) {
+                        console.error('Logout error:', error);
+                    }
+                    window.location.href = '/login.html';
+                });
+
+                // Console easter egg for developers
+                console.log(
+                    '%c🎭 WhoseOnFirst%c\n\n' +
+                    'Who\'s on first?\n' +
+                    'What\'s on second?\n' +
+                    'I Don\'t Know\'s on third!\n\n' +
+                    '💡 Tip: Shift-click the logo to see our inspiration\n\n' +
+                    'Built with ❤️ and a love for classic comedy',
+                    'font-size: 20px; font-weight: bold; color: #206bc4;',
+                    'font-size: 12px; color: #666;'
+                );
+
+                // Continue with normal page initialization
+                await loadDashboardData();
+
+                // Wire up navigation buttons
+                document.getElementById('prevMonth').addEventListener('click', navigatePrevMonth);
+                document.getElementById('nextMonth').addEventListener('click', navigateNextMonth);
+                document.getElementById('todayBtn').addEventListener('click', navigateToday);
+
+                // Wire up logo easter egg
+                document.getElementById('appLogo').addEventListener('click', handleLogoClick);
+            } catch (error) {
+                console.error('Auth check failed:', error);
+                window.location.href = '/login.html';
+            }
         });
     </script>
 </body>

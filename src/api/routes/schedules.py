@@ -24,6 +24,7 @@ from src.services import (
     NoShiftsConfiguredError
 )
 from src.scheduler import trigger_notifications_manually, get_schedule_manager
+from src.api.routes.auth import require_auth, require_admin
 
 
 router = APIRouter()
@@ -31,7 +32,8 @@ router = APIRouter()
 
 @router.get("/current", response_model=List[ScheduleResponse])
 def get_current_week_schedule(
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user = Depends(require_auth)
 ):
     """
     Get the current week's schedule.
@@ -60,7 +62,8 @@ def get_upcoming_schedules(
         le=104,
         description="Number of weeks to retrieve (1-104)"
     ),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user = Depends(require_auth)
 ):
     """
     Get upcoming schedules for the next N weeks.
@@ -90,7 +93,8 @@ def get_schedules_by_date_range(
         None,
         description="Filter schedules ending on or before this date (ISO format with timezone)"
     ),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user = Depends(require_auth)
 ):
     """
     Get schedules filtered by date range.
@@ -142,7 +146,8 @@ def get_member_schedules(
         None,
         description="Filter schedules ending on or before this date"
     ),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user = Depends(require_auth)
 ):
     """
     Get all schedules for a specific team member.
@@ -174,7 +179,8 @@ def get_member_schedules(
 @router.post("/generate", response_model=List[ScheduleResponse], status_code=status.HTTP_201_CREATED)
 def generate_schedule(
     request: ScheduleGenerateRequest,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user = Depends(require_admin)
 ):
     """
     Generate new schedules for a specified period.
@@ -229,7 +235,8 @@ def generate_schedule(
 @router.post("/regenerate", response_model=List[ScheduleResponse])
 def regenerate_schedule(
     request: ScheduleRegenerateRequest,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user = Depends(require_admin)
 ):
     """
     Regenerate schedules from a specific date forward.
@@ -277,7 +284,8 @@ def regenerate_schedule(
 @router.get("/member/{member_id}/next", response_model=Optional[ScheduleResponse])
 def get_next_assignment(
     member_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user = Depends(require_auth)
 ):
     """
     Get the next upcoming assignment for a specific team member.
@@ -302,7 +310,8 @@ def get_next_assignment(
 
 @router.post("/notifications/trigger", tags=["notifications"])
 def trigger_notifications(
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user = Depends(require_admin)
 ):
     """
     Manually trigger the daily notification job.
@@ -325,7 +334,9 @@ def trigger_notifications(
 
 
 @router.get("/notifications/status", tags=["notifications"])
-def get_notification_job_status():
+def get_notification_job_status(
+    current_user = Depends(require_auth)
+):
     """
     Get the status of the scheduled notification job.
 

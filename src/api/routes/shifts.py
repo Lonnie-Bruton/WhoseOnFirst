@@ -20,6 +20,7 @@ from src.services import (
     ShiftNotFoundError,
     InvalidShiftDataError
 )
+from src.api.routes.auth import require_auth, require_admin
 
 
 router = APIRouter()
@@ -27,7 +28,8 @@ router = APIRouter()
 
 @router.get("/", response_model=List[ShiftResponse])
 def list_shifts(
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user = Depends(require_auth)
 ):
     """
     List all shift configurations.
@@ -49,7 +51,8 @@ def list_shifts(
 @router.get("/{shift_id}", response_model=ShiftResponse)
 def get_shift(
     shift_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user = Depends(require_auth)
 ):
     """
     Get a specific shift configuration by ID.
@@ -81,7 +84,8 @@ def get_shift(
 @router.post("/", response_model=ShiftResponse, status_code=status.HTTP_201_CREATED)
 def create_shift(
     shift_data: ShiftCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user = Depends(require_admin)
 ):
     """
     Create a new shift configuration.
@@ -125,7 +129,8 @@ def create_shift(
 def update_shift(
     shift_id: int,
     shift_data: ShiftUpdate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user = Depends(require_admin)
 ):
     """
     Update an existing shift configuration.
@@ -167,7 +172,8 @@ def update_shift(
 @router.delete("/{shift_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_shift(
     shift_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user = Depends(require_admin)
 ):
     """
     Delete a shift configuration.

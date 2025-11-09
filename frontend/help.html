@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Help - WhoseOnFirst</title>
+
+    <!-- Tabler CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/css/tabler.min.css" rel="stylesheet">
+    <!-- Tabler Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" rel="stylesheet">
+
+    <style>
+        /* Custom Logo Styles */
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .logo-svg {
+            width: 32px;
+            height: 32px;
+        }
+
+        /* Code block styling */
+        .code-block {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.875rem;
+            line-height: 1.6;
+            overflow-x: auto;
+        }
+
+        .code-block code {
+            color: #495057;
+        }
+
+        .code-comment {
+            color: #6c757d;
+        }
+
+        .step-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            background: #206bc4;
+            color: white;
+            border-radius: 50%;
+            font-weight: 600;
+            margin-right: 0.5rem;
+        }
+
+        .info-box {
+            background: #e7f5ff;
+            border-left: 4px solid #206bc4;
+            padding: 1rem;
+            border-radius: 4px;
+            margin: 1rem 0;
+        }
+
+        .warning-box {
+            background: #fff9db;
+            border-left: 4px solid #fab005;
+            padding: 1rem;
+            border-radius: 4px;
+            margin: 1rem 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <!-- Sidebar -->
+        <aside class="navbar navbar-vertical navbar-expand-lg" data-bs-theme="dark">
+            <div class="container-fluid">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar-menu">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Custom Logo -->
+                <h1 class="navbar-brand navbar-brand-autodark">
+                    <a href="/" class="logo-container">
+                        <svg class="logo-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="50" cy="50" r="45" fill="#206bc4" stroke="#ffffff" stroke-width="3"/>
+                            <circle cx="50" cy="50" r="35" fill="none" stroke="#ffffff" stroke-width="2"/>
+                            <line x1="50" y1="50" x2="50" y2="25" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/>
+                            <line x1="50" y1="50" x2="65" y2="50" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round"/>
+                            <circle cx="50" cy="70" r="5" fill="#fab005"/>
+                            <path d="M 50 75 L 45 85 M 50 75 L 55 85 M 50 75 L 50 80" stroke="#fab005" stroke-width="2" stroke-linecap="round"/>
+                            <circle cx="50" cy="50" r="3" fill="#fab005"/>
+                        </svg>
+                        <span class="navbar-brand-text">WhoseOnFirst</span>
+                    </a>
+                </h1>
+
+                <div class="collapse navbar-collapse" id="sidebar-menu">
+                    <ul class="navbar-nav pt-lg-3">
+                        <!-- User Info Badge -->
+                        <li class="nav-item mb-3" style="opacity: 0.7;">
+                            <div class="nav-link d-flex align-items-center pe-none">
+                                <span class="avatar avatar-sm bg-primary me-2" id="userRoleIcon">
+                                    <i class="ti ti-user"></i>
+                                </span>
+                                <div class="d-flex flex-column">
+                                    <small class="text-white" id="usernameDisplay" style="font-weight: 500;">Loading...</small>
+                                    <small class="text-muted" id="userRoleDisplay" style="font-size: 0.7rem;">...</small>
+                                </div>
+                            </div>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link" href="/">
+                                <span class="nav-link-icon">
+                                    <i class="ti ti-layout-dashboard"></i>
+                                </span>
+                                <span class="nav-link-title">Dashboard</span>
+                            </a>
+                        </li>
+                        <li class="nav-item admin-only">
+                            <a class="nav-link" href="team-members.html">
+                                <span class="nav-link-icon">
+                                    <i class="ti ti-users-group"></i>
+                                </span>
+                                <span class="nav-link-title">Team Members</span>
+                            </a>
+                        </li>
+                        <li class="nav-item admin-only">
+                            <a class="nav-link" href="shifts.html">
+                                <span class="nav-link-icon">
+                                    <i class="ti ti-clock-hour-3"></i>
+                                </span>
+                                <span class="nav-link-title">Shift Configuration</span>
+                            </a>
+                        </li>
+                        <li class="nav-item admin-only">
+                            <a class="nav-link" href="schedule.html">
+                                <span class="nav-link-icon">
+                                    <i class="ti ti-calendar-event"></i>
+                                </span>
+                                <span class="nav-link-title">Schedule Generation</span>
+                            </a>
+                        </li>
+                        <li class="nav-item admin-only">
+                            <a class="nav-link" href="notifications.html">
+                                <span class="nav-link-icon">
+                                    <i class="ti ti-bell-ringing"></i>
+                                </span>
+                                <span class="nav-link-title">Notifications</span>
+                            </a>
+                        </li>
+
+                        <!-- Separator -->
+                        <li class="nav-item mt-4">
+                            <div style="border-top: 1px solid rgba(255,255,255,0.1); margin: 0 16px;"></div>
+                        </li>
+
+                        <li class="nav-item active">
+                            <a class="nav-link" href="help.html">
+                                <span class="nav-link-icon">
+                                    <i class="ti ti-help"></i>
+                                </span>
+                                <span class="nav-link-title">Help & Setup</span>
+                            </a>
+                        </li>
+                        <li class="nav-item admin-only">
+                            <a class="nav-link" href="change-password.html">
+                                <span class="nav-link-icon">
+                                    <i class="ti ti-key"></i>
+                                </span>
+                                <span class="nav-link-title">Change Password</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-danger" href="#" id="logoutBtn">
+                                <span class="nav-link-icon">
+                                    <i class="ti ti-logout"></i>
+                                </span>
+                                <span class="nav-link-title">Logout</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="page-wrapper">
+            <!-- Page Header -->
+            <div class="page-header d-print-none">
+                <div class="container-xl">
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <div class="page-pretitle">Documentation</div>
+                            <h2 class="page-title">Help & Setup Guide</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Page Body -->
+            <div class="page-body">
+                <div class="container-xl">
+                    <!-- Quick Start Guide -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3 class="card-title">
+                                        <i class="ti ti-rocket me-2"></i>
+                                        Quick Start
+                                    </h3>
+                                </div>
+                                <div class="card-body">
+                                    <p class="text-muted">
+                                        Welcome to WhoseOnFirst! Follow these steps to get your on-call rotation system up and running.
+                                    </p>
+
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <div class="d-flex align-items-start">
+                                                <span class="step-number">1</span>
+                                                <div>
+                                                    <strong>Configure SMS Notifications</strong>
+                                                    <p class="text-muted mb-0">Set up Twilio API credentials to send SMS alerts</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <div class="d-flex align-items-start">
+                                                <span class="step-number">2</span>
+                                                <div>
+                                                    <strong>Add Team Members</strong>
+                                                    <p class="text-muted mb-0">Add your team and their phone numbers</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <div class="d-flex align-items-start">
+                                                <span class="step-number">3</span>
+                                                <div>
+                                                    <strong>Configure Shifts</strong>
+                                                    <p class="text-muted mb-0">Set up your shift schedule (default works for most teams)</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <div class="d-flex align-items-start">
+                                                <span class="step-number">4</span>
+                                                <div>
+                                                    <strong>Generate Schedule</strong>
+                                                    <p class="text-muted mb-0">Generate your rotation schedule for the upcoming weeks</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Twilio Configuration -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3 class="card-title">
+                                        <i class="ti ti-message-circle me-2"></i>
+                                        Twilio SMS Configuration
+                                    </h3>
+                                </div>
+                                <div class="card-body">
+                                    <div class="info-box">
+                                        <div class="d-flex align-items-start">
+                                            <i class="ti ti-info-circle me-2 mt-1" style="font-size: 1.25rem;"></i>
+                                            <div>
+                                                <strong>What is Twilio?</strong>
+                                                <p class="mb-0">Twilio is a cloud communications platform that enables WhoseOnFirst to send SMS notifications to your team members when their on-call shifts start.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <h4 class="mt-4 mb-3">Step 1: Create a Twilio Account</h4>
+                                    <ol>
+                                        <li>Visit <a href="https://www.twilio.com/try-twilio" target="_blank">https://www.twilio.com/try-twilio</a></li>
+                                        <li>Sign up for a free trial account (includes $15 credit)</li>
+                                        <li>Verify your email and phone number</li>
+                                        <li>Complete the onboarding wizard</li>
+                                    </ol>
+
+                                    <h4 class="mt-4 mb-3">Step 2: Get Your Twilio Credentials</h4>
+                                    <ol>
+                                        <li>Log in to the <a href="https://console.twilio.com/" target="_blank">Twilio Console</a></li>
+                                        <li>Navigate to the <strong>Dashboard</strong></li>
+                                        <li>Find your <strong>Account SID</strong> and <strong>Auth Token</strong></li>
+                                        <li>Click the eye icon to reveal your Auth Token</li>
+                                        <li>Copy both values - you'll need them for the .env file</li>
+                                    </ol>
+
+                                    <h4 class="mt-4 mb-3">Step 3: Get a Phone Number</h4>
+                                    <ol>
+                                        <li>In the Twilio Console, go to <strong>Phone Numbers</strong> → <strong>Manage</strong> → <strong>Buy a number</strong></li>
+                                        <li>Select your country (United States recommended)</li>
+                                        <li>Filter by <strong>SMS</strong> capability</li>
+                                        <li>Choose a number and complete the purchase (free with trial credit)</li>
+                                        <li>Copy the phone number in E.164 format (e.g., +15551234567)</li>
+                                    </ol>
+
+                                    <div class="warning-box mt-4">
+                                        <div class="d-flex align-items-start">
+                                            <i class="ti ti-alert-triangle me-2 mt-1" style="font-size: 1.25rem;"></i>
+                                            <div>
+                                                <strong>Trial Account Limitations</strong>
+                                                <p class="mb-2">Twilio trial accounts have some restrictions:</p>
+                                                <ul class="mb-0">
+                                                    <li>Can only send SMS to <strong>verified phone numbers</strong></li>
+                                                    <li>Messages include "Sent from your Twilio trial account" prefix</li>
+                                                    <li>To remove limitations, upgrade to a paid account</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <h4 class="mt-4 mb-3">Step 4: Configure Environment Variables</h4>
+                                    <p>Create or edit the <code>.env</code> file in your WhoseOnFirst installation directory with the following configuration:</p>
+
+                                    <div class="code-block">
+<code><span class="code-comment"># ============================================
+# WhoseOnFirst Configuration
+# ============================================
+
+# Database Configuration</span>
+DATABASE_URL=sqlite:///./data/whoseonfirst.db
+
+<span class="code-comment"># Twilio SMS Configuration
+# Get these from https://console.twilio.com</span>
+TWILIO_ACCOUNT_SID=ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+TWILIO_AUTH_TOKEN=your_auth_token_here
+TWILIO_PHONE_NUMBER=+15551234567
+
+<span class="code-comment"># SMS Notification Schedule
+# Time zone for notifications (America/Chicago = CST/CDT)</span>
+NOTIFICATION_TIMEZONE=America/Chicago
+<span class="code-comment"># Daily notification time (24-hour format)</span>
+NOTIFICATION_HOUR=8
+NOTIFICATION_MINUTE=0
+
+<span class="code-comment"># Server Configuration</span>
+HOST=0.0.0.0
+PORT=8000
+LOG_LEVEL=INFO
+
+<span class="code-comment"># Security (change in production!)</span>
+SECRET_KEY=change-this-to-a-random-secret-key-in-production</code>
+                                    </div>
+
+                                    <div class="info-box mt-3">
+                                        <div class="d-flex align-items-start">
+                                            <i class="ti ti-shield-lock me-2 mt-1" style="font-size: 1.25rem;"></i>
+                                            <div>
+                                                <strong>Security Note</strong>
+                                                <p class="mb-0">Never commit the <code>.env</code> file to version control! It contains sensitive credentials. The file is already listed in <code>.gitignore</code> to prevent accidental commits.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <h4 class="mt-4 mb-3">Step 5: Verify Configuration</h4>
+                                    <ol>
+                                        <li>Save the <code>.env</code> file</li>
+                                        <li>Restart the WhoseOnFirst server:
+                                            <div class="code-block mt-2">
+                                                <code>pkill -f uvicorn
+source venv/bin/activate
+uvicorn src.main:app --reload --host 0.0.0.0 --port 8000</code>
+                                            </div>
+                                        </li>
+                                        <li>Check the server logs for "Scheduler started successfully"</li>
+                                        <li>Go to the <a href="notifications.html">Notifications</a> page and click <strong>Send Test SMS</strong></li>
+                                        <li>Verify your test user receives the SMS notification</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Troubleshooting -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3 class="card-title">
+                                        <i class="ti ti-tool me-2"></i>
+                                        Troubleshooting
+                                    </h3>
+                                </div>
+                                <div class="card-body">
+                                    <div class="accordion" id="troubleshootingAccordion">
+                                        <!-- Question 1 -->
+                                        <div class="accordion-item">
+                                            <h2 class="accordion-header" id="headingOne">
+                                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne">
+                                                    SMS notifications are not being sent
+                                                </button>
+                                            </h2>
+                                            <div id="collapseOne" class="accordion-collapse collapse" data-bs-parent="#troubleshootingAccordion">
+                                                <div class="accordion-body">
+                                                    <strong>Check the following:</strong>
+                                                    <ul>
+                                                        <li>Verify Twilio credentials are correct in <code>.env</code></li>
+                                                        <li>Check server logs for Twilio API errors</li>
+                                                        <li>Ensure phone numbers are in E.164 format (+1XXXXXXXXXX)</li>
+                                                        <li>For trial accounts, verify recipient numbers in Twilio Console</li>
+                                                        <li>Check Notifications page for failed delivery status</li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Question 2 -->
+                                        <div class="accordion-item">
+                                            <h2 class="accordion-header" id="headingTwo">
+                                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo">
+                                                    Scheduler is not running
+                                                </button>
+                                            </h2>
+                                            <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#troubleshootingAccordion">
+                                                <div class="accordion-body">
+                                                    <strong>Check the following:</strong>
+                                                    <ul>
+                                                        <li>Check server logs for "Scheduler started successfully"</li>
+                                                        <li>Verify <code>NOTIFICATION_TIMEZONE</code> is set correctly</li>
+                                                        <li>Restart the server to reinitialize the scheduler</li>
+                                                        <li>Check for database file permissions in <code>./data/</code></li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Question 3 -->
+                                        <div class="accordion-item">
+                                            <h2 class="accordion-header" id="headingThree">
+                                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree">
+                                                    Cannot add team members with phone numbers
+                                                </button>
+                                            </h2>
+                                            <div id="collapseThree" class="accordion-collapse collapse" data-bs-parent="#troubleshootingAccordion">
+                                                <div class="accordion-body">
+                                                    <strong>Phone number validation requirements:</strong>
+                                                    <ul>
+                                                        <li>Must be in E.164 format: <code>+1XXXXXXXXXX</code></li>
+                                                        <li>Must start with country code (+1 for US/Canada)</li>
+                                                        <li>Must be exactly 10 digits after the +1</li>
+                                                        <li>Example: <code>+15551234567</code></li>
+                                                        <li>Phone numbers must be unique across all team members</li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Question 4 -->
+                                        <div class="accordion-item">
+                                            <h2 class="accordion-header" id="headingFour">
+                                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour">
+                                                    How do I change the notification time?
+                                                </button>
+                                            </h2>
+                                            <div id="collapseFour" class="accordion-collapse collapse" data-bs-parent="#troubleshootingAccordion">
+                                                <div class="accordion-body">
+                                                    <p>Edit the <code>.env</code> file and modify:</p>
+                                                    <div class="code-block">
+                                                        <code>NOTIFICATION_HOUR=8  <span class="code-comment"># 0-23 (24-hour format)</span>
+NOTIFICATION_MINUTE=0  <span class="code-comment"># 0-59</span>
+NOTIFICATION_TIMEZONE=America/Chicago</code>
+                                                    </div>
+                                                    <p class="mt-3 mb-0">After saving, restart the server for changes to take effect.</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Additional Resources -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3 class="card-title">
+                                        <i class="ti ti-book me-2"></i>
+                                        Additional Resources
+                                    </h3>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <div class="d-flex align-items-start">
+                                                <i class="ti ti-brand-github me-3 mt-1" style="font-size: 1.5rem; color: #206bc4;"></i>
+                                                <div>
+                                                    <strong>GitHub Repository</strong>
+                                                    <p class="text-muted mb-1">Source code, issues, and documentation</p>
+                                                    <a href="https://github.com/Lonnie-Bruton/WhoseOnFirst" target="_blank">
+                                                        github.com/Lonnie-Bruton/WhoseOnFirst
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <div class="d-flex align-items-start">
+                                                <i class="ti ti-file-text me-3 mt-1" style="font-size: 1.5rem; color: #206bc4;"></i>
+                                                <div>
+                                                    <strong>Twilio Documentation</strong>
+                                                    <p class="text-muted mb-1">SMS API reference and guides</p>
+                                                    <a href="https://www.twilio.com/docs/sms" target="_blank">
+                                                        twilio.com/docs/sms
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <div class="d-flex align-items-start">
+                                                <i class="ti ti-api me-3 mt-1" style="font-size: 1.5rem; color: #206bc4;"></i>
+                                                <div>
+                                                    <strong>API Documentation</strong>
+                                                    <p class="text-muted mb-1">Interactive API docs (Swagger UI)</p>
+                                                    <a href="/docs" target="_blank">
+                                                        /docs
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <div class="d-flex align-items-start">
+                                                <i class="ti ti-clock me-3 mt-1" style="font-size: 1.5rem; color: #206bc4;"></i>
+                                                <div>
+                                                    <strong>Timezone Reference</strong>
+                                                    <p class="text-muted mb-1">List of valid timezone names</p>
+                                                    <a href="https://en.wikipedia.org/wiki/List_of_tz_database_time_zones" target="_blank">
+                                                        IANA Time Zone Database
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <footer class="footer footer-transparent d-print-none">
+                <div class="container-xl">
+                    <div class="row text-center align-items-center">
+                        <div class="col-12 col-lg-auto mt-3 mt-lg-0">
+                            <ul class="list-inline list-inline-dots mb-0">
+                                <li class="list-inline-item">
+                                    <a href="https://github.com/Lonnie-Bruton/WhoseOnFirst" class="link-secondary" target="_blank">
+                                        <i class="ti ti-brand-github"></i>
+                                        WhoseOnFirst v1.0.0
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/js/tabler.min.js"></script>
+    <script>
+        const API_BASE_URL = '';  // Use same origin as current page
+        let currentUser = null;
+
+        // Authentication guard - FIRST thing to execute on page load
+        window.addEventListener('DOMContentLoaded', async function() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/v1/auth/me`, {
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    // Not authenticated - redirect immediately
+                    window.location.href = '/login.html';
+                    return;
+                }
+
+                currentUser = await response.json();
+
+                // Update user info display
+                document.getElementById('usernameDisplay').textContent = currentUser.username;
+
+                // Set role display and icon based on user role
+                const roleIcon = document.getElementById('userRoleIcon').querySelector('i');
+                if (currentUser.role === 'admin') {
+                    document.getElementById('userRoleDisplay').textContent = 'Administrator';
+                    roleIcon.className = 'ti ti-shield-check';
+                } else {
+                    document.getElementById('userRoleDisplay').textContent = 'Viewer';
+                    roleIcon.className = 'ti ti-eye';
+                }
+
+                // Hide admin-only menu items for viewers
+                if (currentUser.role === 'viewer') {
+                    const adminItems = document.querySelectorAll('.admin-only');
+                    adminItems.forEach(item => item.style.display = 'none');
+                }
+
+                // Wire up logout button
+                document.getElementById('logoutBtn').addEventListener('click', async function(e) {
+                    e.preventDefault();
+                    try {
+                        await fetch(`${API_BASE_URL}/api/v1/auth/logout`, {
+                            method: 'POST',
+                            credentials: 'include'
+                        });
+                    } catch (error) {
+                        console.error('Logout error:', error);
+                    }
+                    window.location.href = '/login.html';
+                });
+            } catch (error) {
+                console.error('Auth check failed:', error);
+                window.location.href = '/login.html';
+            }
+        });
+    </script>
+</body>
+</html>
