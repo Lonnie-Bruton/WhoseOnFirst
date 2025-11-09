@@ -163,6 +163,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Client-side matching by IDs (team_member_id, shift_id)
   - **Focused design**: Calendar-centric view for quick on-call status overview
 
+- **UI Polish & Standardization** - Visual consistency improvements (COMPLETE ✅)
+  - **Dashboard Escalation Chain Enhancements**:
+    - Added user initials to avatar circles (e.g., "LB", "BB", "GK")
+    - Fixed escalation calculation to use rotation_order instead of schedule time
+    - Secondary/Tertiary now based on rotation position (previous in rotation, not time)
+    - Fixed bug where all avatars showed same color (now uses individual team colors)
+    - Enhanced card depth with better shadows and borders
+    - Light gray page background (#f1f5f9) for better card separation
+  - **Centralized Color System** (16 unique WCAG AA compliant colors):
+    - Expanded from 7 to 16 colors to eliminate duplicates (8+ team members had collisions)
+    - Standardized all hex values across all 4 frontend pages
+    - Updated all modulo operations from % 7 to % 16
+    - Colors: Blue, Red, Green, Amber, Purple, Cyan, Orange, Pink, Teal, Yellow, Deep Purple, Dark Red, Navy, Forest Green, Rust, Violet
+    - Same person always has same color everywhere (dashboard, calendar, team list, notifications)
+    - All colors pass 4.5:1 contrast ratio on white backgrounds
+  - **SMS Template Editor** (Notifications Page):
+    - Full edit functionality with save/cancel/reset buttons
+    - Real-time character counter (0-160+ characters)
+    - SMS count calculator (multiples of 160 chars per SMS)
+    - Template validation (no empty templates, warning if no variables)
+    - LocalStorage persistence for MVP (can migrate to backend later)
+    - Available variables: {name}, {start_time}, {end_time}, {duration}
+    - Default template: "WhoseOnFirst Alert..." with shift details
+  - **Consistent Card Styling** across all pages:
+    - White cards with subtle shadows (0 1px 3px rgba(0,0,0,0.1))
+    - Enhanced hover shadows (0 4px 12px rgba(0,0,0,0.15))
+    - Light borders (#e2e8f0) for better definition
+    - Smooth transitions (all 0.2s)
+  - **Pages Updated**: index.html, team-members.html, schedule.html, notifications.html
+
 - **Team Member Rotation Ordering** - Custom rotation order support (COMPLETE ✅)
   - Added `rotation_order` field to `team_members` table via Alembic migration
   - Updated `TeamMember` model with `rotation_order` integer field (nullable for flexibility)
