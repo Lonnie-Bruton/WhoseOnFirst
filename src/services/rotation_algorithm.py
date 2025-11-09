@@ -142,14 +142,13 @@ class RotationAlgorithmService:
         schedule_entries = []
 
         for week in range(weeks):
-            # Calculate the rotation offset for this week
-            week_offset = week % len(members)
-
             # Assign members to shifts for this week
             for shift_index, shift in enumerate(shifts):
-                # Circular rotation: each week, person on Shift N moves to Shift N+1
-                # This means we subtract the week offset (person moves UP shifts each week)
-                member_index = (shift_index - week_offset) % len(members)
+                # Circular rotation: continuously cycle through all team members
+                # Calculate total shifts elapsed (week * shifts_per_week + current_shift)
+                # This ensures all members rotate through regardless of team size vs. shifts
+                shifts_elapsed = (week * len(shifts)) + shift_index
+                member_index = shifts_elapsed % len(members)
                 member = members[member_index]
 
                 # Calculate shift start datetime
