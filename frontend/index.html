@@ -206,7 +206,7 @@
                 <div class="container-xl">
                     <!-- Stats Cards -->
                     <div class="row row-deck row-cards mb-4">
-                        <div class="col-sm-6 col-lg-3">
+                        <div class="col-sm-6 col-lg-4">
                             <div class="card stat-card">
                                 <div class="card-body">
                                     <div class="d-flex align-items-center">
@@ -217,75 +217,48 @@
                                             </span>
                                         </div>
                                     </div>
-                                    <div class="h1 mb-3" id="activeMembers">7</div>
+                                    <div class="h1 mb-3" id="activeMembers">-</div>
                                     <div class="d-flex mb-2">
                                         <div class="text-muted">Ready for rotation</div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-sm-6 col-lg-3">
+                        <div class="col-sm-6 col-lg-8">
                             <div class="card stat-card">
                                 <div class="card-body">
-                                    <div class="d-flex align-items-center">
-                                        <div class="subheader">Current On-Call</div>
+                                    <div class="d-flex align-items-center mb-3">
+                                        <div class="subheader">On-Call Escalation Chain</div>
                                         <div class="ms-auto">
                                             <span class="bg-success text-white avatar">
                                                 <i class="ti ti-phone-call"></i>
                                             </span>
                                         </div>
                                     </div>
-                                    <div class="h2 mb-2 text-primary">
-                                        <span class="on-call-badge team-color-1">Lonnie Bruton</span>
-                                    </div>
-                                    <div class="text-muted">Until Thu 8:00 AM CST</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-sm-6 col-lg-3">
-                            <div class="card stat-card">
-                                <div class="card-body">
-                                    <div class="d-flex align-items-center">
-                                        <div class="subheader">SMS This Month</div>
-                                        <div class="ms-auto">
-                                            <span class="bg-info text-white avatar">
-                                                <i class="ti ti-message"></i>
-                                            </span>
+
+                                    <div class="row">
+                                        <!-- Primary On-Call -->
+                                        <div class="col-md-4">
+                                            <div class="mb-1"><strong class="text-success">Primary</strong></div>
+                                            <div id="primaryOnCall" class="mb-2">
+                                                <span class="text-muted">Loading...</span>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div class="d-flex align-items-baseline">
-                                        <div class="h1 mb-0 me-2">42</div>
-                                        <div class="me-auto">
-                                            <span class="text-green d-inline-flex align-items-center">
-                                                <i class="ti ti-trending-up"></i>
-                                                12%
-                                            </span>
+
+                                        <!-- Secondary (Backup) -->
+                                        <div class="col-md-4">
+                                            <div class="mb-1"><strong class="text-blue">Secondary</strong> <small class="text-muted">(Backup)</small></div>
+                                            <div id="secondaryOnCall" class="mb-2">
+                                                <span class="text-muted">Loading...</span>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div class="progress progress-sm mt-2">
-                                        <div class="progress-bar bg-info" style="width: 75%"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-sm-6 col-lg-3">
-                            <div class="card stat-card">
-                                <div class="card-body">
-                                    <div class="d-flex align-items-center">
-                                        <div class="subheader">Delivery Rate</div>
-                                        <div class="ms-auto">
-                                            <span class="bg-green text-white avatar">
-                                                <i class="ti ti-check"></i>
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <div class="d-flex align-items-baseline">
-                                        <div class="h1 mb-0 me-2">98%</div>
-                                        <div class="me-auto">
-                                            <span class="text-green d-inline-flex align-items-center">
-                                                <i class="ti ti-trending-up"></i>
-                                                Excellent
-                                            </span>
+
+                                        <!-- Tertiary (Escalation) -->
+                                        <div class="col-md-4">
+                                            <div class="mb-1"><strong class="text-orange">Tertiary</strong> <small class="text-muted">(Escalation)</small></div>
+                                            <div id="tertiaryOnCall" class="mb-2">
+                                                <span class="text-muted">Loading...</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -579,8 +552,8 @@
                 // Update active members count
                 document.getElementById('activeMembers').textContent = activeMembers.length;
 
-                // Update current on-call
-                updateCurrentOnCall(schedules, allMembers, shifts);
+                // Update on-call escalation chain
+                updateOnCallChain(schedules, allMembers, shifts);
 
                 // Build calendar for current month
                 buildCalendar(schedules, allMembers, shifts);
@@ -593,40 +566,95 @@
             }
         }
 
-        // Update current on-call card
-        function updateCurrentOnCall(schedules, members, shifts) {
+        // Update on-call escalation chain
+        function updateOnCallChain(schedules, members, shifts) {
             const now = new Date();
 
-            // Find active schedule
-            const activeSchedule = schedules.find(s => {
+            // Sort schedules by start time
+            const sortedSchedules = [...schedules].sort((a, b) =>
+                new Date(a.start_datetime) - new Date(b.start_datetime)
+            );
+
+            // Find current/next primary on-call
+            let primarySchedule = sortedSchedules.find(s => {
                 const start = new Date(s.start_datetime);
                 const end = new Date(s.end_datetime);
                 return now >= start && now < end;
             });
 
-            if (activeSchedule) {
-                const member = members.find(m => m.id === activeSchedule.team_member_id);
-                const shift = shifts.find(s => s.id === activeSchedule.shift_id);
-
-                if (member && shift) {
-                    const endDate = new Date(activeSchedule.end_datetime);
-                    const colorClass = getTeamColor(member.id, members);
-
-                    document.querySelector('.h2.mb-2.text-primary').innerHTML = `
-                        <span class="on-call-badge ${colorClass}">${member.name}</span>
-                    `;
-
-                    // Show phone number and end time
-                    document.querySelector('.h2.mb-2.text-primary').nextElementSibling.innerHTML = `
-                        <div>${member.phone}</div>
-                        <div class="text-muted">Until ${endDate.toLocaleDateString('en-US', { weekday: 'short' })} ${formatTime(endDate)} CST</div>
-                    `;
-                }
-            } else {
-                document.querySelector('.h2.mb-2.text-primary').innerHTML =
-                    '<span class="text-muted">No active assignment</span>';
-                document.querySelector('.h2.mb-2.text-primary').nextElementSibling.textContent = '';
+            // If no active, get next upcoming
+            if (!primarySchedule) {
+                primarySchedule = sortedSchedules.find(s => new Date(s.start_datetime) > now);
             }
+
+            // Calculate secondary and tertiary based on rotation
+            // Secondary = next shift after primary (1 position ahead in sorted list)
+            // Tertiary = 2 shifts after primary (2 positions ahead in sorted list)
+            let secondarySchedule = null;
+            let tertiarySchedule = null;
+
+            if (primarySchedule) {
+                const primaryIndex = sortedSchedules.findIndex(s => s.id === primarySchedule.id);
+
+                // Secondary is next shift (wraps around if needed)
+                const secondaryIndex = (primaryIndex + 1) % sortedSchedules.length;
+                secondarySchedule = sortedSchedules[secondaryIndex];
+
+                // Tertiary is 2 shifts ahead (wraps around if needed)
+                const tertiaryIndex = (primaryIndex + 2) % sortedSchedules.length;
+                tertiarySchedule = sortedSchedules[tertiaryIndex];
+            }
+
+            // Render Primary
+            renderOnCallPerson('primaryOnCall', primarySchedule, members, shifts, now, 'Primary');
+
+            // Render Secondary
+            renderOnCallPerson('secondaryOnCall', secondarySchedule, members, shifts, now, 'Secondary');
+
+            // Render Tertiary
+            renderOnCallPerson('tertiaryOnCall', tertiarySchedule, members, shifts, now, 'Tertiary');
+        }
+
+        // Helper to render on-call person card
+        function renderOnCallPerson(elementId, schedule, members, shifts, now, label) {
+            const container = document.getElementById(elementId);
+
+            if (!schedule) {
+                container.innerHTML = '<span class="text-muted">N/A</span>';
+                return;
+            }
+
+            const member = members.find(m => m.id === schedule.team_member_id);
+            const shift = shifts.find(s => s.id === schedule.shift_id);
+
+            if (!member || !shift) {
+                container.innerHTML = '<span class="text-muted">Unknown</span>';
+                return;
+            }
+
+            const colorClass = getTeamColor(member.id, members);
+            const startDate = new Date(schedule.start_datetime);
+            const endDate = new Date(schedule.end_datetime);
+            const isActive = now >= startDate && now < endDate;
+            const isFuture = startDate > now;
+
+            let timeInfo = '';
+            if (isActive) {
+                timeInfo = `Until ${endDate.toLocaleDateString('en-US', { weekday: 'short' })} ${formatTime(endDate)}`;
+            } else if (isFuture) {
+                timeInfo = `Starts ${startDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}`;
+            } else {
+                timeInfo = `Ended ${endDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}`;
+            }
+
+            container.innerHTML = `
+                <div class="d-flex align-items-center mb-1">
+                    <span class="avatar avatar-sm me-2 ${colorClass}"></span>
+                    <strong>${member.name}</strong>
+                </div>
+                <div class="text-muted small">${member.phone}</div>
+                <div class="text-muted small">${timeInfo}</div>
+            `;
         }
 
         // Build calendar for current month

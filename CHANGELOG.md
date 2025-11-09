@@ -133,11 +133,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Dashboard UI Upgrade** - Live data integration (COMPLETE ✅)
   - Removed "Generate Schedule" and "Send Test SMS" buttons (use dedicated pages instead)
   - Removed SMS notification history table (moved to Notifications page)
+  - Removed SMS stats cards (moved to Notifications page)
   - **Live Stats Cards**:
     - Active Team Members count (fetched from API)
-    - Current On-Call member with phone number and end time (fetched from active schedules)
-    - SMS stats (placeholder - awaiting notification log API)
-    - Delivery rate (placeholder - awaiting notification log API)
+    - **On-Call Escalation Chain** (wide card showing 3-tier backup):
+      - Primary: Current on-call (or next if none active) with phone and time info
+      - Secondary: Previous shift person (automatic backup)
+      - Tertiary: 2 shifts ago (escalation contact)
+      - Shows "Until" time for active, "Starts" time for future, "Ended" for past
+      - Color-coded avatars matching team member colors
+      - Full phone numbers displayed for quick contact
   - **Dynamic Calendar**:
     - Auto-generated from real schedule data via `/api/v1/schedules/upcoming`
     - Shows current month only (not hardcoded)
