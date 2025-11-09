@@ -225,33 +225,69 @@
                         </div>
                     </div>
 
-                    <!-- SMS Template (Read-Only) -->
+                    <!-- SMS Template (Editable) -->
                     <div class="row mb-4">
                         <div class="col-12">
                             <div class="card">
                                 <div class="card-header">
                                     <h3 class="card-title">
                                         <i class="ti ti-file-text me-2"></i>
-                                        Current SMS Template
+                                        SMS Template
                                     </h3>
+                                    <div class="card-actions">
+                                        <button class="btn btn-sm btn-primary" id="editTemplateBtn">
+                                            <i class="ti ti-edit"></i>
+                                            Edit Template
+                                        </button>
+                                    </div>
                                 </div>
                                 <div class="card-body">
                                     <div class="alert alert-info mb-3">
                                         <i class="ti ti-info-circle me-2"></i>
                                         This template is automatically sent to team members at 8:00 AM CST when their shift starts.
                                     </div>
-                                    <div class="border p-3 rounded bg-light">
-                                        <div class="mb-2"><strong>Send Time:</strong> 8:00 AM CST</div>
-                                        <div class="mb-2"><strong>Status:</strong> <span class="badge bg-success">Active</span></div>
-                                        <hr>
-                                        <div class="font-monospace">
-                                            <strong>WhoseOnFirst Alert</strong><br><br>
-                                            Hi {name}, you are now on-call starting at {start_time} CST until {end_time} CST.<br><br>
-                                            Your shift lasts {duration}. Thank you for being available!
+
+                                    <!-- Read-Only View -->
+                                    <div id="templateReadView">
+                                        <div class="border p-3 rounded bg-light">
+                                            <div class="mb-2"><strong>Send Time:</strong> 8:00 AM CST</div>
+                                            <div class="mb-2"><strong>Status:</strong> <span class="badge bg-success">Active</span></div>
+                                            <hr>
+                                            <div class="font-monospace" id="templatePreview" style="white-space: pre-wrap;"></div>
+                                        </div>
+                                        <div class="text-muted mt-2">
+                                            <small>Available variables: {name}, {start_time}, {end_time}, {duration}</small>
                                         </div>
                                     </div>
-                                    <div class="text-muted mt-2">
-                                        <small>Template variables: {name}, {start_time}, {end_time}, {duration}</small>
+
+                                    <!-- Edit View (Hidden by default) -->
+                                    <div id="templateEditView" style="display: none;">
+                                        <div class="mb-3">
+                                            <label class="form-label">Message Template</label>
+                                            <textarea class="form-control font-monospace" id="templateEditor" rows="6"
+                                                      placeholder="Enter your SMS template..."></textarea>
+                                            <div class="form-text">
+                                                Available variables: {name}, {start_time}, {end_time}, {duration}
+                                            </div>
+                                            <div class="form-text mt-2">
+                                                <strong>Character count:</strong> <span id="charCount">0</span> / 160
+                                                <span id="smsCount" class="ms-2">(1 SMS)</span>
+                                            </div>
+                                        </div>
+                                        <div class="d-flex gap-2">
+                                            <button class="btn btn-success" id="saveTemplateBtn">
+                                                <i class="ti ti-check"></i>
+                                                Save Template
+                                            </button>
+                                            <button class="btn btn-secondary" id="cancelTemplateBtn">
+                                                <i class="ti ti-x"></i>
+                                                Cancel
+                                            </button>
+                                            <button class="btn btn-outline-primary ms-auto" id="resetTemplateBtn">
+                                                <i class="ti ti-refresh"></i>
+                                                Reset to Default
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -526,8 +562,91 @@
             loadHistory();
         });
 
+        // SMS Template Management
+        const DEFAULT_TEMPLATE = `WhoseOnFirst Alert
+
+Hi {name}, you are now on-call starting at {start_time} CST until {end_time} CST.
+
+Your shift lasts {duration}. Thank you for being available!`;
+
+        function loadTemplate() {
+            const template = localStorage.getItem('smsTemplate') || DEFAULT_TEMPLATE;
+            document.getElementById('templatePreview').textContent = template;
+            return template;
+        }
+
+        function saveTemplate(template) {
+            localStorage.setItem('smsTemplate', template);
+            document.getElementById('templatePreview').textContent = template;
+        }
+
+        function updateCharacterCount() {
+            const text = document.getElementById('templateEditor').value;
+            const length = text.length;
+            document.getElementById('charCount').textContent = length;
+
+            // Calculate SMS count (160 chars per SMS for standard messages)
+            const smsCount = Math.ceil(length / 160) || 1;
+            document.getElementById('smsCount').textContent = `(${smsCount} SMS)`;
+        }
+
+        // Edit Template Button
+        document.getElementById('editTemplateBtn').addEventListener('click', function() {
+            const currentTemplate = loadTemplate();
+            document.getElementById('templateEditor').value = currentTemplate;
+            updateCharacterCount();
+
+            document.getElementById('templateReadView').style.display = 'none';
+            document.getElementById('templateEditView').style.display = 'block';
+            this.style.display = 'none';
+        });
+
+        // Save Template Button
+        document.getElementById('saveTemplateBtn').addEventListener('click', function() {
+            const newTemplate = document.getElementById('templateEditor').value.trim();
+
+            if (!newTemplate) {
+                alert('Template cannot be empty');
+                return;
+            }
+
+            // Validate template has at least one variable
+            if (!newTemplate.includes('{')) {
+                if (!confirm('Warning: Template has no variables. Continue anyway?')) {
+                    return;
+                }
+            }
+
+            saveTemplate(newTemplate);
+
+            document.getElementById('templateReadView').style.display = 'block';
+            document.getElementById('templateEditView').style.display = 'none';
+            document.getElementById('editTemplateBtn').style.display = 'inline-block';
+
+            alert('✅ Template saved successfully!');
+        });
+
+        // Cancel Template Button
+        document.getElementById('cancelTemplateBtn').addEventListener('click', function() {
+            document.getElementById('templateReadView').style.display = 'block';
+            document.getElementById('templateEditView').style.display = 'none';
+            document.getElementById('editTemplateBtn').style.display = 'inline-block';
+        });
+
+        // Reset Template Button
+        document.getElementById('resetTemplateBtn').addEventListener('click', function() {
+            if (confirm('Reset to default template? This cannot be undone.')) {
+                document.getElementById('templateEditor').value = DEFAULT_TEMPLATE;
+                updateCharacterCount();
+            }
+        });
+
+        // Character counter
+        document.getElementById('templateEditor').addEventListener('input', updateCharacterCount);
+
         // Load data on page load
         document.addEventListener('DOMContentLoaded', function() {
+            loadTemplate();
             loadStats();
             loadHistory();
         });
