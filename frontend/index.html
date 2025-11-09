@@ -649,10 +649,10 @@
             renderOnCallPerson('primaryOnCall', primarySchedule, members, shifts, now, 'Primary');
 
             // Render Secondary (use member info, not schedule)
-            renderOnCallPersonFromMember('secondaryOnCall', secondaryMember, 'Secondary');
+            renderOnCallPersonFromMember('secondaryOnCall', secondaryMember, members, 'Secondary');
 
             // Render Tertiary (use member info, not schedule)
-            renderOnCallPersonFromMember('tertiaryOnCall', tertiaryMember, 'Tertiary');
+            renderOnCallPersonFromMember('tertiaryOnCall', tertiaryMember, members, 'Tertiary');
         }
 
         // Helper to render on-call person card
@@ -702,7 +702,7 @@
         }
 
         // Helper to render on-call person from member (for secondary/tertiary based on rotation)
-        function renderOnCallPersonFromMember(elementId, member, label) {
+        function renderOnCallPersonFromMember(elementId, member, allMembers, label) {
             const container = document.getElementById(elementId);
 
             if (!member) {
@@ -710,12 +710,7 @@
                 return;
             }
 
-            const allMembers = Array.from(document.querySelectorAll('.calendar-day'))
-                .map(el => el.dataset.memberId)
-                .filter(id => id)
-                .map(id => parseInt(id));
-
-            const colorClass = getTeamColor(member.id, [member]);
+            const colorClass = getTeamColor(member.id, allMembers);
             const initials = getInitials(member.name);
 
             container.innerHTML = `
