@@ -129,10 +129,23 @@ WhoseOnFirst is an automated on-call rotation and SMS notification system design
 
 #### Phase 4 - Advanced Features
 - **REQ-036:** Support for multiple teams
-- **REQ-037:** PTO/vacation management
-- **REQ-038:** On-call escalation chains
-- **REQ-039:** Analytics and reporting dashboard
-- **REQ-040:** Mobile application
+- **REQ-037:** PTO/vacation management and manual shift overrides
+  - UI to select a future date/shift and manually assign a different team member
+  - Override applies to single occurrence only (doesn't affect rotation)
+  - Visual indicator in calendar for overridden shifts
+- **REQ-038:** Multi-level SMS notifications with escalation chain
+  - Send 3 SMS messages per shift start (Primary, Secondary, Tertiary)
+  - Primary: "You are PRIMARY on-call. Backup: [Name]. Escalation: [Name]"
+  - Secondary: "You are BACKUP on-call. Primary: [Name]. Escalation: [Name]"
+  - Tertiary: "You are ESCALATION on-call. Primary: [Name]. Backup: [Name]"
+  - Uses rotation_order-based backup calculation (already implemented in frontend)
+- **REQ-039:** Automatic schedule regeneration on configuration changes
+  - Auto-regenerate when team members added/removed/reordered
+  - Auto-regenerate when shifts added/modified/deleted
+  - Warning banner if changes detected but schedule not regenerated
+  - Option to manually trigger regeneration vs. auto-regeneration setting
+- **REQ-040:** Analytics and reporting dashboard
+- **REQ-041:** Mobile application
 
 ---
 

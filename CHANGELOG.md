@@ -208,14 +208,56 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Preserves existing rotation behavior for members without rotation_order set
   - All 288 existing tests passing - no regressions
 
+### Known Limitations (MVP)
+These are intentional scope limitations for the initial MVP release. Future enhancements are planned.
+
+- **Manual Schedule Regeneration Required**
+  - **Current Behavior**: Adding/removing team members or modifying shifts does NOT auto-regenerate schedule
+  - **Workaround**: Admin must manually navigate to Schedule Generation page and click "Generate Schedule" with force=true
+  - **Future Enhancement** (REQ-039): Auto-regeneration with warning banners
+  - **Rationale**: Keeps MVP simple; explicit control prevents accidental overwrites
+
+- **Single SMS Notification (Primary Only)**
+  - **Current Behavior**: Only the primary on-call person receives SMS at 8:00 AM CST
+  - **Workaround**: None needed - backup contacts visible on dashboard escalation chain
+  - **Future Enhancement** (REQ-038): Send 3 SMS messages (Primary, Secondary, Tertiary) with escalation info
+  - **Rationale**: Dashboard already calculates escalation chain; backend expansion is straightforward
+
+- **No Manual Shift Overrides**
+  - **Current Behavior**: Cannot manually assign a team member to a single shift occurrence
+  - **Workaround**: Regenerate entire schedule or manually edit database (not recommended)
+  - **Future Enhancement** (REQ-037): UI to select date/shift and apply one-time override
+  - **Rationale**: Rotation algorithm is solid; override mechanism can be added without disrupting core logic
+
+- **SMS Template Editing (LocalStorage Only)**
+  - **Current Behavior**: Template changes stored in browser LocalStorage, not centralized
+  - **Workaround**: Each admin must set template in their browser
+  - **Future Enhancement**: Backend API endpoint for global template management
+  - **Rationale**: LocalStorage works for single-admin MVP; easy to migrate later
+
 ### Fixed
-- **Rotation Algorithm Direction** - Fixed rotation to move forward through shifts (CRITICAL FIX)
-  - Changed formula in `src/services/rotation_algorithm.py:152` from `(shift_index + week_offset)` to `(shift_index - week_offset)`
+- **Rotation Algorithm - Complete Rewrite** - Fixed to cycle through ALL team members (CRITICAL FIX)
+  - **Bug**: With 8 members and 6 shifts, Lance B (member 7) never appeared in schedule
+  - **Root Cause**: Formula used week number as offset instead of total shifts elapsed
+    - Old: `week_offset = week % len(members)` → only rotated by 1 position per week
+    - After 6 shifts in week 0, rotation should advance by 6, not 1
+  - **New Formula**: `shifts_elapsed = (week * len(shifts)) + shift_index`
+    - `member_index = shifts_elapsed % len(members)`
+    - Continuously cycles through all members regardless of team size vs. shifts
+  - **Now Works For**:
+    - 1 member: Same person all shifts ✓
+    - 2 members: Perfect alternation (A,B,A,B...) ✓
+    - 8 members, 6 shifts: All 8 members cycle through (Lance B appears!) ✓
+    - Any team size, any shift count: Fair continuous rotation ✓
+  - **Dynamic Shift Configuration**: Automatically adjusts when shifts added/removed
+    - Change from 6 to 7 shifts → formula uses new `len(shifts) = 7` ✓
+  - All rotation tests updated and passing
+
+- **Rotation Algorithm Direction** - Fixed rotation to move forward through shifts (PREVIOUS FIX)
+  - Changed formula from `(shift_index + week_offset)` to `(shift_index - week_offset)`
   - Old behavior: Person moved BACKWARD through shifts each week (Shift 2 → Shift 1)
   - New behavior: Person moves FORWARD through shifts each week (Shift 2 → Shift 3)
   - Now correctly implements: "Each week, person on Shift N moves to Shift N+1"
-  - Updated test `test_circular_rotation_pattern` to match corrected algorithm
-  - All 30 rotation algorithm tests passing
 
 - **Auto-Assign Rotation Order on Member Creation** - New members now get rotation numbers automatically
   - Added auto-assignment logic in `TeamMemberService.create()` method
