@@ -15,6 +15,7 @@ class NotificationLog(Base):
     Notification log model.
 
     Records all SMS notification attempts with status and error details.
+    Snapshots recipient information at send time to preserve historical accuracy.
 
     Attributes:
         id: Primary key
@@ -23,6 +24,8 @@ class NotificationLog(Base):
         status: Status of notification (sent, failed, pending)
         twilio_sid: Twilio message SID for tracking
         error_message: Error details if notification failed
+        recipient_name: Team member name at time of notification (snapshot)
+        recipient_phone: Team member phone at time of notification (snapshot)
 
     Relationships:
         schedule: The schedule assignment this notification is for
@@ -40,11 +43,11 @@ class NotificationLog(Base):
     # Primary key
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
 
-    # Foreign key
+    # Foreign key (nullable to preserve audit trail when schedules deleted)
     schedule_id = Column(
         Integer,
-        ForeignKey("schedule.id", ondelete="CASCADE"),
-        nullable=False,
+        ForeignKey("schedule.id", ondelete="SET NULL"),
+        nullable=True,
         index=True
     )
 
@@ -53,6 +56,10 @@ class NotificationLog(Base):
     status = Column(String, nullable=False, index=True)  # sent, failed, pending, delivered, undelivered
     twilio_sid = Column(String, nullable=True)  # Twilio message SID
     error_message = Column(Text, nullable=True)  # Error details if failed
+
+    # Recipient snapshot (preserves historical accuracy)
+    recipient_name = Column(String(100), nullable=True)  # Name at time of notification
+    recipient_phone = Column(String(15), nullable=True)  # Phone at time of notification
 
     # Relationships
     schedule = relationship("Schedule", back_populates="notification_logs")
@@ -83,6 +90,8 @@ class NotificationLog(Base):
             "status": self.status,
             "twilio_sid": self.twilio_sid,
             "error_message": self.error_message,
+            "recipient_name": self.recipient_name,
+            "recipient_phone": self.recipient_phone,
         }
 
     @property

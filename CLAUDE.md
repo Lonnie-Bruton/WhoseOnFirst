@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Project:** WhoseOnFirst - Automated on-call rotation and SMS notification system for 7-person technical team
 
-**Current Status:** Phase 1 MVP Complete ✅ (v1.0.0 - Production Ready)
+**Current Status:** Phase 1 MVP Complete ✅ (v1.0.2 - Production Ready)
 - Backend: 100% (FastAPI/APScheduler/Twilio)
 - Frontend: 100% (8 pages with live data)
 - Testing: 288 tests, 85% coverage
@@ -381,7 +381,7 @@ sequential-thinking__sequentialthinking({
 
 ## Project Phases
 
-**Phase 1: MVP** ✅ COMPLETE (v1.0.0)
+**Phase 1: MVP** ✅ COMPLETE (v1.0.2)
 - All backend features implemented
 - All frontend pages with live data
 - Docker containerization complete
@@ -435,5 +435,5 @@ sequential-thinking__sequentialthinking({
 ---
 
 **Last Updated:** 2025-11-10
-**Version:** 1.0.0
+**Version:** 1.0.2
 **File Size:** ~10KB (lean and focused)

@@ -384,6 +384,10 @@
                     const schedule = schedules.find(s => s.id === notification.schedule_id);
                     const member = schedule ? members.find(m => m.id === schedule.team_member_id) : null;
 
+                    // Use snapshot data from notification if available, fallback to current member data
+                    const recipientName = notification.recipient_name || (member ? member.name : 'Unknown');
+                    const recipientPhone = notification.recipient_phone || (member ? member.phone : null);
+
                     const row = document.createElement('tr');
 
                     // Timestamp
@@ -391,14 +395,15 @@
                     timestampCell.innerHTML = `<span class="text-muted">${formatDateTime(notification.sent_at)}</span>`;
                     row.appendChild(timestampCell);
 
-                    // Recipient
+                    // Recipient (use snapshot or current data)
                     const recipientCell = document.createElement('td');
-                    if (member) {
-                        const colorClass = getTeamColor(member.id, members);
+                    if (recipientName !== 'Unknown') {
+                        // Use member.id for color if available, otherwise use a hash of the name
+                        const colorClass = member ? getTeamColor(member.id, members) : getTeamColor(1, members);
                         recipientCell.innerHTML = `
                             <div class="d-flex align-items-center">
                                 <span class="avatar avatar-sm me-2 ${colorClass}"></span>
-                                ${member.name}
+                                ${recipientName}
                             </div>
                         `;
                     } else {
@@ -406,9 +411,9 @@
                     }
                     row.appendChild(recipientCell);
 
-                    // Phone
+                    // Phone (use snapshot or current data)
                     const phoneCell = document.createElement('td');
-                    phoneCell.textContent = member ? maskPhone(member.phone) : '-';
+                    phoneCell.textContent = recipientPhone ? maskPhone(recipientPhone) : '-';
                     row.appendChild(phoneCell);
 
                     // Status

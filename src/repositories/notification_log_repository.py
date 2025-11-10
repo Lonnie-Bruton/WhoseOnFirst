@@ -360,18 +360,23 @@ class NotificationLogRepository(BaseRepository[NotificationLog]):
         schedule_id: int,
         status: str,
         twilio_sid: Optional[str] = None,
-        error_message: Optional[str] = None
+        error_message: Optional[str] = None,
+        recipient_name: Optional[str] = None,
+        recipient_phone: Optional[str] = None
     ) -> NotificationLog:
         """
         Create a new notification log entry.
 
         Convenience method for logging notification attempts.
+        Captures recipient information at send time to preserve historical accuracy.
 
         Args:
             schedule_id: Schedule ID this notification is for
             status: Status of the notification attempt
             twilio_sid: Optional Twilio message SID
             error_message: Optional error message if failed
+            recipient_name: Team member name at time of notification (snapshot)
+            recipient_phone: Team member phone at time of notification (snapshot)
 
         Returns:
             Created NotificationLog instance
@@ -385,7 +390,9 @@ class NotificationLogRepository(BaseRepository[NotificationLog]):
                 "status": status,
                 "sent_at": datetime.now(),
                 "twilio_sid": twilio_sid,
-                "error_message": error_message
+                "error_message": error_message,
+                "recipient_name": recipient_name,
+                "recipient_phone": recipient_phone
             }
 
             return self.create(log_data)

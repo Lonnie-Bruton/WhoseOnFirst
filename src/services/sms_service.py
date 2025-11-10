@@ -167,7 +167,9 @@ class SMSService:
             self.notification_repo.log_notification_attempt(
                 schedule_id=schedule.id,
                 status='failed',
-                error_message=f"Exceeded maximum retry attempts ({self.max_retries})"
+                error_message=f"Exceeded maximum retry attempts ({self.max_retries})",
+                recipient_name=schedule.team_member.name,
+                recipient_phone=schedule.team_member.phone
             )
             return {
                 "success": False,
@@ -199,12 +201,14 @@ class SMSService:
                 # Send SMS
                 result = self._send_sms(to_phone, message_body)
 
-                # Log successful send
+                # Log successful send with recipient snapshot
                 _ = self.notification_repo.log_notification_attempt(
                     schedule_id=schedule.id,
                     status='sent',
                     twilio_sid=result['sid'],
-                    error_message=None
+                    error_message=None,
+                    recipient_name=schedule.team_member.name,
+                    recipient_phone=schedule.team_member.phone
                 )
 
                 # Mark schedule as notified
@@ -237,7 +241,9 @@ class SMSService:
                     schedule_id=schedule.id,
                     status='failed',
                     twilio_sid=None,
-                    error_message=error_msg
+                    error_message=error_msg,
+                    recipient_name=schedule.team_member.name,
+                    recipient_phone=schedule.team_member.phone
                 )
 
                 # Check if error is retryable
@@ -257,7 +263,9 @@ class SMSService:
                     schedule_id=schedule.id,
                     status='failed',
                     twilio_sid=None,
-                    error_message=error_msg
+                    error_message=error_msg,
+                    recipient_name=schedule.team_member.name,
+                    recipient_phone=schedule.team_member.phone
                 )
 
         # All attempts failed
