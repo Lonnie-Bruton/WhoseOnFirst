@@ -2,6 +2,7 @@
 
 > Automated on-call rotation and SMS notification system for technical teams
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/04c85179d2dd4bbaa67e20d2ce0ab55d)](https://app.codacy.com/gh/Lonnie-Bruton/WhoseOnFirst?utm_source=github.com&utm_medium=referral&utm_content=Lonnie-Bruton/WhoseOnFirst&utm_campaign=Badge_Grade)
 [![Python Version](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115%2B-009688.svg)](https://fastapi.tiangolo.com/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
