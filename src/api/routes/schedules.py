@@ -17,7 +17,6 @@ from src.api.schemas.schedule import (
 )
 from src.services import (
     ScheduleService,
-    ScheduleServiceError,
     ScheduleAlreadyExistsError,
     InvalidDateRangeError,
     InsufficientMembersError,

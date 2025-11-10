@@ -19,7 +19,7 @@ The double-shift (e.g., Tuesday-Wednesday 48h) naturally spreads across weeks,
 ensuring no special "weekend fairness" logic is needed.
 """
 
-from datetime import datetime, timedelta, time
+from datetime import datetime, timedelta
 from typing import List, Dict, Any
 from sqlalchemy.orm import Session
 from pytz import timezone

@@ -13,20 +13,18 @@ Key responsibilities:
 
 import logging
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional
 from contextlib import contextmanager
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.jobstores.memory import MemoryJobStore
 from pytz import timezone
-from sqlalchemy.orm import Session
 
 from src.models.database import SessionLocal
 from src.services.schedule_service import ScheduleService
 from src.services.sms_service import SMSService
 from src.services.settings_service import SettingsService
-from src.models.schedule import Schedule
 
 
 # Configure logging

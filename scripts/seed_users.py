@@ -16,7 +16,7 @@ sys.path.insert(0, str(project_root))
 
 from sqlalchemy.orm import Session
 
-from src.models.database import SessionLocal, engine
+from src.models.database import SessionLocal
 from src.models.user import User, UserRole
 from src.auth.utils import hash_password
 

@@ -5,7 +5,7 @@ Stores key-value pairs for runtime configuration that can be
 changed without restarting the application.
 """
 
-from sqlalchemy import Column, Integer, String, Boolean, DateTime
+from sqlalchemy import Column, Integer, String, DateTime
 from sqlalchemy.sql import func
 
 from .database import Base

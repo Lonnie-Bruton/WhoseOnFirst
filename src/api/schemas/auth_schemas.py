@@ -5,7 +5,6 @@ Pydantic models for authentication request/response validation.
 """
 
 from pydantic import BaseModel, Field
-from typing import Optional
 
 
 class LoginRequest(BaseModel):

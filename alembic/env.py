@@ -13,10 +13,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 # Import models for autogenerate support
 from src.models import Base
-from src.models.team_member import TeamMember
-from src.models.shift import Shift
-from src.models.schedule import Schedule
-from src.models.notification_log import NotificationLog
 
 # Load environment variables
 from dotenv import load_dotenv

@@ -7,7 +7,6 @@ Represents a team member who can be assigned to on-call shifts.
 from sqlalchemy import Column, Integer, String, Boolean, DateTime
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from datetime import datetime
 from .database import Base
 
 

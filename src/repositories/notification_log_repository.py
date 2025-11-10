@@ -9,7 +9,7 @@ from typing import List, Optional
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy import and_, func
+from sqlalchemy import and_
 
 from .base_repository import BaseRepository
 from ..models.notification_log import NotificationLog

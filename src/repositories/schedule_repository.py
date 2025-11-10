@@ -9,12 +9,10 @@ from typing import List, Optional
 from datetime import datetime, date, timedelta
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy import and_, or_
+from sqlalchemy import and_
 
 from .base_repository import BaseRepository
 from ..models.schedule import Schedule
-from ..models.team_member import TeamMember
-from ..models.shift import Shift
 
 
 class ScheduleRepository(BaseRepository[Schedule]):

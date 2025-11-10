@@ -6,7 +6,7 @@ FastAPI router for SMS notification management and history.
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
-from typing import List, Optional
+from typing import List
 from datetime import datetime, timedelta
 
 from src.api.dependencies import get_db
@@ -15,7 +15,7 @@ from src.api.schemas.notification import (
     NotificationStatsResponse
 )
 from src.repositories.notification_log_repository import NotificationLogRepository
-from src.api.routes.auth import require_auth, require_admin
+from src.api.routes.auth import require_auth
 
 
 router = APIRouter()

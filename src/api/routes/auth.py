@@ -6,7 +6,6 @@ Handles user login, logout, and session management.
 
 import json
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Cookie
-from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from typing import Optional
 
