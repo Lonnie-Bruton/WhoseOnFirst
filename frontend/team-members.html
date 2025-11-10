@@ -8,10 +8,33 @@
     <link href="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/css/tabler.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" rel="stylesheet">
 
+    <!-- Load sidebar component -->
+    <script src="/js/sidebar-loader.js" defer></script>
+
     <style>
+        /* Logo SVG styling */
+        .logo-svg {
+            width: 32px;
+            height: 32px;
+        }
+
         /* Page background for better card separation */
         .page-body {
             background-color: #f1f5f9;
+        }
+
+        /* Info alert styling */
+        .alert-info {
+            background-color: #dbeafe !important;
+            border: 1px solid #60a5fa !important;
+        }
+
+        .alert-info .alert-title {
+            color: #1e40af !important;
+        }
+
+        .alert-info .text-muted {
+            color: #6c757d !important;
         }
 
         /* Team member color palette - 16 unique WCAG AA compliant colors */
@@ -88,96 +111,10 @@
         }
     </style>
 </head>
-<body>
+<body data-page="team-members">
     <div class="page">
-        <!-- Sidebar -->
-        <aside class="navbar navbar-vertical navbar-expand-lg" data-bs-theme="dark">
-            <div class="container-fluid">
-                <h1 class="navbar-brand navbar-brand-autodark">
-                    <a href="/">
-                        <svg class="logo-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                            <circle cx="50" cy="50" r="45" fill="#206bc4" stroke="#ffffff" stroke-width="3"/>
-                            <circle cx="50" cy="50" r="35" fill="none" stroke="#ffffff" stroke-width="2"/>
-                            <line x1="50" y1="50" x2="50" y2="25" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/>
-                            <line x1="50" y1="50" x2="65" y2="50" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round"/>
-                            <circle cx="50" cy="70" r="5" fill="#fab005"/>
-                            <path d="M 50 75 L 45 85 M 50 75 L 55 85 M 50 75 L 50 80" stroke="#fab005" stroke-width="2" stroke-linecap="round"/>
-                            <circle cx="50" cy="50" r="3" fill="#fab005"/>
-                        </svg>
-                        <span class="navbar-brand-text">WhoseOnFirst</span>
-                    </a>
-                </h1>
-                <div class="navbar-collapse">
-                    <ul class="navbar-nav pt-lg-3">
-                        <!-- User Info Badge -->
-                        <li class="nav-item mb-3" style="opacity: 0.7;">
-                            <div class="nav-link d-flex align-items-center pe-none">
-                                <span class="avatar avatar-sm bg-primary me-2" id="userRoleIcon">
-                                    <i class="ti ti-user"></i>
-                                </span>
-                                <div class="d-flex flex-column">
-                                    <small class="text-white" id="usernameDisplay" style="font-weight: 500;">Loading...</small>
-                                    <small class="text-muted" id="userRoleDisplay" style="font-size: 0.7rem;">...</small>
-                                </div>
-                            </div>
-                        </li>
-
-                        <li class="nav-item">
-                            <a class="nav-link" href="/">
-                                <span class="nav-link-icon"><i class="ti ti-layout-dashboard"></i></span>
-                                <span class="nav-link-title">Dashboard</span>
-                            </a>
-                        </li>
-                        <li class="nav-item active admin-only">
-                            <a class="nav-link" href="team-members.html">
-                                <span class="nav-link-icon"><i class="ti ti-users-group"></i></span>
-                                <span class="nav-link-title">Team Members</span>
-                            </a>
-                        </li>
-                        <li class="nav-item admin-only">
-                            <a class="nav-link" href="shifts.html">
-                                <span class="nav-link-icon"><i class="ti ti-clock-hour-3"></i></span>
-                                <span class="nav-link-title">Shift Configuration</span>
-                            </a>
-                        </li>
-                        <li class="nav-item admin-only">
-                            <a class="nav-link" href="schedule.html">
-                                <span class="nav-link-icon"><i class="ti ti-calendar-event"></i></span>
-                                <span class="nav-link-title">Schedule Generation</span>
-                            </a>
-                        </li>
-                        <li class="nav-item admin-only">
-                            <a class="nav-link" href="notifications.html">
-                                <span class="nav-link-icon"><i class="ti ti-bell-ringing"></i></span>
-                                <span class="nav-link-title">Notifications</span>
-                            </a>
-                        </li>
-
-                        <!-- Separator -->
-                        <li class="nav-item mt-4">
-                            <div style="border-top: 1px solid rgba(255,255,255,0.1); margin: 0 16px;"></div>
-                        </li>
-
-                        <li class="nav-item admin-only">
-                            <a class="nav-link" href="change-password.html">
-                                <span class="nav-link-icon">
-                                    <i class="ti ti-key"></i>
-                                </span>
-                                <span class="nav-link-title">Change Password</span>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-danger" href="#" id="logoutBtn">
-                                <span class="nav-link-icon">
-                                    <i class="ti ti-logout"></i>
-                                </span>
-                                <span class="nav-link-title">Logout</span>
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </aside>
+        <!-- Sidebar Component (loaded via JavaScript) -->
+        <div id="sidebar-container"></div>
 
         <!-- Main Content -->
         <div class="page-wrapper">
@@ -188,17 +125,20 @@
                             <div class="page-pretitle">Management</div>
                             <h2 class="page-title">Team Members</h2>
                         </div>
+                    </div>
+                    <div class="row g-2 align-items-center mt-2">
                         <div class="col-auto">
-                            <div class="btn-list">
-                                <select class="form-select" id="filterSelect" onchange="applyFilter()">
-                                    <option value="active" selected>Active Members</option>
-                                    <option value="inactive">Inactive Members</option>
-                                </select>
-                                <button class="btn btn-primary admin-only" data-bs-toggle="modal" data-bs-target="#addMemberModal">
-                                    <i class="ti ti-plus me-2"></i>
-                                    Add Team Member
-                                </button>
-                            </div>
+                            <select class="form-select" id="filterSelect" onchange="applyFilter()">
+                                <option value="active" selected>Active Members</option>
+                                <option value="inactive">Inactive Members</option>
+                            </select>
+                        </div>
+                        <div class="col"></div>
+                        <div class="col-auto">
+                            <button class="btn btn-primary admin-only" data-bs-toggle="modal" data-bs-target="#addMemberModal">
+                                <i class="ti ti-plus me-2"></i>
+                                Add Team Member
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -224,17 +164,17 @@
                     </div>
 
                     <!-- Drag-and-Drop Hint -->
-                    <div class="alert alert-info" id="dragHint" style="display:none; background-color: #dbeafe; border: 1px solid #60a5fa; color: #1e40af;">
-                        <div class="d-flex align-items-center">
+                    <div class="alert alert-info mb-4" id="dragHint" style="display:none;">
+                        <div class="d-flex">
                             <div>
-                                <i class="ti ti-arrows-move me-2" style="font-size: 1.25rem;"></i>
+                                <i class="ti ti-arrows-move me-2"></i>
                             </div>
                             <div>
-                                <strong>Tips:</strong>
-                                <ul class="mb-0" style="padding-left: 1.2rem; margin-top: 0.25rem;">
-                                    <li>Drag and drop members to change their rotation order. Click "Save Order" when done.</li>
-                                    <li>Hold <kbd style="background: #1e40af; color: white; padding: 0.1rem 0.4rem; border-radius: 3px; font-size: 0.85rem;">Shift</kbd> + click "Deactivate" to permanently delete a member.</li>
-                                </ul>
+                                <h4 class="alert-title">Tips</h4>
+                                <div class="text-muted">
+                                    Drag and drop members to change their rotation order. Click "Save Order" when done.
+                                    Hold <kbd style="background: #1e40af; color: white; padding: 0.1rem 0.4rem; border-radius: 3px; font-size: 0.85rem;">Shift</kbd> + click "Deactivate" to permanently delete a member.
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -381,8 +321,8 @@
         let sortableInstance = null;
         let orderChanged = false;
 
-        // Authentication guard
-        window.addEventListener('DOMContentLoaded', async function() {
+        // Authentication guard - wait for sidebar to load
+        window.addEventListener('sidebarLoaded', async function() {
             try {
                 const response = await fetch(`${API_BASE_URL}/api/v1/auth/me`, {
                     credentials: 'include'

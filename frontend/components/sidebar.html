@@ -1,0 +1,113 @@
+<aside class="navbar navbar-vertical navbar-expand-lg" data-bs-theme="dark">
+    <div class="container-fluid" style="display: flex; flex-direction: column; height: 100vh;">
+        <h1 class="navbar-brand navbar-brand-autodark">
+            <a href="/" id="appLogo">
+                <svg class="logo-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="50" cy="50" r="45" fill="#206bc4" stroke="#ffffff" stroke-width="3"/>
+                    <circle cx="50" cy="50" r="35" fill="none" stroke="#ffffff" stroke-width="2"/>
+                    <line x1="50" y1="50" x2="50" y2="25" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/>
+                    <line x1="50" y1="50" x2="65" y2="50" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round"/>
+                    <circle cx="50" cy="70" r="5" fill="#fab005"/>
+                    <path d="M 50 75 L 45 85 M 50 75 L 55 85 M 50 75 L 50 80" stroke="#fab005" stroke-width="2" stroke-linecap="round"/>
+                    <circle cx="50" cy="50" r="3" fill="#fab005"/>
+                </svg>
+                <span class="navbar-brand-text">WhoseOnFirst</span>
+            </a>
+        </h1>
+
+        <div class="navbar-collapse" style="flex: 1; overflow-y: auto;">
+            <ul class="navbar-nav pt-lg-3">
+                <!-- User Info Badge -->
+                <li class="nav-item mb-3" style="opacity: 0.7;">
+                    <div class="nav-link d-flex align-items-center pe-none">
+                        <span class="avatar avatar-sm bg-primary me-2" id="userRoleIcon">
+                            <i class="ti ti-user"></i>
+                        </span>
+                        <div class="d-flex flex-column">
+                            <small class="text-white" id="usernameDisplay" style="font-weight: 500;">Loading...</small>
+                            <small class="text-muted" id="userRoleDisplay" style="font-size: 0.7rem;">...</small>
+                        </div>
+                    </div>
+                </li>
+
+                <li class="nav-item" data-page="index">
+                    <a class="nav-link" href="/">
+                        <span class="nav-link-icon"><i class="ti ti-layout-dashboard"></i></span>
+                        <span class="nav-link-title">Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item admin-only" data-page="team-members">
+                    <a class="nav-link" href="team-members.html">
+                        <span class="nav-link-icon"><i class="ti ti-users-group"></i></span>
+                        <span class="nav-link-title">Team Members</span>
+                    </a>
+                </li>
+                <li class="nav-item admin-only" data-page="shifts">
+                    <a class="nav-link" href="shifts.html">
+                        <span class="nav-link-icon"><i class="ti ti-clock-hour-3"></i></span>
+                        <span class="nav-link-title">Shift Configuration</span>
+                    </a>
+                </li>
+                <li class="nav-item admin-only" data-page="schedule">
+                    <a class="nav-link" href="schedule.html">
+                        <span class="nav-link-icon"><i class="ti ti-calendar-event"></i></span>
+                        <span class="nav-link-title">Schedule Generation</span>
+                    </a>
+                </li>
+                <li class="nav-item admin-only" data-page="notifications">
+                    <a class="nav-link" href="notifications.html">
+                        <span class="nav-link-icon"><i class="ti ti-bell-ringing"></i></span>
+                        <span class="nav-link-title">Notifications</span>
+                    </a>
+                </li>
+
+                <!-- Separator -->
+                <li class="nav-item mt-4">
+                    <div style="border-top: 1px solid rgba(255,255,255,0.1); margin: 0 16px;"></div>
+                </li>
+
+                <li class="nav-item admin-only" data-page="change-password">
+                    <a class="nav-link" href="change-password.html">
+                        <span class="nav-link-icon">
+                            <i class="ti ti-key"></i>
+                        </span>
+                        <span class="nav-link-title">Change Password</span>
+                    </a>
+                </li>
+                <li class="nav-item" data-page="help">
+                    <a class="nav-link" href="help.html">
+                        <span class="nav-link-icon">
+                            <i class="ti ti-help"></i>
+                        </span>
+                        <span class="nav-link-title">Help</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-danger" href="#" id="logoutBtn">
+                        <span class="nav-link-icon">
+                            <i class="ti ti-logout"></i>
+                        </span>
+                        <span class="nav-link-title">Logout</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Footer anchored to bottom -->
+        <div class="navbar-footer" style="margin-top: auto; padding: 1rem; border-top: 1px solid rgba(255,255,255,0.1);">
+            <div style="text-align: center; font-size: 0.75rem;">
+                <div style="margin-bottom: 0.5rem;">
+                    <a href="https://github.com/Lonnie-Bruton/WhoseOnFirst" class="text-white-50" target="_blank" style="text-decoration: none;">
+                        <i class="ti ti-brand-github"></i>
+                        WhoseOnFirst v1.0.0
+                    </a>
+                </div>
+                <div>
+                    <a href="https://app.codacy.com/gh/Lonnie-Bruton/WhoseOnFirst/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade" target="_blank">
+                        <img src="https://app.codacy.com/project/badge/Grade/b37c9c41b9644a9990be09eeda5bf014" alt="Codacy Badge" style="height: 18px; vertical-align: middle;">
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</aside>

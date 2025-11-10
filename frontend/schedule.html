@@ -8,6 +8,9 @@
     <link href="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/css/tabler.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" rel="stylesheet">
 
+    <!-- Load sidebar component -->
+    <script src="/js/sidebar-loader.js" defer></script>
+
     <style>
         /* Page background for better card separation */
         .page-body {
@@ -94,96 +97,10 @@
         }
     </style>
 </head>
-<body>
+<body data-page="schedule">
     <div class="page">
-        <!-- Sidebar -->
-        <aside class="navbar navbar-vertical navbar-expand-lg" data-bs-theme="dark">
-            <div class="container-fluid">
-                <h1 class="navbar-brand navbar-brand-autodark">
-                    <a href="/">
-                        <svg class="logo-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                            <circle cx="50" cy="50" r="45" fill="#206bc4" stroke="#ffffff" stroke-width="3"/>
-                            <circle cx="50" cy="50" r="35" fill="none" stroke="#ffffff" stroke-width="2"/>
-                            <line x1="50" y1="50" x2="50" y2="25" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/>
-                            <line x1="50" y1="50" x2="65" y2="50" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round"/>
-                            <circle cx="50" cy="70" r="5" fill="#fab005"/>
-                            <path d="M 50 75 L 45 85 M 50 75 L 55 85 M 50 75 L 50 80" stroke="#fab005" stroke-width="2" stroke-linecap="round"/>
-                            <circle cx="50" cy="50" r="3" fill="#fab005"/>
-                        </svg>
-                        <span class="navbar-brand-text">WhoseOnFirst</span>
-                    </a>
-                </h1>
-                <div class="navbar-collapse">
-                    <ul class="navbar-nav pt-lg-3">
-                        <!-- User Info Badge -->
-                        <li class="nav-item mb-3" style="opacity: 0.7;">
-                            <div class="nav-link d-flex align-items-center pe-none">
-                                <span class="avatar avatar-sm bg-primary me-2" id="userRoleIcon">
-                                    <i class="ti ti-user"></i>
-                                </span>
-                                <div class="d-flex flex-column">
-                                    <small class="text-white" id="usernameDisplay" style="font-weight: 500;">Loading...</small>
-                                    <small class="text-muted" id="userRoleDisplay" style="font-size: 0.7rem;">...</small>
-                                </div>
-                            </div>
-                        </li>
-
-                        <li class="nav-item">
-                            <a class="nav-link" href="/">
-                                <span class="nav-link-icon"><i class="ti ti-layout-dashboard"></i></span>
-                                <span class="nav-link-title">Dashboard</span>
-                            </a>
-                        </li>
-                        <li class="nav-item admin-only">
-                            <a class="nav-link" href="team-members.html">
-                                <span class="nav-link-icon"><i class="ti ti-users-group"></i></span>
-                                <span class="nav-link-title">Team Members</span>
-                            </a>
-                        </li>
-                        <li class="nav-item admin-only">
-                            <a class="nav-link" href="shifts.html">
-                                <span class="nav-link-icon"><i class="ti ti-clock-hour-3"></i></span>
-                                <span class="nav-link-title">Shift Configuration</span>
-                            </a>
-                        </li>
-                        <li class="nav-item active admin-only">
-                            <a class="nav-link" href="schedule.html">
-                                <span class="nav-link-icon"><i class="ti ti-calendar-event"></i></span>
-                                <span class="nav-link-title">Schedule Generation</span>
-                            </a>
-                        </li>
-                        <li class="nav-item admin-only">
-                            <a class="nav-link" href="notifications.html">
-                                <span class="nav-link-icon"><i class="ti ti-bell-ringing"></i></span>
-                                <span class="nav-link-title">Notifications</span>
-                            </a>
-                        </li>
-
-                        <!-- Separator -->
-                        <li class="nav-item mt-4">
-                            <div style="border-top: 1px solid rgba(255,255,255,0.1); margin: 0 16px;"></div>
-                        </li>
-
-                        <li class="nav-item admin-only">
-                            <a class="nav-link" href="change-password.html">
-                                <span class="nav-link-icon">
-                                    <i class="ti ti-key"></i>
-                                </span>
-                                <span class="nav-link-title">Change Password</span>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-danger" href="#" id="logoutBtn">
-                                <span class="nav-link-icon">
-                                    <i class="ti ti-logout"></i>
-                                </span>
-                                <span class="nav-link-title">Logout</span>
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </aside>
+        <!-- Sidebar Component (loaded via JavaScript) -->
+        <div id="sidebar-container"></div>
 
         <!-- Main Content -->
         <div class="page-wrapper">
@@ -191,7 +108,7 @@
                 <div class="container-xl">
                     <div class="row g-2 align-items-center">
                         <div class="col">
-                            <div class="page-pretitle">Automation</div>
+                            <div class="page-pretitle">Notification</div>
                             <h2 class="page-title">Schedule Generation</h2>
                         </div>
                     </div>
@@ -203,12 +120,12 @@
                     <div class="row">
                         <!-- Left Column -->
                         <div class="col-lg-7">
-                            <!-- Create Schedule Card -->
+                            <!-- Generate Notification Schedule Card -->
                             <div class="card mb-4">
                                 <div class="card-header">
                                     <h3 class="card-title">
                                         <i class="ti ti-calendar-plus me-2"></i>
-                                        Create Schedule
+                                        Generate Notification Schedule
                                     </h3>
                                 </div>
                                 <div class="card-body">
@@ -255,7 +172,7 @@
 
                                         <button type="submit" class="btn btn-primary admin-only" id="createScheduleBtn">
                                             <i class="ti ti-calendar-plus me-2"></i>
-                                            Create Schedule
+                                            Generate Notification Schedule
                                         </button>
                                     </form>
                                 </div>
@@ -309,10 +226,10 @@
                                 <div class="card-header">
                                     <h3 class="card-title">
                                         <i class="ti ti-calendar-week me-2"></i>
-                                        First 2 Weeks Preview
+                                        14 Day Preview
                                     </h3>
                                     <div class="card-actions">
-                                        <span class="text-muted">Shows rotation pattern (Mon-Sun × 2)</span>
+                                        <span class="text-muted">Next 14 days from today</span>
                                     </div>
                                 </div>
                                 <div class="card-body">
@@ -327,27 +244,6 @@
             </div>
 
             <!-- Footer -->
-            <footer class="footer footer-transparent d-print-none">
-                <div class="container-xl">
-                    <div class="row text-center align-items-center">
-                        <div class="col-12 col-lg-auto mt-3 mt-lg-0">
-                            <ul class="list-inline list-inline-dots mb-0">
-                                <li class="list-inline-item">
-                                    <a href="https://github.com/Lonnie-Bruton/WhoseOnFirst" class="link-secondary" target="_blank">
-                                        <i class="ti ti-brand-github"></i>
-                                        WhoseOnFirst v1.0.0
-                                    </a>
-                                </li>
-                                <li class="list-inline-item">
-                                    <a href="https://app.codacy.com/gh/Lonnie-Bruton/WhoseOnFirst/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade" target="_blank">
-                                        <img src="https://app.codacy.com/project/badge/Grade/b37c9c41b9644a9990be09eeda5bf014" alt="Codacy Badge" style="height: 20px; vertical-align: middle;">
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </footer>
         </div>
     </div>
 
@@ -684,7 +580,7 @@
                 alert('❌ Error: ' + error.message);
             } finally {
                 btn.disabled = false;
-                btn.innerHTML = '<i class="ti ti-calendar-plus me-2"></i>Create Schedule';
+                btn.innerHTML = '<i class="ti ti-calendar-plus me-2"></i>Generate Notification Schedule';
             }
         });
 
@@ -773,7 +669,7 @@
         }
 
         // Authentication guard - FIRST thing to execute on page load
-        window.addEventListener('DOMContentLoaded', async function() {
+        window.addEventListener('sidebarLoaded', async function() {
             try {
                 const response = await fetch(`${API_BASE_URL}/api/v1/auth/me`, {
                     credentials: 'include'
