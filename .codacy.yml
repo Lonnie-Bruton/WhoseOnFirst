@@ -1,0 +1,76 @@
+---
+# ============================================
+# Codacy Configuration - WhoseOnFirst
+# ============================================
+# Exclude test files, migrations, and build artifacts
+# from code quality analysis
+# ============================================
+
+# Global exclusions (applies to all engines)
+exclude_paths:
+  # Test directories and files
+  - "tests/**"
+  - "**/*_test.py"
+  - "**/test_*.py"
+
+  # Database migrations (auto-generated)
+  - "alembic/versions/**"
+
+  # Build artifacts and dependencies
+  - "venv/**"
+  - "**/__pycache__/**"
+  - "**/*.pyc"
+  - "**/*.pyo"
+  - "**/.pytest_cache/**"
+  - "**/.mypy_cache/**"
+
+  # Installer bundle (deployment artifact)
+  - "offline-installer/**"
+
+  # Documentation (markdown files)
+  - "docs/**/*.md"
+  - "*.md"
+
+  # Configuration files
+  - ".env*"
+  - "*.ini"
+  - "*.cfg"
+
+  # Frontend vendor files (if any added later)
+  - "frontend/vendor/**"
+  - "frontend/node_modules/**"
+
+# Engine-specific configurations
+engines:
+  # Duplication analysis
+  duplication:
+    enabled: true
+    exclude_paths:
+      - "tests/**"
+      - "alembic/versions/**"
+    config:
+      languages:
+        - "python"
+
+  # Complexity metrics
+  metrics:
+    enabled: true
+    exclude_paths:
+      - "tests/**"
+      - "alembic/versions/**"
+    config:
+      languages:
+        - "python"
+
+# Language-specific settings
+languages:
+  python:
+    enabled: true
+    extensions:
+      - ".py"
+  html:
+    enabled: true
+  css:
+    enabled: true
+  javascript:
+    enabled: true
