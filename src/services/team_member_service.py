@@ -22,22 +22,18 @@ from src.repositories.team_member_repository import TeamMemberRepository
 
 class TeamMemberServiceError(Exception):
     """Base exception for team member service errors."""
-    pass
 
 
 class DuplicatePhoneError(TeamMemberServiceError):
     """Raised when attempting to create member with duplicate phone number."""
-    pass
 
 
 class MemberNotFoundError(TeamMemberServiceError):
     """Raised when team member is not found."""
-    pass
 
 
 class InvalidPhoneError(TeamMemberServiceError):
     """Raised when phone number is invalid."""
-    pass
 
 
 class TeamMemberService:
@@ -214,7 +210,7 @@ class TeamMemberService:
             DuplicatePhoneError: If new phone number already exists
         """
         # Check member exists
-        member = self.get_by_id(member_id)
+        _ = self.get_by_id(member_id)
 
         # Validate phone number if being updated
         if "phone" in update_data:

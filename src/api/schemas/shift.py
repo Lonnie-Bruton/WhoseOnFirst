@@ -116,7 +116,6 @@ class ShiftCreate(ShiftBase):
 
     All fields from ShiftBase are required.
     """
-    pass
 
 
 class ShiftUpdate(BaseModel):

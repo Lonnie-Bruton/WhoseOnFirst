@@ -24,17 +24,14 @@ from src.models.schedule import Schedule
 
 class ScheduleServiceError(Exception):
     """Base exception for schedule service errors."""
-    pass
 
 
 class ScheduleAlreadyExistsError(ScheduleServiceError):
     """Raised when trying to generate schedule for dates that already exist."""
-    pass
 
 
 class InvalidDateRangeError(ScheduleServiceError):
     """Raised when date range is invalid (end < start)."""
-    pass
 
 
 class ScheduleService:
@@ -239,7 +236,7 @@ class ScheduleService:
             )
 
         # Delete future schedules from this date forward
-        deleted_count = self.schedule_repo.delete_future_schedules(from_date)
+        _ = self.schedule_repo.delete_future_schedules(from_date)
 
         # Generate new schedules (force=True since we just deleted)
         schedules = self.generate_schedule(from_date, weeks, force=True)

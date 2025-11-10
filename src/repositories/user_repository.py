@@ -47,7 +47,7 @@ class UserRepository(BaseRepository[User]):
         Returns:
             List of active users
         """
-        return self.db.query(User).filter(User.is_active == True).all()
+        return self.db.query(User).filter(User.is_active.is_(True)).all()
 
     def get_by_role(self, role: UserRole) -> list[User]:
         """

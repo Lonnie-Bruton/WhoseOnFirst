@@ -30,22 +30,18 @@ from src.repositories.shift_repository import ShiftRepository
 
 class RotationAlgorithmError(Exception):
     """Base exception for rotation algorithm errors."""
-    pass
 
 
 class InsufficientMembersError(RotationAlgorithmError):
     """Raised when there are not enough active team members for rotation."""
-    pass
 
 
 class NoShiftsConfiguredError(RotationAlgorithmError):
     """Raised when no shifts are configured in the system."""
-    pass
 
 
 class InvalidWeekCountError(RotationAlgorithmError):
     """Raised when the week count is invalid (< 1)."""
-    pass
 
 
 class RotationAlgorithmService:

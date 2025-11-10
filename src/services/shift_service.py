@@ -22,22 +22,18 @@ from src.repositories.shift_repository import ShiftRepository
 
 class ShiftServiceError(Exception):
     """Base exception for shift service errors."""
-    pass
 
 
 class DuplicateShiftNumberError(ShiftServiceError):
     """Raised when attempting to create shift with duplicate shift number."""
-    pass
 
 
 class ShiftNotFoundError(ShiftServiceError):
     """Raised when shift is not found."""
-    pass
 
 
 class InvalidShiftDataError(ShiftServiceError):
     """Raised when shift data is invalid."""
-    pass
 
 
 class ShiftService:
@@ -235,7 +231,7 @@ class ShiftService:
             DuplicateShiftNumberError: If new shift number already exists
         """
         # Check shift exists
-        shift = self.get_by_id(shift_id)
+        _ = self.get_by_id(shift_id)
 
         # Validate update data
         self._validate_shift_data(update_data, partial=True)

@@ -4,7 +4,7 @@ Settings API Routes
 FastAPI router for application settings management.
 """
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from src.api.dependencies import get_db

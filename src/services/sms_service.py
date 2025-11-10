@@ -23,17 +23,14 @@ logger = logging.getLogger(__name__)
 
 class SMSServiceError(Exception):
     """Base exception for SMS service errors."""
-    pass
 
 
 class TwilioConfigurationError(SMSServiceError):
     """Raised when Twilio configuration is invalid or missing."""
-    pass
 
 
 class SMSDeliveryError(SMSServiceError):
     """Raised when SMS delivery fails after all retry attempts."""
-    pass
 
 
 class SMSService:
@@ -203,7 +200,7 @@ class SMSService:
                 result = self._send_sms(to_phone, message_body)
 
                 # Log successful send
-                notification_log = self.notification_repo.log_notification_attempt(
+                _ = self.notification_repo.log_notification_attempt(
                     schedule_id=schedule.id,
                     status='sent',
                     twilio_sid=result['sid'],

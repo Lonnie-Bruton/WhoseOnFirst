@@ -49,7 +49,7 @@ class TeamMemberRepository(BaseRepository[TeamMember]):
         try:
             return (
                 self.db.query(self.model)
-                .filter(self.model.is_active == True)
+                .filter(self.model.is_active.is_(True))
                 .order_by(self.model.name)
                 .all()
             )
@@ -70,7 +70,7 @@ class TeamMemberRepository(BaseRepository[TeamMember]):
         try:
             return (
                 self.db.query(self.model)
-                .filter(self.model.is_active == False)
+                .filter(self.model.is_active.is_(False))
                 .order_by(self.model.name)
                 .all()
             )
@@ -128,7 +128,7 @@ class TeamMemberRepository(BaseRepository[TeamMember]):
             self.db.rollback()
             raise Exception(f"Database error checking phone existence: {str(e)}")
 
-    def deactivate(self, id: int) -> Optional[TeamMember]:
+    def deactivate(self, member_id: int) -> Optional[TeamMember]:
         """
         Deactivate a team member (soft delete).
 
@@ -136,7 +136,7 @@ class TeamMemberRepository(BaseRepository[TeamMember]):
         Preserves historical schedule data.
 
         Args:
-            id: Team member ID to deactivate
+            member_id: Team member ID to deactivate
 
         Returns:
             Updated TeamMember instance if found, None otherwise
@@ -145,7 +145,7 @@ class TeamMemberRepository(BaseRepository[TeamMember]):
             Exception: If database operation fails
         """
         try:
-            member = self.get_by_id(id)
+            member = self.get_by_id(member_id)
             if member:
                 member.is_active = False
                 self.db.commit()
@@ -155,14 +155,14 @@ class TeamMemberRepository(BaseRepository[TeamMember]):
             self.db.rollback()
             raise Exception(f"Database error deactivating team member: {str(e)}")
 
-    def activate(self, id: int) -> Optional[TeamMember]:
+    def activate(self, member_id: int) -> Optional[TeamMember]:
         """
         Activate a team member.
 
         Sets is_active to True to add them back to rotation.
 
         Args:
-            id: Team member ID to activate
+            member_id: Team member ID to activate
 
         Returns:
             Updated TeamMember instance if found, None otherwise
@@ -171,7 +171,7 @@ class TeamMemberRepository(BaseRepository[TeamMember]):
             Exception: If database operation fails
         """
         try:
-            member = self.get_by_id(id)
+            member = self.get_by_id(member_id)
             if member:
                 member.is_active = True
                 self.db.commit()
@@ -196,7 +196,7 @@ class TeamMemberRepository(BaseRepository[TeamMember]):
         try:
             return (
                 self.db.query(self.model)
-                .filter(self.model.is_active == True)
+                .filter(self.model.is_active.is_(True))
                 .count()
             )
         except SQLAlchemyError as e:
@@ -305,7 +305,7 @@ class TeamMemberRepository(BaseRepository[TeamMember]):
             query = self.db.query(self.model)
 
             if active_only:
-                query = query.filter(self.model.is_active == True)
+                query = query.filter(self.model.is_active.is_(True))
 
             # Order by rotation_order (nulls last), then by ID as fallback
             return query.order_by(

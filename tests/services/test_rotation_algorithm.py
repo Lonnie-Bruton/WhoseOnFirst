@@ -104,9 +104,9 @@ class TestRotationAlgorithmBasic:
         start_date = chicago_tz.localize(datetime(2025, 11, 4))
 
         # Get member IDs in sorted order (how algorithm sorts them)
-        members = TeamMemberRepository(db_session).get_active()
-        sorted_members = sorted(members, key=lambda m: m.id)
-        member_ids = [m.id for m in sorted_members]
+        # Algorithm uses get_ordered_for_rotation() which sorts by rotation_order, then ID
+        members = TeamMemberRepository(db_session).get_ordered_for_rotation(active_only=True)
+        member_ids = [m.id for m in members]
 
         # Get shift IDs in order
         shifts = ShiftRepository(db_session).get_all_ordered()

@@ -217,7 +217,7 @@ class ScheduleRepository(BaseRepository[Schedule]):
                 self.db.query(self.model)
                 .filter(
                     and_(
-                        self.model.notified == False,
+                        self.model.notified.is_(False),
                         self.model.start_datetime >= start_datetime,
                         self.model.start_datetime <= end_datetime
                     )

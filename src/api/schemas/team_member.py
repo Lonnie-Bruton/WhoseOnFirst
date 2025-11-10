@@ -77,7 +77,6 @@ class TeamMemberCreate(TeamMemberBase):
 
     All fields from TeamMemberBase are required.
     """
-    pass
 
 
 class TeamMemberUpdate(BaseModel):

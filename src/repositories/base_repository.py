@@ -38,18 +38,18 @@ class BaseRepository(Generic[ModelType]):
         self.db = db
         self.model = model
 
-    def get_by_id(self, id: int) -> Optional[ModelType]:
+    def get_by_id(self, item_id: int) -> Optional[ModelType]:
         """
         Retrieve a single record by ID.
 
         Args:
-            id: Primary key value
+            item_id: Primary key value
 
         Returns:
             Model instance if found, None otherwise
         """
         try:
-            return self.db.query(self.model).filter(self.model.id == id).first()
+            return self.db.query(self.model).filter(self.model.id == item_id).first()
         except SQLAlchemyError as e:
             self.db.rollback()
             raise Exception(f"Database error getting {self.model.__name__} by id: {str(e)}")
@@ -97,12 +97,12 @@ class BaseRepository(Generic[ModelType]):
             self.db.rollback()
             raise Exception(f"Database error creating {self.model.__name__}: {str(e)}")
 
-    def update(self, id: int, data: Dict[str, Any]) -> Optional[ModelType]:
+    def update(self, item_id: int, data: Dict[str, Any]) -> Optional[ModelType]:
         """
         Update an existing record.
 
         Args:
-            id: Primary key of record to update
+            item_id: Primary key of record to update
             data: Dictionary of field values to update
 
         Returns:
@@ -112,7 +112,7 @@ class BaseRepository(Generic[ModelType]):
             Exception: If database operation fails
         """
         try:
-            instance = self.get_by_id(id)
+            instance = self.get_by_id(item_id)
             if instance:
                 for key, value in data.items():
                     if hasattr(instance, key):
@@ -124,12 +124,12 @@ class BaseRepository(Generic[ModelType]):
             self.db.rollback()
             raise Exception(f"Database error updating {self.model.__name__}: {str(e)}")
 
-    def delete(self, id: int) -> bool:
+    def delete(self, item_id: int) -> bool:
         """
         Delete a record by ID.
 
         Args:
-            id: Primary key of record to delete
+            item_id: Primary key of record to delete
 
         Returns:
             True if record was deleted, False if not found
@@ -138,7 +138,7 @@ class BaseRepository(Generic[ModelType]):
             Exception: If database operation fails
         """
         try:
-            instance = self.get_by_id(id)
+            instance = self.get_by_id(item_id)
             if instance:
                 self.db.delete(instance)
                 self.db.commit()
@@ -161,18 +161,18 @@ class BaseRepository(Generic[ModelType]):
             self.db.rollback()
             raise Exception(f"Database error counting {self.model.__name__}: {str(e)}")
 
-    def exists(self, id: int) -> bool:
+    def exists(self, item_id: int) -> bool:
         """
         Check if a record exists by ID.
 
         Args:
-            id: Primary key to check
+            item_id: Primary key to check
 
         Returns:
             True if record exists, False otherwise
         """
         try:
-            return self.db.query(self.model).filter(self.model.id == id).count() > 0
+            return self.db.query(self.model).filter(self.model.id == item_id).count() > 0
         except SQLAlchemyError as e:
             self.db.rollback()
             raise Exception(f"Database error checking existence of {self.model.__name__}: {str(e)}")
