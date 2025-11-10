@@ -54,19 +54,22 @@ class BaseRepository(Generic[ModelType]):
             self.db.rollback()
             raise Exception(f"Database error getting {self.model.__name__} by id: {str(e)}")
 
-    def get_all(self, skip: int = 0, limit: int = 100) -> List[ModelType]:
+    def get_all(self, skip: int = 0, limit: Optional[int] = None) -> List[ModelType]:
         """
         Retrieve all records with optional pagination.
 
         Args:
             skip: Number of records to skip (for pagination)
-            limit: Maximum number of records to return
+            limit: Maximum number of records to return (None for unlimited)
 
         Returns:
             List of model instances
         """
         try:
-            return self.db.query(self.model).offset(skip).limit(limit).all()
+            query = self.db.query(self.model).offset(skip)
+            if limit is not None:
+                query = query.limit(limit)
+            return query.all()
         except SQLAlchemyError as e:
             self.db.rollback()
             raise Exception(f"Database error getting all {self.model.__name__}: {str(e)}")

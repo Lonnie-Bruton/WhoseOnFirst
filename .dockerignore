@@ -1,0 +1,88 @@
+# ============================================
+# WhoseOnFirst - Docker Build Ignore
+# ============================================
+# Files and directories to exclude from Docker build context
+# This reduces build time and image size
+# ============================================
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv
+
+# Database files (should be in volume, not in image)
+data/
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Documentation (not needed in runtime image)
+docs/
+*.md
+!README.md
+
+# Testing
+tests/
+pytest.ini
+.coveragerc
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+
+# Environment files (should be provided at runtime)
+.env
+.env.example
+.env.local
+.env.*.local
+
+# Logs
+*.log
+logs/
+
+# Claude Code
+.claude/
+
+# Docker files (no need to include these in the image)
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Other
+*.tar.gz
+*.zip
+.cache/
+tmp/
+temp/

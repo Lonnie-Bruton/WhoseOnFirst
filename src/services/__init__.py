@@ -47,6 +47,9 @@ from .sms_service import (
     TwilioConfigurationError,
     SMSDeliveryError,
 )
+from .settings_service import (
+    SettingsService,
+)
 
 # Export all services and exceptions
 __all__ = [
@@ -78,4 +81,6 @@ __all__ = [
     "SMSServiceError",
     "TwilioConfigurationError",
     "SMSDeliveryError",
+    # Settings Service
+    "SettingsService",
 ]

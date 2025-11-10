@@ -1,0 +1,86 @@
+# ============================================
+# WhoseOnFirst - Mac Development Configuration
+# ============================================
+# Docker Compose configuration for local Mac development
+# Avoids port conflicts and macOS SQLite corruption issues
+# Version: 1.0.0
+# ============================================
+
+services:
+  whoseonfirst:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: whoseonfirst:dev
+    container_name: whoseonfirst-dev
+    restart: unless-stopped
+
+    # Port mapping - Use 8900 externally to avoid conflict with uvicorn dev server
+    ports:
+      - "8900:8000"  # External port 8900 -> Internal port 8000
+
+    # Volumes for development
+    volumes:
+      # CRITICAL: Use named volume for database to prevent macOS SQLite corruption
+      # macOS fcntl locking WILL corrupt SQLite on Docker restart if bind-mounted
+      - whoseonfirst-dev-db:/app/data
+
+      # Mount source code for development (optional - enable for hot reload)
+      # - ./src:/app/src:ro
+      # - ./frontend:/app/frontend:ro
+
+    # Environment variables
+    environment:
+      - DATABASE_URL=sqlite:///./data/whoseonfirst.db
+      - HOST=0.0.0.0
+      - PORT=8000
+      - LOG_LEVEL=DEBUG  # More verbose logging for development
+
+      # Twilio configuration (from .env file)
+      - TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID}
+      - TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN}
+      - TWILIO_PHONE_NUMBER=${TWILIO_PHONE_NUMBER}
+
+      # SMS notification schedule
+      - NOTIFICATION_TIMEZONE=${NOTIFICATION_TIMEZONE:-America/Chicago}
+      - NOTIFICATION_HOUR=${NOTIFICATION_HOUR:-8}
+      - NOTIFICATION_MINUTE=${NOTIFICATION_MINUTE:-0}
+
+      # Security
+      - SECRET_KEY=${SECRET_KEY:-dev-secret-key-change-in-production}
+
+    # Load environment from .env file
+    env_file:
+      - .env
+
+    # Health check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    # Network
+    networks:
+      - whoseonfirst-dev-network
+
+    # Grace period for clean shutdown
+    stop_grace_period: 30s
+
+# Named volume for database (prevents macOS corruption)
+volumes:
+  whoseonfirst-dev-db:
+    driver: local
+
+# Network definition
+networks:
+  whoseonfirst-dev-network:
+    driver: bridge

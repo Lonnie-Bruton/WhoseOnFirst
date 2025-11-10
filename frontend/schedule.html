@@ -235,6 +235,18 @@
                                         </div>
 
                                         <div class="form-check form-switch mb-3">
+                                            <input class="form-check-input" type="checkbox" id="autoRenewEnabled" checked>
+                                            <label class="form-check-label" for="autoRenewEnabled">
+                                                <strong>Auto-renew schedule</strong>
+                                                <small class="text-muted">(Automatically extend when running low)</small>
+                                            </label>
+                                            <small class="form-hint d-block mt-1">
+                                                <i class="ti ti-info-circle"></i>
+                                                System will automatically generate new schedules when less than 4 weeks remain
+                                            </small>
+                                        </div>
+
+                                        <div class="form-check form-switch mb-3">
                                             <input class="form-check-input" type="checkbox" id="forceRegenerate">
                                             <label class="form-check-label" for="forceRegenerate">
                                                 Force regenerate (delete existing schedules and create new ones)
@@ -614,6 +626,7 @@
             const startDate = document.getElementById('startDate').value;
             const weeks = parseInt(document.getElementById('weeks').value);
             const force = document.getElementById('forceRegenerate').checked;
+            const autoRenewEnabled = document.getElementById('autoRenewEnabled').checked;
             const btn = document.getElementById('createScheduleBtn');
 
             // Convert local date to ISO datetime with CST timezone
@@ -639,6 +652,21 @@
 
                 if (response.ok) {
                     const result = await response.json();
+
+                    // Save auto-renewal setting
+                    try {
+                        await fetch(`${API_BASE}/settings/auto-renew`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            credentials: 'include',
+                            body: JSON.stringify({
+                                enabled: autoRenewEnabled
+                            })
+                        });
+                    } catch (settingsError) {
+                        console.error('Failed to save auto-renewal setting:', settingsError);
+                    }
+
                     alert(`✅ Successfully created ${result.length} schedule assignments!`);
                     setTimeout(() => {
                         window.location.reload();
@@ -713,11 +741,30 @@
         });
 
         // Main initialization function
+        // Load auto-renewal setting
+        async function loadAutoRenewSetting() {
+            try {
+                const response = await fetch(`${API_BASE}/settings/auto-renew`, {
+                    credentials: 'include'
+                });
+
+                if (response.ok) {
+                    const config = await response.json();
+                    document.getElementById('autoRenewEnabled').checked = config.enabled;
+                }
+            } catch (error) {
+                console.error('Failed to load auto-renewal setting:', error);
+                // Default to enabled if fetch fails
+                document.getElementById('autoRenewEnabled').checked = true;
+            }
+        }
+
         async function loadSchedulesData() {
             setDefaultStartDate();
             await loadTeamMembers();
             await loadShifts();
             await loadScheduleStatus();
+            await loadAutoRenewSetting();
         }
 
         // Authentication guard - FIRST thing to execute on page load

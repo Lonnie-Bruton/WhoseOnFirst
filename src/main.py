@@ -15,7 +15,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 
 # Import routers
-from src.api.routes import team_members, shifts, schedules, notifications, auth
+from src.api.routes import team_members, shifts, schedules, notifications, auth, settings
 from src.scheduler import get_schedule_manager
 
 
@@ -152,6 +152,11 @@ app.include_router(
     notifications.router,
     prefix="/api/v1/notifications",
     tags=["notifications"]
+)
+app.include_router(
+    settings.router,
+    prefix="/api/v1/settings",
+    tags=["settings"]
 )
 
 # Mount static files (frontend) - MUST be after API routes to avoid conflicts

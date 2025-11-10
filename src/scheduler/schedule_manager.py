@@ -25,6 +25,7 @@ from sqlalchemy.orm import Session
 from src.models.database import SessionLocal
 from src.services.schedule_service import ScheduleService
 from src.services.sms_service import SMSService
+from src.services.settings_service import SettingsService
 from src.models.schedule import Schedule
 
 
@@ -90,6 +91,28 @@ class ScheduleManager:
         )
         logger.info("Added daily notification job: 8:00 AM %s", CHICAGO_TZ)
 
+    def add_auto_renewal_job(self) -> None:
+        """
+        Add the auto-renewal check job to the scheduler.
+
+        Configures a CronTrigger to run check_auto_renewal()
+        every day at 2:00 AM Chicago time.
+
+        The job will:
+        - Check if auto-renewal is enabled
+        - Find the furthest schedule date
+        - If less than threshold weeks remain, generate new schedules
+        - Log auto-renewal events
+        """
+        self.scheduler.add_job(
+            func=check_auto_renewal,
+            trigger=CronTrigger(hour=2, minute=0, timezone=CHICAGO_TZ),
+            id='auto_renewal_check',
+            name='Auto-Renewal Schedule Check',
+            replace_existing=True
+        )
+        logger.info("Added auto-renewal job: 2:00 AM %s", CHICAGO_TZ)
+
     def start(self) -> None:
         """
         Start the scheduler.
@@ -104,6 +127,7 @@ class ScheduleManager:
             return
 
         self.add_daily_notification_job()
+        self.add_auto_renewal_job()
         self.scheduler.start()
         self.is_running = True
         logger.info("Scheduler started successfully")
@@ -287,3 +311,106 @@ def trigger_notifications_manually() -> dict:
             'message': str(e),
             'timestamp': datetime.now(CHICAGO_TZ).isoformat()
         }
+
+
+def check_auto_renewal() -> None:
+    """
+    Check if schedule auto-renewal is needed and generate new schedules.
+
+    This function is executed by APScheduler every day at 2:00 AM CST.
+
+    Process:
+    1. Check if auto-renewal is enabled in settings
+    2. Find the furthest (maximum) schedule end date
+    3. Calculate weeks remaining until that date
+    4. If weeks remaining < threshold, generate new schedules
+    5. Log the auto-renewal event
+
+    Note: This function runs in a background thread, so it must manage
+    its own database session.
+    """
+    logger.info("Starting auto-renewal check job")
+
+    with get_db_session() as db:
+        try:
+            # Check if auto-renewal is enabled
+            settings_service = SettingsService(db)
+
+            if not settings_service.is_auto_renew_enabled():
+                logger.info("Auto-renewal is disabled, skipping check")
+                return
+
+            threshold_weeks = settings_service.get_auto_renew_threshold_weeks()
+            renew_weeks = settings_service.get_auto_renew_weeks()
+
+            logger.info(
+                "Auto-renewal enabled: threshold=%d weeks, renew=%d weeks",
+                threshold_weeks,
+                renew_weeks
+            )
+
+            # Get schedule service to find furthest date
+            schedule_service = ScheduleService(db)
+
+            # Get all schedules and find the maximum end date
+            all_schedules = schedule_service.schedule_repo.get_all()
+
+            if not all_schedules:
+                logger.warning("No schedules found, cannot determine auto-renewal need")
+                return
+
+            # Find the furthest end date
+            furthest_date = max(schedule.end_datetime for schedule in all_schedules)
+
+            # Calculate weeks until furthest date
+            now = datetime.now(CHICAGO_TZ)
+            days_remaining = (furthest_date.replace(tzinfo=None) - now.replace(tzinfo=None)).days
+            weeks_remaining = days_remaining / 7.0
+
+            logger.info(
+                "Current schedule extends to %s (%d days / %.1f weeks remaining)",
+                furthest_date.date(),
+                days_remaining,
+                weeks_remaining
+            )
+
+            # Check if renewal is needed
+            if weeks_remaining < threshold_weeks:
+                logger.info(
+                    "Auto-renewal triggered: %.1f weeks < %d week threshold",
+                    weeks_remaining,
+                    threshold_weeks
+                )
+
+                # Generate new schedules starting from furthest date
+                try:
+                    new_schedules = schedule_service.generate_schedule(
+                        start_date=furthest_date,
+                        weeks=renew_weeks,
+                        force=False  # Don't overwrite existing
+                    )
+
+                    logger.info(
+                        "Auto-renewal successful: generated %d new schedule assignments for %d weeks",
+                        len(new_schedules),
+                        renew_weeks
+                    )
+
+                except Exception as gen_error:
+                    logger.error(
+                        "Auto-renewal generation failed: %s",
+                        str(gen_error),
+                        exc_info=True
+                    )
+                    raise
+
+            else:
+                logger.info(
+                    "Auto-renewal not needed: %.1f weeks >= %d week threshold",
+                    weeks_remaining,
+                    threshold_weeks
+                )
+
+        except Exception as e:
+            logger.error("Error in auto-renewal check job: %s", str(e), exc_info=True)
+            raise

@@ -123,7 +123,9 @@ uvicorn src.main:app --host 0.0.0.0 --port 8000
 # API Docs: http://localhost:8000/docs
 ```
 
-### Docker Deployment (Coming v1.1.0)
+### Docker Deployment
+
+#### Using Docker
 
 ```bash
 # Build image
@@ -138,6 +140,75 @@ docker run -d --name whoseonfirst \
 
 # View logs
 docker logs -f whoseonfirst
+
+# Stop container
+docker stop whoseonfirst
+
+# Remove container
+docker rm whoseonfirst
+```
+
+#### Using Docker Compose (Recommended)
+
+```bash
+# Start application (builds image if needed)
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# Stop application
+docker-compose down
+
+# Rebuild and restart
+docker-compose up -d --build
+```
+
+#### Using Podman (RHEL/CentOS)
+
+```bash
+# Build image
+podman build -t whoseonfirst:1.0.0 .
+
+# Run container
+podman run -d --name whoseonfirst \
+  -p 8000:8000 \
+  -v $(pwd)/data:/app/data:Z \
+  --env-file .env \
+  whoseonfirst:1.0.0
+
+# View logs
+podman logs -f whoseonfirst
+
+# Stop and remove
+podman stop whoseonfirst
+podman rm whoseonfirst
+```
+
+**Note:** The `:Z` flag on the volume mount is required for SELinux systems (RHEL/CentOS) to allow the container to write to the mounted directory.
+
+#### Docker Troubleshooting
+
+**TLS Certificate Errors:**
+If you encounter TLS certificate errors when pulling images, this typically indicates a proxy or network configuration issue:
+```
+ERROR: tls: failed to verify certificate
+```
+Solutions:
+- Configure Docker to use your corporate proxy settings
+- Add necessary CA certificates to Docker's trust store
+- Use an offline base image if deploying to air-gapped environments
+
+**SELinux Permission Denied:**
+If you see permission errors on RHEL/CentOS, ensure you use the `:Z` flag on volume mounts:
+```bash
+-v $(pwd)/data:/app/data:Z  # Note the :Z flag
+```
+
+**Port Already in Use:**
+If port 8000 is already in use, you can map to a different port:
+```bash
+docker run -p 8080:8000 ...  # Maps host port 8080 to container port 8000
 ```
 
 ---
@@ -206,8 +277,8 @@ curl -X POST http://localhost:8000/api/v1/schedules/notifications/trigger
 - [x] Help & Setup page with Twilio guide
 - [x] **v1.0.0 RELEASE** 🎉
 
-### 🚧 Phase 2: Deployment & Enhancement (Next - 1-2 weeks)
-- [ ] Docker/Podman containerization
+### 🚧 Phase 2: Deployment & Enhancement (In Progress)
+- [x] Docker/Podman containerization
 - [ ] Offline installer for air-gapped RHEL 10
 - [ ] Production deployment validation
 - [ ] Twilio 10DLC verification completion

@@ -48,6 +48,24 @@ WhoseOnFirst v1.0.0 is a fully functional on-call rotation and SMS notification 
   - Serves frontend from `frontend/` directory
   - No need for separate static file server on port 8080
 
+- **Docker Containerization** - Production-ready container deployment (COMPLETE ✅)
+  - Multi-stage Dockerfile for optimized image size (385MB final image)
+  - Builder stage with gcc/g++/libffi for compiling Python dependencies
+  - Runtime stage with minimal dependencies (curl for health checks)
+  - Non-root user (`whoseonfirst`) for enhanced container security
+  - Automatic database migrations on container startup (`alembic upgrade head`)
+  - Health check integration using `/health` endpoint
+  - Docker Compose configurations:
+    - `docker-compose.yml` - Production deployment (port 8000)
+    - `docker-compose.dev.yml` - Mac development (port 8900, named volume for SQLite)
+  - `.dockerignore` for optimized build context (excludes venv, tests, data)
+  - Environment variable configuration via `.env` file
+  - Named volume for persistent database storage (prevents macOS corruption)
+  - Logging configuration with 10MB rotation, 3 file retention
+  - Podman compatibility for RHEL/CentOS deployments (SELinux `:Z` flag documented)
+  - Fixed Docker Hub authentication requirement (free tier requires login)
+  - README updated with complete Docker deployment instructions
+
 ### Fixed
 
 - **Cross-Origin Cookie Authentication Bug** - Critical same-origin policy fix (CRITICAL FIX ✅)

@@ -1,0 +1,62 @@
+# ============================================
+# WhoseOnFirst - Docker Compose Configuration
+# ============================================
+# Easy deployment with docker-compose or podman-compose
+# Version: 1.0.0
+# ============================================
+
+services:
+  whoseonfirst:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: whoseonfirst:1.0.0
+    container_name: whoseonfirst
+    restart: unless-stopped
+
+    # Port mapping
+    ports:
+      - "8000:8000"
+
+    # Volume for persistent database
+    volumes:
+      - ./data:/app/data
+
+    # Environment variables
+    # IMPORTANT: Create a .env file with your Twilio credentials
+    # See .env.example for template
+    environment:
+      - DATABASE_URL=sqlite:///./data/whoseonfirst.db
+      - HOST=0.0.0.0
+      - PORT=8000
+      - LOG_LEVEL=INFO
+      # Twilio configuration (from .env file)
+      - TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID}
+      - TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN}
+      - TWILIO_PHONE_NUMBER=${TWILIO_PHONE_NUMBER}
+      # SMS notification schedule
+      - NOTIFICATION_TIMEZONE=${NOTIFICATION_TIMEZONE:-America/Chicago}
+      - NOTIFICATION_HOUR=${NOTIFICATION_HOUR:-8}
+      - NOTIFICATION_MINUTE=${NOTIFICATION_MINUTE:-0}
+      # Security
+      - SECRET_KEY=${SECRET_KEY:-change-this-in-production}
+
+    # Health check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+# Volume definition (optional, for named volumes)
+volumes:
+  whoseonfirst-data:
+    driver: local
