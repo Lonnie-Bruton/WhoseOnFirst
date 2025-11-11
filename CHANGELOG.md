@@ -15,6 +15,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+## [1.0.3] - 2025-11-10
+
+### Fixed
+
+- **API Schema Bug** - Notification recipient data not visible in frontend despite v1.0.2 database fix
+  - **Problem**: Frontend notification history showed "Unknown" recipients even after v1.0.2 fix
+  - **Root Cause**: `NotificationLogResponse` Pydantic schema missing `recipient_name` and `recipient_phone` fields
+  - **Impact**: Database correctly stored snapshot data, but FastAPI serialization filtered it out before sending to frontend
+  - **Solution**: Added `recipient_name` and `recipient_phone` to API response schema (`src/api/schemas/notification.py:21-22`)
+  - **Also Fixed**: Made `schedule_id` Optional in schema to match nullable FK constraint from v1.0.2
+  - **Lesson**: When adding database columns, must update ALL three layers: DB schema → ORM model → API contract
+
+---
+
 ---
 
 ## [1.0.2] - 2025-11-10
@@ -436,3 +450,4 @@ These limitations are intentional design choices for the MVP. Future enhancement
 [1.0.0]: https://github.com/Lonnie-Bruton/WhoseOnFirst/compare/v0.1.0...v1.0.0
 [0.1.0]: https://github.com/Lonnie-Bruton/WhoseOnFirst/compare/v0.0.1...v0.1.0
 [0.0.1]: https://github.com/Lonnie-Bruton/WhoseOnFirst/releases/tag/v0.0.1
+[1.0.3]: https://github.com/Lonnie-Bruton/WhoseOnFirst/compare/v1.0.2...v1.0.3

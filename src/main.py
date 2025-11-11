@@ -70,7 +70,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="WhoseOnFirst API",
     description="Automated on-call rotation and SMS notification system for technical teams",
-    version="1.0.2",
+    version="1.0.3",
     docs_url="/docs",
     redoc_url="/redoc",
     openapi_url="/openapi.json",
@@ -104,7 +104,7 @@ async def api_info():
     """
     return {
         "name": "WhoseOnFirst API",
-        "version": "1.0.2",
+        "version": "1.0.3",
         "description": "On-call rotation and SMS notification system",
         "docs": "/docs",
         "redoc": "/redoc"

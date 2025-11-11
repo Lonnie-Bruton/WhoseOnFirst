@@ -13,11 +13,13 @@ class NotificationLogResponse(BaseModel):
     """Response schema for notification log entries."""
 
     id: int = Field(..., description="Notification log ID")
-    schedule_id: int = Field(..., description="Associated schedule ID")
+    schedule_id: Optional[int] = Field(None, description="Associated schedule ID (may be null if schedule deleted)")
     sent_at: datetime = Field(..., description="Timestamp when notification was sent")
     status: str = Field(..., description="Notification status (sent, failed, delivered, etc.)")
     twilio_sid: Optional[str] = Field(None, description="Twilio message SID")
     error_message: Optional[str] = Field(None, description="Error details if failed")
+    recipient_name: Optional[str] = Field(None, description="Recipient name at time of notification (snapshot)")
+    recipient_phone: Optional[str] = Field(None, description="Recipient phone at time of notification (snapshot)")
 
     class Config:
         from_attributes = True

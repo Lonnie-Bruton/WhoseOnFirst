@@ -4,7 +4,7 @@
 
 [![Python Version](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115%2B-009688.svg)](https://fastapi.tiangolo.com/)
-[![Version](https://img.shields.io/badge/version-1.0.2-success.svg)](https://github.com/Lonnie-Bruton/WhoseOnFirst/blob/main/CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.0.3-success.svg)](https://github.com/Lonnie-Bruton/WhoseOnFirst/blob/main/CHANGELOG.md)
 [![Status](https://img.shields.io/badge/status-production%20ready-brightgreen.svg)](CHANGELOG.md)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/b37c9c41b9644a9990be09eeda5bf014)](https://app.codacy.com/gh/Lonnie-Bruton/WhoseOnFirst/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 
@@ -25,7 +25,7 @@ WhoseOnFirst is a production-ready on-call rotation and SMS notification system 
 
 ## 📋 Project Status
 
-**Current Version:** 1.0.2 🎉
+**Current Version:** 1.0.3 🎉
 **Status:** Production Ready - MVP Complete
 **Release Date:** November 9, 2025
 **Next Phase:** Docker containerization for RHEL deployment
@@ -154,4 +154,4 @@ See [CHANGELOG.md](CHANGELOG.md#100---2025-11-09) for complete v1.0.0 details.
 ---
 
 *Last Updated: November 9, 2025*
-*Version: 1.0.2 - Production Ready*
+*Version: 1.0.3 - Production Ready*
