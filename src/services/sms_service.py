@@ -474,6 +474,126 @@ class SMSService:
 
         return summary
 
+    def send_manual_notification(
+        self,
+        team_member,
+        message: str
+    ) -> Dict[str, Any]:
+        """
+        Send a manual SMS notification to a team member.
+
+        This method bypasses the schedule system entirely and sends
+        a custom message directly to a team member. Logs the notification
+        with schedule_id=NULL to indicate a manual send.
+
+        Args:
+            team_member: TeamMember instance to send notification to
+            message: Custom SMS message text
+
+        Returns:
+            Dictionary with send result:
+            {
+                "success": bool,
+                "notification_id": int or None,
+                "twilio_sid": str or None,
+                "status": str (sent, failed),
+                "message": str,
+                "error": str or None
+            }
+
+        Example:
+            >>> service = SMSService(db)
+            >>> result = service.send_manual_notification(
+            ...     team_member=member,
+            ...     message="Hi {name}, this is a test."
+            ... )
+            >>> result['success']
+            True
+        """
+        logger.info(
+            f"Sending manual notification to {self._sanitize_phone(team_member.phone)} "
+            f"({team_member.name})"
+        )
+
+        try:
+            # Send SMS via Twilio
+            twilio_result = self._send_sms(team_member.phone, message)
+
+            # Log manual notification (schedule_id=NULL)
+            log_entry = self.notification_repo.log_notification_attempt(
+                schedule_id=None,  # NULL for manual notifications
+                status='sent',
+                twilio_sid=twilio_result['sid'],
+                error_message=None,
+                recipient_name=team_member.name,
+                recipient_phone=team_member.phone
+            )
+
+            logger.info(
+                f"Manual SMS sent successfully to {self._sanitize_phone(team_member.phone)} "
+                f"({team_member.name}, SID: {twilio_result['sid']})"
+            )
+
+            return {
+                "success": True,
+                "notification_id": log_entry.id,
+                "twilio_sid": twilio_result['sid'],
+                "status": "sent",
+                "message": f"SMS sent successfully to {team_member.name}",
+                "error": None
+            }
+
+        except TwilioRestException as e:
+            error_msg = f"Twilio error sending manual notification: {str(e)}"
+            logger.error(error_msg)
+
+            # Log failed manual notification
+            log_entry = self.notification_repo.log_notification_attempt(
+                schedule_id=None,  # NULL for manual notifications
+                status='failed',
+                twilio_sid=None,
+                error_message=error_msg,
+                recipient_name=team_member.name,
+                recipient_phone=team_member.phone
+            )
+
+            return {
+                "success": False,
+                "notification_id": log_entry.id,
+                "twilio_sid": None,
+                "status": "failed",
+                "message": f"Failed to send SMS to {team_member.name}",
+                "error": str(e)
+            }
+
+        except Exception as e:
+            error_msg = f"Unexpected error sending manual notification: {str(e)}"
+            logger.error(error_msg)
+
+            # Log failed manual notification
+            try:
+                log_entry = self.notification_repo.log_notification_attempt(
+                    schedule_id=None,
+                    status='failed',
+                    twilio_sid=None,
+                    error_message=error_msg,
+                    recipient_name=team_member.name,
+                    recipient_phone=team_member.phone
+                )
+                notification_id = log_entry.id
+            except Exception as log_error:
+                logger.error(f"Failed to log manual notification attempt: {str(log_error)}")
+                notification_id = None
+
+            return {
+                "success": False,
+                "notification_id": notification_id,
+                "twilio_sid": None,
+                "status": "failed",
+                "message": f"Failed to send SMS to {team_member.name}",
+                "error": str(e)
+            }
+
     def get_delivery_status(self, twilio_sid: str) -> Optional[Dict[str, Any]]:
         """
         Query Twilio for message delivery status.

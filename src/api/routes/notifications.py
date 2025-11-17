@@ -13,10 +13,13 @@ import os
 from src.api.dependencies import get_db
 from src.api.schemas.notification import (
     NotificationLogResponse,
-    NotificationStatsResponse
+    NotificationStatsResponse,
+    ManualNotificationRequest,
+    ManualNotificationResponse
 )
 from src.repositories.notification_log_repository import NotificationLogRepository
-from src.api.routes.auth import require_auth
+from src.repositories.team_member_repository import TeamMemberRepository
+from src.api.routes.auth import require_auth, require_admin
 from src.services.sms_service import SMSService
 
 
@@ -253,4 +256,113 @@ def get_notification_message_from_twilio(
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail=f"Failed to fetch message from Twilio: {str(e)}"
+        )
+
+
+@router.post("/send-manual", response_model=ManualNotificationResponse)
+def send_manual_notification(
+    request: ManualNotificationRequest,
+    db: Session = Depends(get_db),
+    current_user = Depends(require_admin)
+) -> ManualNotificationResponse:
+    """
+    Send a manual SMS notification to a specific team member.
+
+    This endpoint allows administrators to send custom SMS messages
+    to any active team member, bypassing the schedule system entirely.
+    Useful for testing, emergency notifications, or ad-hoc communications.
+
+    **Features:**
+    - Send to any active team member
+    - Fully customizable message text
+    - No schedule dependency
+    - Logs as manual notification (schedule_id = NULL)
+    - Supports message templates with {name} placeholder
+
+    **Use Cases:**
+    - Testing SMS delivery
+    - Emergency notifications
+    - Manual schedule changes
+    - System announcements
+
+    Args:
+        request: Manual notification request (team_member_id, message)
+        db: Database session (injected)
+        current_user: Authenticated admin user (injected)
+
+    Returns:
+        ManualNotificationResponse with send result and details
+
+    Raises:
+        HTTPException 400: Invalid team member or validation error
+        HTTPException 404: Team member not found
+        HTTPException 502: Twilio API error
+
+    Example:
+        POST /api/v1/notifications/send-manual
+        {
+            "team_member_id": 1,
+            "message": "WhoseOnFirst Alert\\n\\nHi {name}, this is a test notification."
+        }
+    """
+    # Get team member
+    team_repo = TeamMemberRepository(db)
+    member = team_repo.get_by_id(request.team_member_id)
+
+    if not member:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Team member not found: {request.team_member_id}"
+        )
+
+    if not member.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Team member {member.name} is not active"
+        )
+
+    # Replace {name} placeholder in message
+    message_text = request.message.replace("{name}", member.name)
+
+    # Send manual notification
+    sms_service = SMSService(db)
+
+    try:
+        result = sms_service.send_manual_notification(
+            team_member=member,
+            message=message_text
+        )
+
+        # Mask phone number for response
+        masked_phone = member.phone[:-4] + 'XXXX' if len(member.phone) >= 4 else member.phone
+
+        if result['success']:
+            return ManualNotificationResponse(
+                success=True,
+                notification_id=result.get('notification_id'),
+                twilio_sid=result.get('twilio_sid'),
+                status=result['status'],
+                message=f"SMS sent successfully to {member.name}",
+                recipient_name=member.name,
+                recipient_phone=masked_phone,
+                sent_at=datetime.now(),
+                error=None
+            )
+        else:
+            return ManualNotificationResponse(
+                success=False,
+                notification_id=result.get('notification_id'),
+                twilio_sid=None,
+                status=result['status'],
+                message=f"Failed to send SMS to {member.name}",
+                recipient_name=member.name,
+                recipient_phone=masked_phone,
+                sent_at=None,
+                error=result.get('error')
+            )
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Failed to send manual notification: {str(e)}"
         )

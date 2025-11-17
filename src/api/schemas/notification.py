@@ -4,9 +4,44 @@ Notification API Schemas
 Pydantic models for notification log requests and responses.
 """
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from datetime import datetime
 from typing import Optional
+
+
+class ManualNotificationRequest(BaseModel):
+    """Request schema for sending manual notifications."""
+
+    team_member_id: int = Field(..., description="Team member ID to send notification to", gt=0)
+    message: str = Field(
+        ...,
+        description="SMS message text",
+        min_length=1,
+        max_length=1600,
+        examples=["WhoseOnFirst Alert\n\nHi {name}, manual test notification."]
+    )
+
+    @field_validator('message')
+    @classmethod
+    def validate_message(cls, v: str) -> str:
+        """Validate message is not empty or whitespace only."""
+        if not v or not v.strip():
+            raise ValueError("Message cannot be empty or whitespace only")
+        return v.strip()
+
+
+class ManualNotificationResponse(BaseModel):
+    """Response schema for manual notification send."""
+
+    success: bool = Field(..., description="Whether SMS was sent successfully")
+    notification_id: Optional[int] = Field(None, description="Notification log ID")
+    twilio_sid: Optional[str] = Field(None, description="Twilio message SID")
+    status: str = Field(..., description="Send status (sent, failed)")
+    message: str = Field(..., description="Human-readable result message")
+    recipient_name: str = Field(..., description="Recipient name")
+    recipient_phone: str = Field(..., description="Recipient phone (masked)")
+    sent_at: Optional[datetime] = Field(None, description="Timestamp when sent")
+    error: Optional[str] = Field(None, description="Error details if failed")
 
 
 class NotificationLogResponse(BaseModel):
