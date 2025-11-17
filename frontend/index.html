@@ -224,28 +224,36 @@
                                         </div>
                                     </div>
 
-                                    <div class="row">
+                                    <div class="row" id="onCallRow">
                                         <!-- Primary On-Call -->
-                                        <div class="col-md-4">
+                                        <div class="col-md-3" id="primaryColumn">
                                             <div class="mb-1"><strong class="text-success">Primary</strong></div>
                                             <div id="primaryOnCall" class="mb-2">
                                                 <span class="text-muted">Loading...</span>
                                             </div>
                                         </div>
 
-                                        <!-- Secondary (Backup) -->
-                                        <div class="col-md-4">
-                                            <div class="mb-1"><strong class="text-blue">Secondary</strong></div>
-                                            <div id="secondaryOnCall" class="mb-2">
+                                        <!-- Backup On-Call -->
+                                        <div class="col-md-3" id="backupColumn">
+                                            <div class="mb-1"><strong class="text-blue">Backup</strong></div>
+                                            <div id="backupOnCall" class="mb-2">
                                                 <span class="text-muted">Loading...</span>
                                             </div>
                                         </div>
 
-                                        <!-- Tertiary (Escalation) -->
-                                        <div class="col-md-4">
-                                            <div class="mb-1"><strong class="text-orange">Tertiary</strong></div>
-                                            <div id="tertiaryOnCall" class="mb-2">
-                                                <span class="text-muted">Loading...</span>
+                                        <!-- 1st Escalation (Fixed) -->
+                                        <div class="col-md-3" id="escalation1Column">
+                                            <div class="mb-1"><strong class="text-orange">1st Escalation</strong></div>
+                                            <div id="firstEscalationOnCall" class="mb-2">
+                                                <span class="text-muted">Not configured</span>
+                                            </div>
+                                        </div>
+
+                                        <!-- 2nd Escalation (Fixed) -->
+                                        <div class="col-md-3" id="escalation2Column">
+                                            <div class="mb-1"><strong class="text-purple">2nd Escalation</strong></div>
+                                            <div id="secondEscalationOnCall" class="mb-2">
+                                                <span class="text-muted">Not configured</span>
                                             </div>
                                         </div>
                                     </div>
@@ -444,16 +452,14 @@
             // If no one is currently on call, show N/A for all
             if (!primarySchedule) {
                 document.getElementById('primaryOnCall').innerHTML = '<span class="text-muted">Who\'s on first? Nobody yet - schedule hasn\'t started</span>';
-                document.getElementById('secondaryOnCall').innerHTML = '<span class="text-muted">What\'s on second? Not yet!</span>';
-                document.getElementById('tertiaryOnCall').innerHTML = '<span class="text-muted">I Don\'t Know\'s on third...</span>';
+                document.getElementById('backupOnCall').innerHTML = '<span class="text-muted">What\'s on second? Not yet!</span>';
+                loadEscalationContacts(); // Still load escalation even if no one on call
                 return;
             }
 
-            // Calculate secondary and tertiary based on rotation_order (not schedule time)
-            // Secondary = person before primary in rotation order (backup)
-            // Tertiary = person 2 positions before primary in rotation order (escalation)
-            let secondaryMember = null;
-            let tertiaryMember = null;
+            // Calculate backup based on rotation_order (not schedule time)
+            // Backup = person before primary in rotation order
+            let backupMember = null;
 
             const primaryMember = members.find(m => m.id === primarySchedule.team_member_id);
 
@@ -466,23 +472,19 @@
                 const teamSize = activeMembers.length;
                 const primaryRotationIndex = activeMembers.findIndex(m => m.id === primaryMember.id);
 
-                // Secondary is previous person in rotation (wraps around)
-                const secondaryRotationIndex = (primaryRotationIndex - 1 + teamSize) % teamSize;
-                secondaryMember = activeMembers[secondaryRotationIndex];
-
-                // Tertiary is 2 positions back in rotation (wraps around)
-                const tertiaryRotationIndex = (primaryRotationIndex - 2 + teamSize) % teamSize;
-                tertiaryMember = activeMembers[tertiaryRotationIndex];
+                // Backup is previous person in rotation (wraps around)
+                const backupRotationIndex = (primaryRotationIndex - 1 + teamSize) % teamSize;
+                backupMember = activeMembers[backupRotationIndex];
             }
 
             // Render Primary
             renderOnCallPerson('primaryOnCall', primarySchedule, members, shifts, now, 'Primary');
 
-            // Render Secondary (use member info, not schedule)
-            renderOnCallPersonFromMember('secondaryOnCall', secondaryMember, members, 'Secondary');
+            // Render Backup (use member info, not schedule)
+            renderOnCallPersonFromMember('backupOnCall', backupMember, members, 'Backup');
 
-            // Render Tertiary (use member info, not schedule)
-            renderOnCallPersonFromMember('tertiaryOnCall', tertiaryMember, members, 'Tertiary');
+            // Load and render fixed escalation contacts
+            loadEscalationContacts();
         }
 
         // Helper to render on-call person card
@@ -553,6 +555,82 @@
                 <div class="text-muted small">${member.phone}</div>
                 <div class="text-muted small">Rotation backup</div>
             `;
+        }
+
+        // Load and render escalation contacts (fixed, non-rotating)
+        async function loadEscalationContacts() {
+            try {
+                const response = await fetch(`${API_BASE}/settings/escalation`, {
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    console.error('Failed to load escalation config:', response.status);
+                    return;
+                }
+
+                const config = await response.json();
+                console.log('Escalation config loaded:', config); // Debug logging
+
+                // Get column references
+                const primaryCol = document.getElementById('primaryColumn');
+                const backupCol = document.getElementById('backupColumn');
+                const escalation1Col = document.getElementById('escalation1Column');
+                const escalation2Col = document.getElementById('escalation2Column');
+
+                // Show/hide escalation columns based on enabled flag
+                if (config.enabled) {
+                    // Show all 4 columns (col-md-3 each)
+                    primaryCol.className = 'col-md-3';
+                    backupCol.className = 'col-md-3';
+                    escalation1Col.style.display = 'block';
+                    escalation2Col.style.display = 'block';
+
+                    // Render 1st Escalation Contact
+                    const firstContainer = document.getElementById('firstEscalationOnCall');
+                    if (config.primary_name && config.primary_phone) {
+                        firstContainer.innerHTML = `
+                            <div class="d-flex align-items-center mb-1">
+                                <span class="avatar avatar-sm me-2 bg-orange text-white">
+                                    <span class="avatar-initials">${getInitials(config.primary_name)}</span>
+                                </span>
+                                <strong>${config.primary_name}</strong>
+                            </div>
+                            <div class="text-muted small">${config.primary_phone}</div>
+                            <div class="text-muted small">Fixed escalation contact</div>
+                        `;
+                    } else {
+                        firstContainer.innerHTML = '<span class="text-muted">Not configured</span>';
+                    }
+
+                    // Render 2nd Escalation Contact
+                    const secondContainer = document.getElementById('secondEscalationOnCall');
+                    if (config.secondary_name && config.secondary_phone) {
+                        secondContainer.innerHTML = `
+                            <div class="d-flex align-items-center mb-1">
+                                <span class="avatar avatar-sm me-2 bg-purple text-white">
+                                    <span class="avatar-initials">${getInitials(config.secondary_name)}</span>
+                                </span>
+                                <strong>${config.secondary_name}</strong>
+                            </div>
+                            <div class="text-muted small">${config.secondary_phone}</div>
+                            <div class="text-muted small">Fixed escalation contact</div>
+                        `;
+                    } else {
+                        secondContainer.innerHTML = '<span class="text-muted">Not configured</span>';
+                    }
+                } else {
+                    // Hide escalation columns, show only Primary + Backup (col-md-6 each)
+                    primaryCol.className = 'col-md-6';
+                    backupCol.className = 'col-md-6';
+                    escalation1Col.style.display = 'none';
+                    escalation2Col.style.display = 'none';
+                    console.log('Escalation disabled - showing only Primary and Backup');
+                }
+
+            } catch (error) {
+                console.error('Error loading escalation contacts:', error);
+            }
         }
 
         // Build calendar for viewed month

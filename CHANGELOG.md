@@ -11,6 +11,74 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+(No unreleased changes yet)
+
+---
+
+## [1.1.0] - 2025-11-17
+
+### Added
+
+- **SMS Template Editor** - Dynamic SMS notification template management with database persistence ([WHO-20](https://linear.app/hextrackr/issue/WHO-20))
+  - **Purpose**: Allow administrators to customize SMS notification templates without code changes
+  - **User Experience**: In-place template editor with live character counting and validation feedback
+  - **Key Features**:
+    - Load template from database via API (GET /api/v1/settings/sms-template)
+    - Edit template with real-time character counter and SMS segment calculation
+    - Template variable support: `{name}`, `{start_time}`, `{end_time}`, `{duration}`
+    - Visual feedback: Character count display (e.g., "88 / 160 (1 SMS)")
+    - Validation: Must contain at least one variable, maximum 320 characters (2 SMS segments)
+    - Invalid variable detection (only allows whitelisted variables)
+    - Reset to default template button
+    - Cancel editing without saving
+  - **Backend Implementation**:
+    - New settings service methods: `get_sms_template()`, `set_sms_template()`
+    - Lazy initialization pattern (seeds default template on first access)
+    - New endpoints:
+      - `GET /api/v1/settings/sms-template` - Retrieve current template with metadata
+      - `PUT /api/v1/settings/sms-template` - Update template (admin-only)
+    - Comprehensive validation:
+      - Empty/whitespace-only templates rejected (Pydantic + endpoint validation)
+      - Must contain at least one template variable
+      - Only valid variables allowed: `{name}`, `{start_time}`, `{end_time}`, `{duration}`
+      - Maximum 320 characters (2 SMS segments)
+    - Response metadata: character count, SMS segment count, detected variables, last updated timestamp
+    - Regex-based variable extraction: `re.findall(r'\{(\w+)\}', template)`
+    - SMS service integration: `_compose_message()` now loads template from database instead of using hardcoded message
+  - **Frontend Implementation** (`frontend/notifications.html:172-947`):
+    - Async API integration using `fetch()` with credentials
+    - Read view: Displays current template with "Edit Template" button (admin-only visibility)
+    - Edit view: Textarea with character counter, Save/Cancel/Reset buttons
+    - Real-time character counting with SMS segment calculation
+    - Loading states during save operations (spinner button)
+    - Success/error feedback via alert dialogs
+    - Template persistence across page refreshes
+  - **Testing**:
+    - 17 comprehensive pytest tests in `tests/api/test_settings.py`
+    - Coverage: Settings routes 95%, Settings schemas 100%, Settings service 83%
+    - Test cases:
+      - Default template lazy initialization
+      - Valid template save and retrieve
+      - Empty template rejection (422 from Pydantic)
+      - Whitespace-only template rejection
+      - No variables detection
+      - Invalid variable detection
+      - Character limit enforcement (320 max)
+      - SMS segment calculation for various lengths
+      - Template persistence across requests
+      - Multiline template support
+      - Variable extraction regex correctness
+  - **Bug Fixes**:
+    - Fixed async/await bug in edit button click handler (was setting textarea to `[object Promise]`)
+    - Added `await` keyword to `loadTemplate()` call in event listener
+  - **Files Modified**:
+    - `src/services/settings_service.py` - Added SMS template methods (lines 231-274)
+    - `src/api/schemas/settings.py` - Added `SMSTemplateResponse` and `SMSTemplateRequest` schemas
+    - `src/api/routes/settings.py` - Added GET/PUT endpoints (lines 95-233)
+    - `src/services/sms_service.py` - Rewrote `_compose_message()` to use database template
+    - `frontend/notifications.html` - Converted localStorage to API calls, fixed async bug
+    - `tests/api/test_settings.py` - New test file with 17 tests
+
 - **Manual SMS Notification System** - Complete redesign of notification testing and manual messaging ([WHO-21](https://linear.app/hextrackr/issue/WHO-21))
   - **Purpose**: Dual-purpose system for both testing SMS delivery AND sending production manual notifications (emergencies, schedule changes, announcements)
   - **User Experience**: Modal dialog with recipient dropdown, message editor, and live preview
@@ -46,6 +114,66 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - `src/api/schemas/notification.py` - Request/response schemas
     - `src/services/sms_service.py` - Manual notification service method
 
+- **Escalation Contacts System** - Fixed escalation contacts with admin configuration ([WHO-XX](https://linear.app/hextrackr/issue/WHO-XX))
+  - **Purpose**: Replace rotating tertiary contact with fixed, non-rotating escalation contacts displayed on dashboard
+  - **User Experience**: Admin-configurable escalation contacts with 4-column dashboard layout
+  - **Key Changes**:
+    - **Dashboard Layout**: Upgraded from 3-column to 4-column responsive layout
+      - Column 1: Primary (on-call, rotating)
+      - Column 2: Backup (previous in rotation, rotating)
+      - Column 3: 1st Escalation (fixed, non-rotating)
+      - Column 4: 2nd Escalation (fixed, non-rotating)
+    - **Removed**: Tertiary rotating contact (previously calculated as 2 positions back in rotation)
+    - **Renamed**: "Secondary" label changed to "Backup" for clarity
+    - **Configuration**: Admin-only "Escalation Contacts" button on Team Members page
+  - **Backend Implementation**:
+    - New settings service methods: `get_escalation_config()`, `set_escalation_config()`
+    - Five new setting keys: `escalation_enabled`, `escalation_primary_name`, `escalation_primary_phone`, `escalation_secondary_name`, `escalation_secondary_phone`
+    - New endpoints:
+      - `GET /api/v1/settings/escalation` - Retrieve escalation configuration (all authenticated users)
+      - `PUT /api/v1/settings/escalation` - Update configuration (admin-only)
+    - Pydantic schemas: `EscalationConfigResponse`, `EscalationConfigRequest`
+    - E.164 phone validation: `^\+1\d{10}$` pattern (matches team member validation)
+    - Optional fields: All contact details can be null/empty
+  - **Frontend Implementation**:
+    - **Dashboard** (`frontend/index.html:228-611`):
+      - Changed columns from `col-md-4` (3 columns) to `col-md-3` (4 columns)
+      - Updated IDs: `secondaryOnCall` → `backupOnCall`, removed `tertiaryOnCall`
+      - Added IDs: `firstEscalationOnCall`, `secondEscalationOnCall`
+      - New function: `loadEscalationContacts()` - Fetches and renders fixed contacts from API
+      - Removed tertiary rotation logic from `updateOnCallChain()`
+      - Backup calculation: `(primaryRotationIndex - 1 + teamSize) % teamSize` (unchanged, just renamed)
+    - **Configuration Modal** (`frontend/team-members.html:138-942`):
+      - New button: "Escalation Contacts" (admin-only, next to "Add Team Member")
+      - Bootstrap modal with enable/disable toggle
+      - Two contact sections: Primary Escalation (1st), Secondary Escalation (2nd)
+      - Form fields: Name (max 100 chars), Phone (E.164 validation)
+      - Load configuration on modal open via API
+      - Save configuration with validation feedback
+      - Visual feedback: Loading states, success/error messages
+  - **Display Behavior**:
+    - **Enabled + Configured**: Shows contact name, phone, avatar with initials, "Fixed escalation contact" label
+    - **Disabled**: Dashboard shows only Primary + Backup (2 columns, `col-md-6`), escalation columns hidden entirely
+    - **Enabled**: Dashboard shows all 4 columns (Primary, Backup, 1st Escalation, 2nd Escalation at `col-md-3`)
+    - **Color Coding**: 1st Escalation uses orange avatar, 2nd Escalation uses purple avatar
+  - **UX Improvements**:
+    - Toggle defaults to **checked** for better new-user experience
+    - Generic placeholders ("First Last" instead of team-specific names)
+    - Dynamic column layout prevents confusing "Not configured" placeholders
+    - Console logging for debugging escalation display issues
+  - **Technical Notes**:
+    - Escalation contacts do NOT receive automated notifications (display-only)
+    - Escalation contacts are NOT part of rotation schedule
+    - Settings persist in database, loaded on every dashboard refresh
+    - Responsive design: 4 columns on desktop, stacks on mobile (Bootstrap grid)
+    - Dynamic column width adjustment via JavaScript (2-col vs 4-col layouts)
+  - **Files Modified**:
+    - `src/services/settings_service.py` - Escalation config methods (lines 19-371)
+    - `src/api/schemas/settings.py` - Request/response schemas (lines 70-97)
+    - `src/api/routes/settings.py` - GET/PUT endpoints (lines 238-329)
+    - `frontend/index.html` - 4-column layout, dynamic column hiding (lines 227-634)
+    - `frontend/team-members.html` - Configuration button and modal (lines 138-951)
+
 ### Changed
 
 - **Twilio Phone Number Update** - Upgraded to compliant US phone number ([WHO-21](https://linear.app/hextrackr/issue/WHO-21))
@@ -56,6 +184,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Configuration**: Updated `TWILIO_PHONE_NUMBER` in `.env` file
 
 ### Fixed
+
+- **Bootstrap Modal Backdrop Persists After Save** - Escalation configuration modal cleanup ([WHO-XX](https://linear.app/hextrackr/issue/WHO-XX))
+  - **Problem**: After saving escalation config, modal closed but semi-transparent backdrop remained, blocking UI interaction
+  - **Root Cause**: Bootstrap's programmatic `modal.hide()` sometimes fails to remove backdrop when using async fetch with `credentials: 'include'`
+  - **Solution**: Added manual cleanup with 100ms timeout to remove backdrop, modal-open class, and body style overrides
+  - **Impact**: Modal now closes cleanly, no need for page refresh (Cmd+R) to restore UI interaction
+  - **Files Modified**: `frontend/team-members.html` (lines 931-941)
 
 - **Test SMS Fails After Schedule Regeneration** - Permanent solution via modal-based manual notification system ([WHO-21](https://linear.app/hextrackr/issue/WHO-21))
   - **Original Problem**: "Send Test SMS" button failed after schedule regeneration because `get_pending_notifications()` required schedule entries starting TODAY

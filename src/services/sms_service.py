@@ -16,6 +16,7 @@ from sqlalchemy.orm import Session
 
 from ..repositories import NotificationLogRepository, ScheduleRepository
 from ..models import Schedule
+from .settings_service import SettingsService
 
 
 logger = logging.getLogger(__name__)
@@ -52,6 +53,7 @@ class SMSService:
         base_delay: Base delay in seconds for exponential backoff
         notification_repo: Repository for logging notifications
         schedule_repo: Repository for schedule operations
+        settings_service: Service for accessing application settings
     """
 
     def __init__(
@@ -78,9 +80,10 @@ class SMSService:
         self.base_delay = base_delay
         self.mock_mode = mock_mode
 
-        # Initialize repositories
+        # Initialize repositories and services
         self.notification_repo = NotificationLogRepository(db)
         self.schedule_repo = ScheduleRepository(db)
+        self.settings_service = SettingsService(db)
 
         # Initialize Twilio client
         if not mock_mode:
@@ -319,36 +322,55 @@ class SMSService:
 
     def _compose_message(self, schedule: Schedule) -> str:
         """
-        Compose SMS message for a schedule assignment.
+        Compose SMS message for a schedule assignment using template from database.
 
-        Format:
-        "WhoseOnFirst: Your on-call shift has started.
-        Duration: 24 hours (until Mon 08:00 AM)
-        Questions? Contact admin."
+        Loads the SMS template from settings and replaces variables:
+        - {name}: Team member name
+        - {start_time}: Shift start time (e.g., "Mon 08:00 AM")
+        - {end_time}: Shift end time (e.g., "Tue 08:00 AM")
+        - {duration}: Shift duration (e.g., "24h")
 
         Args:
             schedule: Schedule instance
 
         Returns:
-            Formatted SMS message text (under 160 characters)
+            Formatted SMS message text from template
+
+        Raises:
+            Exception: If template loading or formatting fails
         """
-        member_name = schedule.team_member.name
-        duration = schedule.shift.duration_hours
-        end_time = schedule.end_datetime.strftime('%a %I:%M %p')
+        try:
+            # Load template from database
+            template = self.settings_service.get_sms_template()
 
-        message = (
-            f"WhoseOnFirst: {member_name}, your on-call shift has started.\n"
-            f"Duration: {duration}h (until {end_time})\n"
-            f"Questions? Contact admin."
-        )
+            # Prepare template variables
+            member_name = schedule.team_member.name
+            duration_hours = schedule.shift.duration_hours
+            start_time = schedule.start_datetime.strftime('%a %I:%M %p')
+            end_time = schedule.end_datetime.strftime('%a %I:%M %p')
 
-        # Ensure message is under 160 characters for single SMS
-        if len(message) > 160:
-            # Truncate if too long
-            message = message[:157] + "..."
-            logger.warning(f"SMS message truncated to 160 characters for schedule {schedule.id}")
+            # Format template with variables
+            message = template.format(
+                name=member_name,
+                start_time=start_time,
+                end_time=end_time,
+                duration=f"{duration_hours}h"
+            )
 
-        return message
+            logger.info(f"Composed message for schedule {schedule.id}: {len(message)} characters")
+            return message
+
+        except KeyError as e:
+            # Missing template variable
+            logger.error(f"Template formatting error: missing variable {e}")
+            raise Exception(f"SMS template missing required variable: {e}")
+
+        except Exception as e:
+            # Fallback to basic message if template loading fails
+            logger.error(f"Error loading SMS template: {str(e)}, using fallback")
+            member_name = schedule.team_member.name
+            end_time = schedule.end_datetime.strftime('%a %I:%M %p')
+            return f"WhoseOnFirst: {member_name}, your on-call shift has started (until {end_time})"
 
     def _is_retryable_error(self, error: TwilioRestException) -> bool:
         """

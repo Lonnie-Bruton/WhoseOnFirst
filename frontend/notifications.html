@@ -753,15 +753,55 @@ Hi {name}, you are now on-call starting at {start_time} CST until {end_time} CST
 
 Your shift lasts {duration}. Thank you for being available!`;
 
-        function loadTemplate() {
-            const template = localStorage.getItem('smsTemplate') || DEFAULT_TEMPLATE;
-            document.getElementById('templatePreview').textContent = template;
-            return template;
+        async function loadTemplate() {
+            try {
+                const response = await fetch(`${API_BASE}/settings/sms-template`, {
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch SMS template');
+                }
+
+                const data = await response.json();
+                const template = data.template || DEFAULT_TEMPLATE;
+                document.getElementById('templatePreview').textContent = template;
+                return template;
+
+            } catch (error) {
+                console.error('Error loading SMS template:', error);
+                // Fallback to default template
+                document.getElementById('templatePreview').textContent = DEFAULT_TEMPLATE;
+                return DEFAULT_TEMPLATE;
+            }
         }
 
-        function saveTemplate(template) {
-            localStorage.setItem('smsTemplate', template);
-            document.getElementById('templatePreview').textContent = template;
+        async function saveTemplate(template) {
+            try {
+                const response = await fetch(`${API_BASE}/settings/sms-template`, {
+                    method: 'PUT',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        template: template
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Failed to save template');
+                }
+
+                const data = await response.json();
+                document.getElementById('templatePreview').textContent = data.template;
+                return true;
+
+            } catch (error) {
+                console.error('Error saving SMS template:', error);
+                throw error;  // Re-throw so caller can handle
+            }
         }
 
         function updateCharacterCount() {
@@ -776,7 +816,7 @@ Your shift lasts {duration}. Thank you for being available!`;
 
         // Main data loading function (called after auth check)
         async function loadNotificationsData() {
-            loadTemplate();
+            await loadTemplate();
             await loadStats();
             await loadHistory();
         }
@@ -852,8 +892,8 @@ Your shift lasts {duration}. Thank you for being available!`;
             // Template editing (admin only)
             if (user.role === 'admin') {
                 // Edit Template Button
-                document.getElementById('editTemplateBtn').addEventListener('click', function() {
-                    const currentTemplate = loadTemplate();
+                document.getElementById('editTemplateBtn').addEventListener('click', async function() {
+                    const currentTemplate = await loadTemplate();
                     document.getElementById('templateEditor').value = currentTemplate;
                     updateCharacterCount();
 
@@ -863,7 +903,7 @@ Your shift lasts {duration}. Thank you for being available!`;
                 });
 
                 // Save Template Button
-                document.getElementById('saveTemplateBtn').addEventListener('click', function() {
+                document.getElementById('saveTemplateBtn').addEventListener('click', async function() {
                     const newTemplate = document.getElementById('templateEditor').value.trim();
 
                     if (!newTemplate) {
@@ -878,13 +918,26 @@ Your shift lasts {duration}. Thank you for being available!`;
                         }
                     }
 
-                    saveTemplate(newTemplate);
+                    // Disable button during save
+                    this.disabled = true;
+                    this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
 
-                    document.getElementById('templateReadView').style.display = 'block';
-                    document.getElementById('templateEditView').style.display = 'none';
-                    document.getElementById('editTemplateBtn').style.display = 'inline-block';
+                    try {
+                        await saveTemplate(newTemplate);
 
-                    alert('✅ Template saved successfully!');
+                        document.getElementById('templateReadView').style.display = 'block';
+                        document.getElementById('templateEditView').style.display = 'none';
+                        document.getElementById('editTemplateBtn').style.display = 'inline-block';
+
+                        alert('✅ Template saved successfully!');
+
+                    } catch (error) {
+                        alert('❌ Failed to save template: ' + error.message);
+                    } finally {
+                        // Re-enable button
+                        this.disabled = false;
+                        this.innerHTML = '<i class="ti ti-check"></i> Save Template';
+                    }
                 });
 
                 // Cancel Template Button

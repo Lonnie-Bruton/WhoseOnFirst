@@ -135,6 +135,10 @@
                         </div>
                         <div class="col"></div>
                         <div class="col-auto">
+                            <button class="btn btn-ghost-primary admin-only me-2" data-bs-toggle="modal" data-bs-target="#escalationModal" title="Configure escalation contacts">
+                                <i class="ti ti-alert-triangle me-2"></i>
+                                Escalation Contacts
+                            </button>
                             <button class="btn btn-primary admin-only" data-bs-toggle="modal" data-bs-target="#addMemberModal">
                                 <i class="ti ti-plus me-2"></i>
                                 Add Team Member
@@ -302,6 +306,83 @@
                         <button type="submit" class="btn btn-danger" id="deleteMemberBtn" disabled>
                             <i class="ti ti-trash me-2"></i>
                             Delete Permanently
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Escalation Contacts Modal -->
+    <div class="modal fade" id="escalationModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="ti ti-alert-triangle me-2"></i>
+                        Escalation Contacts
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="escalationForm">
+                    <div class="modal-body">
+                        <!-- Info Alert -->
+                        <div class="alert alert-info mb-4">
+                            <div class="d-flex">
+                                <div>
+                                    <i class="ti ti-info-circle me-2"></i>
+                                </div>
+                                <div>
+                                    <h4 class="alert-title">About Escalation Contacts</h4>
+                                    <div class="text-muted">
+                                        Escalation contacts are <strong>fixed contacts</strong> displayed on the dashboard alongside rotating on-call assignments.
+                                        They <strong>do not rotate</strong> and <strong>do not receive automated notifications</strong>.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Enable Toggle -->
+                        <div class="mb-4">
+                            <label class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="escalationEnabled" checked>
+                                <span class="form-check-label">Display escalation contacts on dashboard</span>
+                            </label>
+                        </div>
+
+                        <!-- Primary Escalation Contact -->
+                        <h6 class="mb-3">Primary Escalation Contact (1st)</h6>
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label">Name</label>
+                                <input type="text" class="form-control" id="primaryName" placeholder="First Last" maxlength="100">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Phone Number</label>
+                                <input type="tel" class="form-control" id="primaryPhone" placeholder="+19185551234" pattern="^\+1\d{10}$">
+                                <small class="form-hint">Format: +1XXXXXXXXXX (E.164)</small>
+                            </div>
+                        </div>
+
+                        <!-- Secondary Escalation Contact -->
+                        <h6 class="mb-3">Secondary Escalation Contact (2nd)</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label class="form-label">Name</label>
+                                <input type="text" class="form-control" id="secondaryName" placeholder="First Last" maxlength="100">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Phone Number</label>
+                                <input type="tel" class="form-control" id="secondaryPhone" placeholder="+19185551234" pattern="^\+1\d{10}$">
+                                <small class="form-hint">Format: +1XXXXXXXXXX (E.164)</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="saveEscalationBtn">
+                            <i class="ti ti-check me-2"></i>
+                            Save Configuration
                         </button>
                     </div>
                 </form>
@@ -780,6 +861,94 @@
             currentFilter = document.getElementById('filterSelect').value;
             renderMembers();
         }
+
+        // Escalation Contacts
+        // Load escalation config when modal is opened
+        document.getElementById('escalationModal').addEventListener('show.bs.modal', async function() {
+            try {
+                const response = await fetch(`${API_BASE}/settings/escalation`, {
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to load escalation config');
+                }
+
+                const config = await response.json();
+
+                // Populate form fields
+                document.getElementById('escalationEnabled').checked = config.enabled || false;
+                document.getElementById('primaryName').value = config.primary_name || '';
+                document.getElementById('primaryPhone').value = config.primary_phone || '';
+                document.getElementById('secondaryName').value = config.secondary_name || '';
+                document.getElementById('secondaryPhone').value = config.secondary_phone || '';
+
+            } catch (error) {
+                console.error('Error loading escalation config:', error);
+                showError('❌ Failed to load escalation configuration');
+            }
+        });
+
+        // Save escalation config
+        document.getElementById('escalationForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            // Prevent form submission for viewers
+            if (currentUser && currentUser.role === 'viewer') {
+                showError('You do not have permission to update escalation contacts');
+                return;
+            }
+
+            const btn = document.getElementById('saveEscalationBtn');
+            const enabled = document.getElementById('escalationEnabled').checked;
+            const primaryName = document.getElementById('primaryName').value.trim();
+            const primaryPhone = document.getElementById('primaryPhone').value.trim();
+            const secondaryName = document.getElementById('secondaryName').value.trim();
+            const secondaryPhone = document.getElementById('secondaryPhone').value.trim();
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
+
+            try {
+                const response = await fetch(`${API_BASE}/settings/escalation`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        enabled: enabled,
+                        primary_name: primaryName || null,
+                        primary_phone: primaryPhone || null,
+                        secondary_name: secondaryName || null,
+                        secondary_phone: secondaryPhone || null
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Failed to save escalation config');
+                }
+
+                // Close modal and clean up backdrop
+                const modal = bootstrap.Modal.getInstance(document.getElementById('escalationModal'));
+                modal.hide();
+
+                // Manually remove backdrop and reset body state (Bootstrap sometimes leaves these)
+                setTimeout(() => {
+                    document.querySelector('.modal-backdrop')?.remove();
+                    document.body.classList.remove('modal-open');
+                    document.body.style.removeProperty('padding-right');
+                    document.body.style.removeProperty('overflow');
+                }, 100);
+
+                showSuccess('✅ Escalation contacts saved successfully!');
+
+            } catch (error) {
+                showError('❌ ' + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="ti ti-check me-2"></i>Save Configuration';
+            }
+        });
 
         // Utility Functions
         function showLoading(show) {

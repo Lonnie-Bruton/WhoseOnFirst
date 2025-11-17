@@ -15,6 +15,19 @@ from ..models.settings import Settings
 AUTO_RENEW_ENABLED = "auto_renew_enabled"
 AUTO_RENEW_THRESHOLD_WEEKS = "auto_renew_threshold_weeks"
 AUTO_RENEW_WEEKS = "auto_renew_weeks"
+SMS_TEMPLATE = "sms_template"
+ESCALATION_ENABLED = "escalation_enabled"
+ESCALATION_PRIMARY_NAME = "escalation_primary_name"
+ESCALATION_PRIMARY_PHONE = "escalation_primary_phone"
+ESCALATION_SECONDARY_NAME = "escalation_secondary_name"
+ESCALATION_SECONDARY_PHONE = "escalation_secondary_phone"
+
+# Default SMS template
+DEFAULT_SMS_TEMPLATE = """WhoseOnFirst Alert
+
+Hi {name}, you are now on-call starting at {start_time} CST until {end_time} CST.
+
+Your shift lasts {duration}. Thank you for being available!"""
 
 
 class SettingsService:
@@ -217,5 +230,142 @@ class SettingsService:
 
         if "renew_weeks" in config:
             updated["renew_weeks"] = self.set_auto_renew_weeks(config["renew_weeks"])
+
+        return updated
+
+    # SMS template methods
+    def get_sms_template(self) -> str:
+        """
+        Get the SMS notification template.
+
+        Returns template from database, or default if not set.
+        Automatically seeds default template on first access.
+
+        Returns:
+            SMS template string with variables: {name}, {start_time}, {end_time}, {duration}
+        """
+        template = self.repository.get_value(SMS_TEMPLATE, default=None)
+
+        # Lazy initialization: seed default template if not exists
+        if template is None:
+            self.set_sms_template(DEFAULT_SMS_TEMPLATE)
+            template = DEFAULT_SMS_TEMPLATE
+
+        return template
+
+    def set_sms_template(self, template: str) -> Settings:
+        """
+        Set the SMS notification template.
+
+        Args:
+            template: SMS template string with variables
+
+        Returns:
+            Settings instance
+
+        Raises:
+            ValueError: If template is invalid
+        """
+        # Basic validation (detailed validation in API layer)
+        if not template or not template.strip():
+            raise ValueError("SMS template cannot be empty")
+
+        return self.set_setting(
+            SMS_TEMPLATE,
+            template,
+            "text",
+            "SMS notification template for on-call shift alerts"
+        )
+
+    # Escalation contact methods
+    def get_escalation_config(self) -> Dict[str, Any]:
+        """
+        Get the escalation contact configuration.
+
+        Returns dictionary with escalation settings:
+        - enabled: bool (default: False)
+        - primary_name: str | None
+        - primary_phone: str | None
+        - secondary_name: str | None
+        - secondary_phone: str | None
+
+        Returns:
+            Escalation configuration dictionary
+        """
+        return {
+            "enabled": self.repository.get_value(ESCALATION_ENABLED, default=False),
+            "primary_name": self.repository.get_value(ESCALATION_PRIMARY_NAME, default=None),
+            "primary_phone": self.repository.get_value(ESCALATION_PRIMARY_PHONE, default=None),
+            "secondary_name": self.repository.get_value(ESCALATION_SECONDARY_NAME, default=None),
+            "secondary_phone": self.repository.get_value(ESCALATION_SECONDARY_PHONE, default=None)
+        }
+
+    def set_escalation_config(
+        self,
+        enabled: bool,
+        primary_name: Optional[str] = None,
+        primary_phone: Optional[str] = None,
+        secondary_name: Optional[str] = None,
+        secondary_phone: Optional[str] = None
+    ) -> Dict[str, Settings]:
+        """
+        Set the escalation contact configuration.
+
+        Args:
+            enabled: Enable or disable escalation display
+            primary_name: Primary escalation contact name
+            primary_phone: Primary escalation contact phone (E.164 format)
+            secondary_name: Secondary escalation contact name
+            secondary_phone: Secondary escalation contact phone (E.164 format)
+
+        Returns:
+            Dictionary of updated Settings instances
+
+        Raises:
+            ValueError: If validation fails
+        """
+        updated = {}
+
+        # Set enabled flag
+        updated["enabled"] = self.set_setting(
+            ESCALATION_ENABLED,
+            enabled,
+            "boolean",
+            "Enable escalation contact display on dashboard"
+        )
+
+        # Set primary escalation contact
+        if primary_name is not None:
+            updated["primary_name"] = self.set_setting(
+                ESCALATION_PRIMARY_NAME,
+                primary_name,
+                "text",
+                "Primary escalation contact name"
+            )
+
+        if primary_phone is not None:
+            updated["primary_phone"] = self.set_setting(
+                ESCALATION_PRIMARY_PHONE,
+                primary_phone,
+                "text",
+                "Primary escalation contact phone (E.164 format)"
+            )
+
+        # Set secondary escalation contact
+        if secondary_name is not None:
+            updated["secondary_name"] = self.set_setting(
+                ESCALATION_SECONDARY_NAME,
+                secondary_name,
+                "text",
+                "Secondary escalation contact name"
+            )
+
+        if secondary_phone is not None:
+            updated["secondary_phone"] = self.set_setting(
+                ESCALATION_SECONDARY_PHONE,
+                secondary_phone,
+                "text",
+                "Secondary escalation contact phone (E.164 format)"
+            )
 
         return updated
