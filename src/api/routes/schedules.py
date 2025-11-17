@@ -309,6 +309,7 @@ def get_next_assignment(
 
 @router.post("/notifications/trigger", tags=["notifications"])
 def trigger_notifications(
+    force: bool = False,
     db: Session = Depends(get_db),
     current_user = Depends(require_admin)
 ):
@@ -322,13 +323,18 @@ def trigger_notifications(
     **Note:** This is primarily for testing and manual execution.
     In production, notifications are sent automatically by APScheduler.
 
+    Args:
+        force: If True, resend notifications even if already sent (for testing)
+        db: Database session (injected)
+        current_user: Authenticated user (injected)
+
     Returns:
         dict: Result summary with status and counts
 
     Example:
-        POST /api/v1/schedules/notifications/trigger
+        POST /api/v1/schedules/notifications/trigger?force=true
     """
-    result = trigger_notifications_manually()
+    result = trigger_notifications_manually(force=force)
     return result
 
 

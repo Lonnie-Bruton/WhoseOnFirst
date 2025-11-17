@@ -13,7 +13,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Twilio Phone Number Update** - Upgraded to compliant US phone number ([WHO-21](https://linear.app/hextrackr/issue/WHO-21))
+  - **Old Number**: `+18557482075` (temporary toll-free)
+  - **New Number**: `+19188008737` (regulatory compliant)
+  - **Status**: Completed 10DLC registration and Twilio compliance verification
+  - **Impact**: Production-ready for US SMS delivery with proper sender authentication
+  - **Configuration**: Updated `TWILIO_PHONE_NUMBER` in `.env` file
+
 ### Fixed
+
+- **Test SMS Button Only Works Once** - Critical bug preventing repeated test notifications ([WHO-21](https://linear.app/hextrackr/issue/WHO-21))
+  - **Problem**: "Send Test SMS" button only sent notification on first click, subsequent clicks showed success but sent nothing
+  - **Root Cause**: Database query in `get_pending_notifications()` always filtered by `notified = False`, even when `force=true` was passed. After first SMS, schedule marked as notified, so query returned 0 results
+  - **Impact**: Unable to test SMS system repeatedly without manually resetting database flags
+  - **Solution**: Added `force` parameter that flows through entire notification pipeline:
+    - API endpoint: `POST /api/v1/schedules/notifications/trigger?force=true` accepts force parameter
+    - Scheduler: `trigger_notifications_manually(force=True)` → `send_daily_notifications(force=True)`
+    - Service: `get_pending_notifications(force=True)` passes to repository
+    - Repository: Conditionally applies `notified = False` filter only when `force=False`
+  - **Files Modified**:
+    - `src/api/routes/schedules.py` - Added force parameter to API endpoint
+    - `src/scheduler/schedule_manager.py` - Pass force through scheduler functions
+    - `src/services/schedule_service.py` - Pass force to repository layer
+    - `src/repositories/schedule_repository.py` - Conditional notified filter based on force flag
+    - `frontend/notifications.html` - Send `?force=true` query parameter
+  - **Testing**: Click "Send Test SMS" multiple times → each click sends new SMS to Twilio
 
 ## [1.0.3] - 2025-11-10
 

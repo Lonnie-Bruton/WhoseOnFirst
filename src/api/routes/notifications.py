@@ -4,10 +4,11 @@ Notifications API Routes
 FastAPI router for SMS notification management and history.
 """
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, HTTPException, status
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
+import os
 
 from src.api.dependencies import get_db
 from src.api.schemas.notification import (
@@ -16,6 +17,7 @@ from src.api.schemas.notification import (
 )
 from src.repositories.notification_log_repository import NotificationLogRepository
 from src.api.routes.auth import require_auth
+from src.services.sms_service import SMSService
 
 
 router = APIRouter()
@@ -158,10 +160,97 @@ def get_notification_by_id(
     log = repo.get_by_id(notification_id)
 
     if not log:
-        from fastapi import HTTPException, status
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Notification log not found: {notification_id}"
         )
 
     return log
+
+
+@router.get("/{notification_id}/message")
+def get_notification_message_from_twilio(
+    notification_id: int,
+    db: Session = Depends(get_db),
+    current_user = Depends(require_auth)
+) -> Dict[str, Any]:
+    """
+    Fetch SMS message details from Twilio API.
+
+    Retrieves comprehensive message information including body, status,
+    timestamps, pricing, and delivery details directly from Twilio.
+
+    Args:
+        notification_id: Notification log ID
+        db: Database session (injected)
+
+    Returns:
+        Dictionary with Twilio message details:
+        - body: SMS message text
+        - status: Current delivery status
+        - direction: outbound-api
+        - from: Sender phone number
+        - to: Recipient phone number
+        - date_sent: When message was sent
+        - date_updated: Last status update
+        - sid: Twilio message SID
+        - num_segments: Number of SMS segments
+        - price: Cost in USD
+        - price_unit: Currency code
+        - error_code: Twilio error code (if failed)
+        - error_message: Error description (if failed)
+
+    Raises:
+        HTTPException 404: Notification not found
+        HTTPException 400: No Twilio SID available
+        HTTPException 502: Twilio API error
+
+    Example:
+        GET /api/v1/notifications/1/message
+    """
+    # Get notification record
+    repo = NotificationLogRepository(db)
+    log = repo.get_by_id(notification_id)
+
+    if not log:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Notification log not found: {notification_id}"
+        )
+
+    if not log.twilio_sid:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No Twilio SID available for this notification"
+        )
+
+    # Initialize SMS service to access Twilio client
+    sms_service = SMSService(db)
+
+    try:
+        # Fetch message from Twilio API
+        message = sms_service.twilio_client.messages(log.twilio_sid).fetch()
+
+        # Return structured response
+        return {
+            "body": message.body,
+            "status": message.status,
+            "direction": message.direction,
+            "from": message.from_,
+            "to": message.to,
+            "date_sent": message.date_sent.isoformat() if message.date_sent else None,
+            "date_updated": message.date_updated.isoformat() if message.date_updated else None,
+            "sid": message.sid,
+            "num_segments": message.num_segments,
+            "price": float(message.price) if message.price else None,
+            "price_unit": message.price_unit,
+            "error_code": message.error_code,
+            "error_message": message.error_message,
+        }
+
+    except Exception as e:
+        # Twilio API error
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Failed to fetch message from Twilio: {str(e)}"
+        )

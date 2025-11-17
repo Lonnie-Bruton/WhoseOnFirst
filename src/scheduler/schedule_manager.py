@@ -227,7 +227,7 @@ def get_db_session():
         db.close()
 
 
-def send_daily_notifications() -> None:
+def send_daily_notifications(force: bool = False) -> dict:
     """
     Send daily on-call notifications via SMS.
 
@@ -240,10 +240,16 @@ def send_daily_notifications() -> None:
     4. Mark schedule as notified in database
     5. Log results
 
+    Args:
+        force: If True, resend notifications even if already sent (for testing)
+
+    Returns:
+        dict: Result summary with counts (successful, failed, skipped, total)
+
     Note: This function runs in a background thread, so it must manage
     its own database session.
     """
-    logger.info("Starting daily notification job")
+    logger.info("Starting daily notification job (force=%s)", force)
 
     # Get current date in Chicago timezone
     now = datetime.now(CHICAGO_TZ)
@@ -256,11 +262,16 @@ def send_daily_notifications() -> None:
         try:
             # Get schedules that need notifications
             service = ScheduleService(db)
-            pending_schedules = service.get_pending_notifications(target_date=now)
+            pending_schedules = service.get_pending_notifications(target_date=now, force=force)
 
             if not pending_schedules:
                 logger.info("No pending notifications for today")
-                return
+                return {
+                    'successful': 0,
+                    'failed': 0,
+                    'skipped': 0,
+                    'total': 0
+                }
 
             logger.info("Found %d schedules requiring notification", len(pending_schedules))
 
@@ -268,7 +279,7 @@ def send_daily_notifications() -> None:
             sms_service = SMSService(db)
 
             # Send notifications using batch method
-            result = sms_service.send_batch_notifications(pending_schedules, force=False)
+            result = sms_service.send_batch_notifications(pending_schedules, force=force)
 
             logger.info(
                 "Notification job complete: %d successful, %d failed, %d skipped out of %d total",
@@ -278,36 +289,49 @@ def send_daily_notifications() -> None:
                 result['total']
             )
 
+            return result
+
         except Exception as e:
             logger.error("Error in daily notification job: %s", str(e), exc_info=True)
             raise
 
 
-def trigger_notifications_manually() -> dict:
+def trigger_notifications_manually(force: bool = False) -> dict:
     """
     Manually trigger the notification job for testing.
 
     This function can be called from an API endpoint to test
     the notification system without waiting for the scheduled time.
 
+    Args:
+        force: If True, resend notifications even if already sent (for testing)
+
     Returns:
-        dict: Result summary with counts and status
+        dict: Result summary with counts (successful, failed, skipped, total) and status
     """
-    logger.info("Manual notification trigger requested")
+    logger.info("Manual notification trigger requested (force=%s)", force)
 
     try:
-        send_daily_notifications()
+        result = send_daily_notifications(force=force)
         return {
             'status': 'success',
             'message': 'Notifications processed successfully',
-            'timestamp': datetime.now(CHICAGO_TZ).isoformat()
+            'timestamp': datetime.now(CHICAGO_TZ).isoformat(),
+            'successful': result['successful'],
+            'failed': result['failed'],
+            'skipped': result['skipped'],
+            'total': result['total']
         }
     except Exception as e:
         logger.error("Manual notification trigger failed: %s", str(e))
         return {
             'status': 'error',
             'message': str(e),
-            'timestamp': datetime.now(CHICAGO_TZ).isoformat()
+            'timestamp': datetime.now(CHICAGO_TZ).isoformat(),
+            'successful': 0,
+            'failed': 0,
+            'skipped': 0,
+            'total': 0
         }
 
 

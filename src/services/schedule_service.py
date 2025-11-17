@@ -289,27 +289,30 @@ class ScheduleService:
         """
         return self.schedule_repo.get_next_assignment_for_member(team_member_id)
 
-    def get_pending_notifications(self, target_date: datetime = None) -> List[Schedule]:
+    def get_pending_notifications(self, target_date: datetime = None, force: bool = False) -> List[Schedule]:
         """
         Get schedules that need notifications sent.
 
         Args:
             target_date: Optional target date (default: today)
+            force: If True, include already-notified schedules (for testing)
 
         Returns:
             List of Schedule objects that haven't been notified yet
-            for the target date
+            for the target date (or all schedules for date if force=True)
 
         Example:
             >>> service = ScheduleService(db)
             >>> pending = service.get_pending_notifications()
             >>> # Schedules starting today that haven't been notified
+            >>> pending_force = service.get_pending_notifications(force=True)
+            >>> # All schedules starting today (for testing)
         """
         # Convert datetime to date if provided
         if target_date is not None:
             target_date = target_date.date()
 
-        return self.schedule_repo.get_pending_notifications(target_date)
+        return self.schedule_repo.get_pending_notifications(target_date, force=force)
 
     def mark_as_notified(self, schedule_id: int) -> Schedule:
         """

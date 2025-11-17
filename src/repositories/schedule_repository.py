@@ -192,12 +192,13 @@ class ScheduleRepository(BaseRepository[Schedule]):
             self.db.rollback()
             raise Exception(f"Database error getting upcoming weeks: {str(e)}")
 
-    def get_pending_notifications(self, target_date: Optional[date] = None) -> List[Schedule]:
+    def get_pending_notifications(self, target_date: Optional[date] = None, force: bool = False) -> List[Schedule]:
         """
         Get schedule assignments that need notifications sent.
 
         Args:
             target_date: Date to check for notifications (defaults to today)
+            force: If True, include already-notified schedules (for testing)
 
         Returns:
             List of Schedule instances needing notification
@@ -209,19 +210,23 @@ class ScheduleRepository(BaseRepository[Schedule]):
             if target_date is None:
                 target_date = datetime.now().date()
 
-            # Get schedules starting on target_date that haven't been notified
+            # Get schedules starting on target_date
             start_datetime = datetime.combine(target_date, datetime.min.time())
             end_datetime = datetime.combine(target_date, datetime.max.time())
 
+            # Build filter conditions
+            conditions = [
+                self.model.start_datetime >= start_datetime,
+                self.model.start_datetime <= end_datetime
+            ]
+
+            # Only filter by notified=False if force is False
+            if not force:
+                conditions.append(self.model.notified.is_(False))
+
             return (
                 self.db.query(self.model)
-                .filter(
-                    and_(
-                        self.model.notified.is_(False),
-                        self.model.start_datetime >= start_datetime,
-                        self.model.start_datetime <= end_datetime
-                    )
-                )
+                .filter(and_(*conditions))
                 .options(
                     joinedload(self.model.team_member),
                     joinedload(self.model.shift)
