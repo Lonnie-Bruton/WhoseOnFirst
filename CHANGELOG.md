@@ -11,6 +11,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Manual SMS Notification System** - Complete redesign of notification testing and manual messaging ([WHO-21](https://linear.app/hextrackr/issue/WHO-21))
+  - **Purpose**: Dual-purpose system for both testing SMS delivery AND sending production manual notifications (emergencies, schedule changes, announcements)
+  - **User Experience**: Modal dialog with recipient dropdown, message editor, and live preview
+  - **Key Features**:
+    - Select any active team member from dropdown (pre-selects current on-call)
+    - Full message customization with `{name}` placeholder support
+    - Real-time character counter with SMS segment calculation (160 chars = 1 SMS)
+    - Color-coded progress bar (green → yellow → red as message length increases)
+    - Live preview shows message with placeholder substitution
+    - Success feedback with Twilio SID display
+    - Auto-refresh notification history after send
+  - **Backend Implementation**:
+    - New endpoint: `POST /api/v1/notifications/send-manual` (admin-only)
+    - New schemas: `ManualNotificationRequest`, `ManualNotificationResponse` with full validation
+    - Service method: `send_manual_notification()` with comprehensive error handling
+    - Audit trail: Logs manual sends with `schedule_id=NULL` to distinguish from automated notifications
+    - Phone number masking in API responses for privacy
+  - **Frontend Implementation** (`frontend/notifications.html:391-1183`):
+    - Bootstrap modal with recipient selection, message editor, and preview
+    - Character counting with visual feedback (progress bar + SMS count)
+    - Real-time message preview with name substitution
+    - Form validation (recipient required, message not empty)
+    - Loading states, error handling, success messages
+  - **Technical Advantages**:
+    - No schedule dependency (works immediately after regeneration)
+    - Bypasses `get_pending_notifications()` entirely
+    - Reuses existing Twilio infrastructure and error handling
+    - Maintains full audit trail in `notification_log` table
+    - Admin-only access control via authentication system
+  - **Files Modified**:
+    - `frontend/notifications.html` - Modal UI and JavaScript (592 new lines)
+    - `src/api/routes/notifications.py` - Manual notification endpoint
+    - `src/api/schemas/notification.py` - Request/response schemas
+    - `src/services/sms_service.py` - Manual notification service method
+
 ### Changed
 
 - **Twilio Phone Number Update** - Upgraded to compliant US phone number ([WHO-21](https://linear.app/hextrackr/issue/WHO-21))
@@ -22,22 +57,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- **Test SMS Button Only Works Once** - Critical bug preventing repeated test notifications ([WHO-21](https://linear.app/hextrackr/issue/WHO-21))
-  - **Problem**: "Send Test SMS" button only sent notification on first click, subsequent clicks showed success but sent nothing
-  - **Root Cause**: Database query in `get_pending_notifications()` always filtered by `notified = False`, even when `force=true` was passed. After first SMS, schedule marked as notified, so query returned 0 results
-  - **Impact**: Unable to test SMS system repeatedly without manually resetting database flags
-  - **Solution**: Added `force` parameter that flows through entire notification pipeline:
-    - API endpoint: `POST /api/v1/schedules/notifications/trigger?force=true` accepts force parameter
-    - Scheduler: `trigger_notifications_manually(force=True)` → `send_daily_notifications(force=True)`
-    - Service: `get_pending_notifications(force=True)` passes to repository
-    - Repository: Conditionally applies `notified = False` filter only when `force=False`
-  - **Files Modified**:
-    - `src/api/routes/schedules.py` - Added force parameter to API endpoint
-    - `src/scheduler/schedule_manager.py` - Pass force through scheduler functions
-    - `src/services/schedule_service.py` - Pass force to repository layer
-    - `src/repositories/schedule_repository.py` - Conditional notified filter based on force flag
-    - `frontend/notifications.html` - Send `?force=true` query parameter
-  - **Testing**: Click "Send Test SMS" multiple times → each click sends new SMS to Twilio
+- **Test SMS Fails After Schedule Regeneration** - Permanent solution via modal-based manual notification system ([WHO-21](https://linear.app/hextrackr/issue/WHO-21))
+  - **Original Problem**: "Send Test SMS" button failed after schedule regeneration because `get_pending_notifications()` required schedule entries starting TODAY
+  - **First Attempt**: Added `force` parameter to bypass `notified=False` filter - worked initially but still failed after regeneration
+  - **Root Cause**: Schedule-based testing was fundamentally flawed - regenerating schedules changed start dates, causing query to return zero results
+  - **Permanent Solution**: Completely replaced schedule-dependent testing with standalone manual notification system (see "Manual SMS Notification System" in Added section)
+  - **Architecture Change**: Manual notifications bypass schedule system entirely, logging with `schedule_id=NULL`
+  - **Benefit**: Testing now works 100% reliably regardless of schedule state, regeneration, or time of day
+  - **Migration Note**: Old `force` parameter removed from UI; backend still supports it for backward compatibility
 
 ## [1.0.3] - 2025-11-10
 
