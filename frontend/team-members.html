@@ -666,7 +666,8 @@
                     credentials: 'include',
                     body: JSON.stringify({
                         name: formData.get('name'),
-                        phone: formData.get('phone')
+                        phone: formData.get('phone'),
+                        secondary_phone: formData.get('secondary_phone') || null
                     })
                 });
 
@@ -731,7 +732,8 @@
                     credentials: 'include',
                     body: JSON.stringify({
                         name: formData.get('name'),
-                        phone: formData.get('phone')
+                        phone: formData.get('phone'),
+                        secondary_phone: formData.get('secondary_phone') || null
                     })
                 });
 

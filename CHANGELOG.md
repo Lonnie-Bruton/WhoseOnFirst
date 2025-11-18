@@ -62,6 +62,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Both primary and secondary can be set to same test number for dry-run testing
   - **Cost Impact**: Doubles SMS volume when all members configure secondary phones (~52 messages/month → ~104 messages/month at $0.008/message = $0.83/month)
 
+### Fixed
+
+- **Team Member Secondary Phone Not Saving** - Fixed frontend bug preventing secondary phone numbers from being saved
+  - **Issue**: JavaScript forms for Add/Edit team member were not sending `secondary_phone` field to API
+  - **Root Cause**: `JSON.stringify()` calls in `team-members.html` were missing `secondary_phone` property
+  - **Fix**: Added `secondary_phone: formData.get('secondary_phone') || null` to both POST (add) and PUT (edit) request bodies
+  - **Files Changed**:
+    - `frontend/team-members.html:670` - Add Member form
+    - `frontend/team-members.html:736` - Edit Member form
+  - **Impact**: Users can now successfully add/edit secondary phone numbers; changes persist to database
+  - **Testing**: Docker container rebuilt to deploy fix; users should hard-refresh browser (Cmd+Shift+R) to clear cached JavaScript
+
 ---
 
 ## [1.1.0] - 2025-11-17
