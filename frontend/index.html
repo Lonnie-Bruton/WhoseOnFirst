@@ -477,11 +477,25 @@
                 backupMember = activeMembers[backupRotationIndex];
             }
 
+            // Find backup member's current schedule
+            let backupSchedule = null;
+            if (backupMember) {
+                backupSchedule = sortedSchedules.find(s => {
+                    const start = new Date(s.start_datetime);
+                    const end = new Date(s.end_datetime);
+                    return s.team_member_id === backupMember.id && now >= start && now < end;
+                });
+            }
+
             // Render Primary
             renderOnCallPerson('primaryOnCall', primarySchedule, members, shifts, now, 'Primary');
 
-            // Render Backup (use member info, not schedule)
-            renderOnCallPersonFromMember('backupOnCall', backupMember, members, 'Backup');
+            // Render Backup (with schedule for "Until" time)
+            if (backupSchedule) {
+                renderOnCallPerson('backupOnCall', backupSchedule, members, shifts, now, 'Backup');
+            } else {
+                renderOnCallPersonFromMember('backupOnCall', backupMember, members, 'Backup');
+            }
 
             // Load and render fixed escalation contacts
             loadEscalationContacts();
@@ -529,7 +543,7 @@
                     <strong>${member.name}</strong>
                 </div>
                 <div class="text-muted small">
-                    <i class="ti ti-phone me-1"></i>${member.phone}
+                    <i class="ti ti-device-mobile me-1"></i>${member.phone}
                     ${member.secondary_phone ? '<br><i class="ti ti-device-mobile me-1"></i>' + member.secondary_phone : ''}
                 </div>
                 <div class="text-muted small">${timeInfo}</div>
@@ -556,7 +570,7 @@
                     <strong>${member.name}</strong>
                 </div>
                 <div class="text-muted small">
-                    <i class="ti ti-phone me-1"></i>${member.phone}
+                    <i class="ti ti-device-mobile me-1"></i>${member.phone}
                     ${member.secondary_phone ? '<br><i class="ti ti-device-mobile me-1"></i>' + member.secondary_phone : ''}
                 </div>
                 <div class="text-muted small">Rotation backup</div>
@@ -602,7 +616,9 @@
                                 </span>
                                 <strong>${config.primary_name}</strong>
                             </div>
-                            <div class="text-muted small">${config.primary_phone}</div>
+                            <div class="text-muted small">
+                                <i class="ti ti-device-mobile me-1"></i>${config.primary_phone}
+                            </div>
                             <div class="text-muted small">Fixed escalation contact</div>
                         `;
                     } else {
@@ -619,7 +635,9 @@
                                 </span>
                                 <strong>${config.secondary_name}</strong>
                             </div>
-                            <div class="text-muted small">${config.secondary_phone}</div>
+                            <div class="text-muted small">
+                                <i class="ti ti-device-mobile me-1"></i>${config.secondary_phone}
+                            </div>
                             <div class="text-muted small">Fixed escalation contact</div>
                         `;
                     } else {
