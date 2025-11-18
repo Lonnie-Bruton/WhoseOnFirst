@@ -27,6 +27,12 @@ class TeamMemberBase(BaseModel):
         description="Phone number in E.164 format (+1XXXXXXXXXX)",
         examples=["+15551234567"]
     )
+    secondary_phone: Optional[str] = Field(
+        None,
+        pattern=r'^\+1\d{10}$',
+        description="Optional secondary phone number in E.164 format (+1XXXXXXXXXX)",
+        examples=["+15551234567"]
+    )
 
     @field_validator('phone')
     @classmethod
@@ -70,6 +76,28 @@ class TeamMemberBase(BaseModel):
             raise ValueError('Name cannot be empty or whitespace only')
         return v
 
+    @field_validator('secondary_phone')
+    @classmethod
+    def validate_secondary_phone_format(cls, v: Optional[str]) -> Optional[str]:
+        """
+        Validate secondary phone number is in E.164 format if provided.
+
+        Args:
+            v: Phone number string or None
+
+        Returns:
+            Optional[str]: Validated phone number or None
+
+        Raises:
+            ValueError: If phone format is invalid
+        """
+        if v is not None and not re.match(r'^\+1\d{10}$', v):
+            raise ValueError(
+                'Secondary phone must be in E.164 format (+1XXXXXXXXXX). '
+                'Example: +15551234567'
+            )
+        return v
+
 
 class TeamMemberCreate(TeamMemberBase):
     """
@@ -96,6 +124,12 @@ class TeamMemberUpdate(BaseModel):
         None,
         pattern=r'^\+1\d{10}$',
         description="Phone number in E.164 format (+1XXXXXXXXXX)",
+        examples=["+15551234567"]
+    )
+    secondary_phone: Optional[str] = Field(
+        None,
+        pattern=r'^\+1\d{10}$',
+        description="Optional secondary phone number in E.164 format (+1XXXXXXXXXX)",
         examples=["+15551234567"]
     )
 
@@ -140,6 +174,28 @@ class TeamMemberUpdate(BaseModel):
             v = v.strip()
             if not v:
                 raise ValueError('Name cannot be empty or whitespace only')
+        return v
+
+    @field_validator('secondary_phone')
+    @classmethod
+    def validate_secondary_phone_format(cls, v: Optional[str]) -> Optional[str]:
+        """
+        Validate secondary phone number is in E.164 format if provided.
+
+        Args:
+            v: Phone number string or None
+
+        Returns:
+            Optional[str]: Validated phone number or None
+
+        Raises:
+            ValueError: If phone format is invalid
+        """
+        if v is not None and not re.match(r'^\+1\d{10}$', v):
+            raise ValueError(
+                'Secondary phone must be in E.164 format (+1XXXXXXXXXX). '
+                'Example: +15551234567'
+            )
         return v
 
 

@@ -15,6 +15,55 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.2.0] - 2025-11-17
+
+### Added
+
+- **Dual-Device SMS Notification Support** - Optional secondary phone number for redundant notification delivery ([WHO-17](https://linear.app/hextrackr/issue/WHO-17))
+  - **Purpose**: Improve on-call notification reliability by sending SMS to both office and personal phones
+  - **User Experience**: Optional secondary phone field in team member management with redundancy status display
+  - **Key Features**:
+    - Optional `secondary_phone` field on team members table (nullable, no unique constraint)
+    - E.164 format validation for secondary phone (same as primary)
+    - Concurrent SMS delivery to both phones when secondary configured
+    - Independent retry logic for each phone (3 attempts with exponential backoff)
+    - Partial success support: Schedule marked as notified if EITHER phone succeeds
+    - Separate notification log entries for primary and secondary phones (independent tracking)
+    - Dashboard displays both phone numbers with icons (phone icon for primary, mobile icon for secondary)
+  - **Backend Implementation**:
+    - **Database**: Migration `c59db199a117_add_secondary_phone_to_team_members` adds nullable `secondary_phone` column (String, max 15 chars)
+    - **Model** (`src/models/team_member.py:39-41`): Added `secondary_phone` field with compatibility note for testing mode (migration 200f01c20965)
+    - **Schemas** (`src/api/schemas/team_member.py:30-99, 129-199`): Added `secondary_phone` to Base, Update, and Response schemas with E.164 validation
+    - **SMS Service** (`src/services/sms_service.py:187-355`):
+      - Refactored retry logic into `_send_to_single_phone()` helper method
+      - Modified `send_notification()` to send to both primary and secondary phones
+      - Returns enhanced result with `primary` and `secondary` sub-results
+      - Logging differentiates between "primary phone" and "secondary phone" in messages
+      - Marks schedule as notified if EITHER phone succeeds (redundancy pattern)
+    - **API Responses**: Team member endpoints now include `secondary_phone` in responses
+  - **Frontend Implementation**:
+    - **Team Members Page** (`frontend/team-members.html:213-222, 251-260, 706`):
+      - Add Member modal: Added "Secondary Phone (Optional)" field below primary phone
+      - Edit Member modal: Added secondary phone field with pre-population from member data
+      - Form labels updated: "Phone Number" → "Primary Phone" for clarity
+      - Edit member function populates secondary phone field when opening modal
+    - **Dashboard** (`frontend/index.html:531-534, 558-561`):
+      - Primary phone displays with phone icon (`ti ti-phone`)
+      - Secondary phone displays below primary with mobile icon (`ti ti-device-mobile`)
+      - Conditional rendering: Secondary phone only shown if configured
+  - **Redundancy Logic**:
+    - Primary phone failure + Secondary phone success = Schedule marked as notified ✅
+    - Primary phone success + Secondary phone failure = Schedule marked as notified ✅
+    - Both phones fail = Schedule NOT marked as notified ❌
+    - Status message indicates which phone(s) succeeded: "both phones", "primary phone", or "secondary phone"
+  - **Testing Compatibility**:
+    - Compatible with testing mode (migration 200f01c20965) where multiple members share same phone number
+    - No unique constraint on secondary phone allows multiple members to use same personal phone or omit it
+    - Both primary and secondary can be set to same test number for dry-run testing
+  - **Cost Impact**: Doubles SMS volume when all members configure secondary phones (~52 messages/month → ~104 messages/month at $0.008/message = $0.83/month)
+
+---
+
 ## [1.1.0] - 2025-11-17
 
 ### Added

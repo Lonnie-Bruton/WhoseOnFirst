@@ -211,9 +211,14 @@
                             <input type="text" class="form-control" name="name" placeholder="John Doe" required>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label required">Phone Number</label>
+                            <label class="form-label required">Primary Phone</label>
                             <input type="tel" class="form-control" name="phone" placeholder="+19185551234" required pattern="^\+1\d{10}$">
-                            <small class="form-hint">Format: +1XXXXXXXXXX (E.164)</small>
+                            <small class="form-hint">Office phone (required)</small>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Secondary Phone (Optional)</label>
+                            <input type="tel" class="form-control" name="secondary_phone" placeholder="+19185551234" pattern="^\+1\d{10}$">
+                            <small class="form-hint">Personal phone for redundancy (optional)</small>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -244,9 +249,14 @@
                             <input type="text" class="form-control" id="editName" name="name" required>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label required">Phone Number</label>
+                            <label class="form-label required">Primary Phone</label>
                             <input type="tel" class="form-control" id="editPhone" name="phone" required pattern="^\+1\d{10}$">
-                            <small class="form-hint">Format: +1XXXXXXXXXX (E.164)</small>
+                            <small class="form-hint">Office phone (required)</small>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Secondary Phone (Optional)</label>
+                            <input type="tel" class="form-control" id="editSecondaryPhone" name="secondary_phone" pattern="^\+1\d{10}$">
+                            <small class="form-hint">Personal phone for redundancy (optional)</small>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -693,6 +703,7 @@
             document.getElementById('editMemberId').value = member.id;
             document.getElementById('editName').value = member.name;
             document.getElementById('editPhone').value = member.phone;
+            document.getElementById('editSecondaryPhone').value = member.secondary_phone || '';
 
             new bootstrap.Modal(document.getElementById('editMemberModal')).show();
         }

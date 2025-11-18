@@ -528,7 +528,10 @@
                     </span>
                     <strong>${member.name}</strong>
                 </div>
-                <div class="text-muted small">${member.phone}</div>
+                <div class="text-muted small">
+                    <i class="ti ti-phone me-1"></i>${member.phone}
+                    ${member.secondary_phone ? '<br><i class="ti ti-device-mobile me-1"></i>' + member.secondary_phone : ''}
+                </div>
                 <div class="text-muted small">${timeInfo}</div>
             `;
         }
@@ -552,7 +555,10 @@
                     </span>
                     <strong>${member.name}</strong>
                 </div>
-                <div class="text-muted small">${member.phone}</div>
+                <div class="text-muted small">
+                    <i class="ti ti-phone me-1"></i>${member.phone}
+                    ${member.secondary_phone ? '<br><i class="ti ti-device-mobile me-1"></i>' + member.secondary_phone : ''}
+                </div>
                 <div class="text-muted small">Rotation backup</div>
             `;
         }

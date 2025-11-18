@@ -186,9 +186,83 @@ class SMSService:
 
         # Compose message
         message_body = self._compose_message(schedule)
-        to_phone = schedule.team_member.phone
 
-        # Send with retry logic
+        # Send to primary phone
+        primary_result = self._send_to_single_phone(
+            phone=schedule.team_member.phone,
+            message_body=message_body,
+            schedule=schedule,
+            phone_type="primary"
+        )
+
+        # Send to secondary phone if configured
+        secondary_result = None
+        if schedule.team_member.secondary_phone:
+            secondary_result = self._send_to_single_phone(
+                phone=schedule.team_member.secondary_phone,
+                message_body=message_body,
+                schedule=schedule,
+                phone_type="secondary"
+            )
+
+        # Mark as notified if EITHER phone succeeded (redundancy pattern)
+        if primary_result['success'] or (secondary_result and secondary_result['success']):
+            schedule.notified = True
+            schedule.notified_at = datetime.now()
+            self.db.commit()
+
+            # Determine which phone(s) succeeded
+            if primary_result['success'] and secondary_result and secondary_result['success']:
+                message = "SMS sent successfully to both phones"
+            elif primary_result['success']:
+                message = "SMS sent successfully to primary phone"
+            else:
+                message = "SMS sent successfully to secondary phone"
+
+            return {
+                "success": True,
+                "schedule_id": schedule.id,
+                "twilio_sid": primary_result.get('twilio_sid') or (secondary_result.get('twilio_sid') if secondary_result else None),
+                "status": "sent",
+                "message": message,
+                "attempts": primary_result.get('attempts', 0),
+                "error": None,
+                "primary": primary_result,
+                "secondary": secondary_result
+            }
+
+        # Both phones failed
+        return {
+            "success": False,
+            "schedule_id": schedule.id,
+            "twilio_sid": None,
+            "status": "failed",
+            "message": "Failed to send SMS to any phone",
+            "attempts": primary_result.get('attempts', 0),
+            "error": primary_result.get('error'),
+            "primary": primary_result,
+            "secondary": secondary_result
+        }
+
+    def _send_to_single_phone(
+        self,
+        phone: str,
+        message_body: str,
+        schedule: Schedule,
+        phone_type: str
+    ) -> Dict[str, Any]:
+        """
+        Send SMS to a single phone number with retry logic.
+
+        Args:
+            phone: Recipient phone number (E.164 format)
+            message_body: SMS message text
+            schedule: Schedule instance for logging
+            phone_type: "primary" or "secondary" for logging purposes
+
+        Returns:
+            Dictionary with result information for this phone
+        """
         last_error = None
         for attempt in range(self.max_retries):
             try:
@@ -197,12 +271,12 @@ class SMSService:
                     delay = self.base_delay * (2 ** (attempt - 1))
                     logger.info(
                         f"Retry attempt {attempt + 1}/{self.max_retries} "
-                        f"for schedule {schedule.id} after {delay}s delay"
+                        f"for {phone_type} phone of schedule {schedule.id} after {delay}s delay"
                     )
                     sleep(delay)
 
                 # Send SMS
-                result = self._send_sms(to_phone, message_body)
+                result = self._send_sms(phone, message_body)
 
                 # Log successful send with recipient snapshot
                 _ = self.notification_repo.log_notification_attempt(
@@ -211,32 +285,26 @@ class SMSService:
                     twilio_sid=result['sid'],
                     error_message=None,
                     recipient_name=schedule.team_member.name,
-                    recipient_phone=schedule.team_member.phone
+                    recipient_phone=phone
                 )
 
-                # Mark schedule as notified
-                schedule.notified = True
-                schedule.notified_at = datetime.now()
-                self.db.commit()
-
                 logger.info(
-                    f"SMS sent successfully to {self._sanitize_phone(to_phone)} "
+                    f"SMS sent successfully to {phone_type} phone {self._sanitize_phone(phone)} "
                     f"for schedule {schedule.id} (SID: {result['sid']})"
                 )
 
                 return {
                     "success": True,
-                    "schedule_id": schedule.id,
                     "twilio_sid": result['sid'],
                     "status": "sent",
-                    "message": "SMS sent successfully",
+                    "phone_type": phone_type,
                     "attempts": attempt + 1,
                     "error": None
                 }
 
             except TwilioRestException as e:
                 last_error = str(e)
-                error_msg = f"Twilio error (attempt {attempt + 1}/{self.max_retries}): {str(e)}"
+                error_msg = f"Twilio error on {phone_type} phone (attempt {attempt + 1}/{self.max_retries}): {str(e)}"
                 logger.error(error_msg)
 
                 # Log failed attempt
@@ -246,19 +314,19 @@ class SMSService:
                     twilio_sid=None,
                     error_message=error_msg,
                     recipient_name=schedule.team_member.name,
-                    recipient_phone=schedule.team_member.phone
+                    recipient_phone=phone
                 )
 
                 # Check if error is retryable
                 if not self._is_retryable_error(e):
                     logger.error(
-                        f"Non-retryable Twilio error for schedule {schedule.id}: {str(e)}"
+                        f"Non-retryable Twilio error for {phone_type} phone of schedule {schedule.id}: {str(e)}"
                     )
                     break
 
             except Exception as e:
                 last_error = str(e)
-                error_msg = f"Unexpected error (attempt {attempt + 1}/{self.max_retries}): {str(e)}"
+                error_msg = f"Unexpected error on {phone_type} phone (attempt {attempt + 1}/{self.max_retries}): {str(e)}"
                 logger.error(error_msg)
 
                 # Log failed attempt
@@ -268,21 +336,20 @@ class SMSService:
                     twilio_sid=None,
                     error_message=error_msg,
                     recipient_name=schedule.team_member.name,
-                    recipient_phone=schedule.team_member.phone
+                    recipient_phone=phone
                 )
 
-        # All attempts failed
+        # All attempts failed for this phone
         logger.error(
-            f"Failed to send SMS for schedule {schedule.id} after "
+            f"Failed to send SMS to {phone_type} phone for schedule {schedule.id} after "
             f"{self.max_retries} attempts. Last error: {last_error}"
         )
 
         return {
             "success": False,
-            "schedule_id": schedule.id,
             "twilio_sid": None,
             "status": "failed",
-            "message": "Failed to send SMS after all retry attempts",
+            "phone_type": phone_type,
             "attempts": self.max_retries,
             "error": last_error
         }

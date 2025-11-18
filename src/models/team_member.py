@@ -18,6 +18,7 @@ class TeamMember(Base):
         id: Primary key
         name: Full name of team member
         phone: Phone number in E.164 format (+1XXXXXXXXXX)
+        secondary_phone: Optional secondary phone for dual-device paging
         is_active: Whether member is currently active in rotation
         rotation_order: Position in rotation sequence (lower numbers go first)
         created_at: Timestamp when member was added
@@ -35,6 +36,9 @@ class TeamMember(Base):
     # Member information
     name = Column(String, nullable=False)
     phone = Column(String, unique=True, nullable=False, index=True)
+    # NOTE: No unique constraint - multiple members can share same personal phone or omit it
+    # Also compatible with testing mode where primary phone is non-unique (see migration 200f01c20965)
+    secondary_phone = Column(String, nullable=True)
     is_active = Column(Boolean, default=True, nullable=False, index=True)
     rotation_order = Column(Integer, nullable=True, index=True)  # Order in rotation (nullable for flexibility)
 
@@ -74,6 +78,7 @@ class TeamMember(Base):
             "id": self.id,
             "name": self.name,
             "phone": self.phone,
+            "secondary_phone": self.secondary_phone,
             "is_active": self.is_active,
             "rotation_order": self.rotation_order,
             "created_at": self.created_at.isoformat() if self.created_at else None,
