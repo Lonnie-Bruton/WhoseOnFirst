@@ -380,9 +380,9 @@ System shall automatically regenerate schedules when configuration changes:
 - [ ] Setting to enable/disable auto-regeneration
 - [ ] Preserve notification history when regenerating
 
-**REQ-049: Optional Second Phone Number for Dual-Device Paging (WHO-17)**  
-**Status:** 📋 Planned  
-**Priority:** Medium  
+**REQ-049: Optional Second Phone Number for Dual-Device Paging (WHO-17)**
+**Status:** ✅ Complete (v1.2.0)
+**Priority:** Medium
 **Linear:** [WHO-17](https://linear.app/hextrackr/issue/WHO-17)
 
 System shall support optional second phone number per team member for redundant notification delivery:
@@ -417,6 +417,47 @@ System shall support optional second phone number per team member for redundant 
 - Test secondary phone validation
 - Test notification log with dual entries
 - Test retry logic for mixed success/failure scenarios
+
+**REQ-050: Global Team Member Color Consistency System (WHO-22)**
+**Status:** 📋 Planned
+**Priority:** Medium
+**Linear:** [WHO-22](https://linear.app/hextrackr/issue/WHO-22)
+
+System shall provide consistent avatar color assignment for team members across all pages and sessions:
+- Add `color` field to team_members table (VARCHAR(20), stores CSS class like "team-color-1")
+- Assign color from 16-color WCAG AA palette on member creation
+- Return color in all API responses (GET /api/v1/team-members)
+- Replace page-specific color algorithms with database-driven colors
+- Support manual color override via Team Members edit page (future)
+
+**Acceptance Criteria:**
+- [ ] Database migration adds `color` column to team_members table
+- [ ] Assign colors to existing members (sorted by ID for consistency)
+- [ ] Update Pydantic schemas to include `color` field
+- [ ] Replace `getTeamColor()` functions on all 4 pages with `member.color`
+- [ ] Gary K shows same color on Dashboard, Team Members, Schedule, and Notifications
+- [ ] New members automatically get next available color from palette
+- [ ] Color persists across sessions and page refreshes
+
+**Implementation Notes:**
+- Current issue: 3 different pages use 3 different color assignment algorithms
+  - Dashboard/Notifications: Sort by ID → find position → modulo
+  - Schedule page: Loop index → modulo (no sorting!)
+  - Team Members page: forEach index → modulo (different sort!)
+- Result: Same member appears in different colors depending on page
+- Database approach provides single source of truth
+- Consider "color pool" tracking to prevent collisions when all 16 colors in use
+- Color field optional on creation (auto-assigned by backend)
+
+**Dependencies:**
+- None - independent feature
+
+**Testing:**
+- Verify Gary K shows same color on all 4 pages
+- Test new member creation (gets next available color)
+- Test color persistence across sessions
+- Test manual color override (future enhancement)
+- Verify existing members get consistent colors after migration
 
 ---
 
@@ -756,9 +797,10 @@ The following features are explicitly out of scope for initial releases:
 
 ### Phase 3: Enhancements 📋 PLANNED
 **Duration:** December 2025 - January 2026 (6-8 weeks estimated)
-- REQ-037: Manual shift override UI
-- REQ-038: Multi-level SMS notifications
-- REQ-039: Auto-regeneration on config changes
+- REQ-037: Manual shift override UI (WHO-14)
+- REQ-038: Multi-level SMS notifications (WHO-15)
+- REQ-039: Auto-regeneration on config changes (WHO-16)
+- REQ-050: Global color consistency system (WHO-22)
 - REQ-031: Email notification backup
 - REQ-035: PTO/vacation management
 
