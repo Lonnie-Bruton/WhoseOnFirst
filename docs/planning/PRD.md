@@ -461,6 +461,108 @@ System shall provide consistent avatar color assignment for team members across 
 
 ---
 
+**REQ-051: Weekly Escalation Contact Schedule Summary (WHO-23)**
+**Status:** 📋 Planned
+**Priority:** High (Supervisor Request)
+**Linear:** [WHO-23](https://linear.app/hextrackr/issue/WHO-23)
+
+System shall send automated weekly SMS summary to escalation contacts every Monday at 8:00 AM CST with upcoming 7-day on-call schedule:
+- New APScheduler job runs Monday 8am CST
+- Query schedules for next 7 days (Mon-Sun)
+- Compose message with day, team member name, and primary phone
+- Send to both escalation contacts (primary + secondary phones)
+- Log sends with category `escalation_weekly`
+- Settings modal toggle to enable/disable weekly summary
+- Manual "Send Test Weekly Summary" button for testing
+
+**SMS Format Example:**
+```
+WhoseOnFirst Weekly Schedule (Nov 18-24)
+
+Mon 11/18: Lance B +19187019714
+Tue 11/19: Gary K +19187019714 (48h)
+Wed 11/20: Gary K (continues)
+Thu 11/21: Troy M +19187019714
+...
+
+Questions? Reply to this message.
+```
+
+**Acceptance Criteria:**
+- [ ] Scheduler job runs every Monday 8:00 AM CST
+- [ ] SMS sent to escalation primary and secondary phones
+- [ ] Message lists 7 days with name + primary phone only
+- [ ] 48h shifts marked with "(48h)" and "(continues)"
+- [ ] Settings: `escalation_weekly_enabled` (boolean)
+- [ ] Settings: `escalation_weekly_template` (text)
+- [ ] Notification log entries with category `escalation_weekly`
+- [ ] Settings modal: Toggle and "Send Test" button
+- [ ] Manual trigger endpoint for testing
+
+**Implementation Notes:**
+- Builds on existing scheduler and SMS service infrastructure
+- Query pattern: Next Monday 00:00:00 + 7 days
+- Character count: ~320 chars (2 SMS segments, ~$0.016/recipient)
+- Weekly cost: ~$0.032/week (~$0.13/month) for 2 recipients
+- No new tables needed (uses existing settings table)
+- Template stored in settings, customizable by admin
+
+**Dependencies:**
+- WHO-17 (Dual-Device SMS) - Complete v1.2.0
+
+**Testing:**
+- Verify Monday 8am job execution
+- Test 7-day query returns correct schedules
+- Validate 48h shift display logic
+- Test toggle enable/disable persistence
+- Verify SMS delivery to both escalation phones
+- Test manual trigger endpoint
+
+---
+
+**REQ-052: Calendar Card Phone Display Enhancement (WHO-24)**
+**Status:** 📋 Planned
+**Priority:** Medium (UX Polish)
+**Linear:** [WHO-24](https://linear.app/hextrackr/issue/WHO-24)
+
+System shall enhance calendar card phone display to match header escalation chain pattern:
+- Add mobile icon (`ti ti-device-mobile`) before phone numbers
+- Show primary phone always visible in card
+- Show secondary phone in Bootstrap tooltip on hover (if configured)
+- Tooltip format: "Secondary: +1918XXXXXXX"
+- No tooltip if team member has no secondary phone
+- Maintain current card colors and layout
+
+**Acceptance Criteria:**
+- [ ] Calendar cards display mobile icon before phone number
+- [ ] Icon matches header pattern (icon before number)
+- [ ] Primary phone always visible
+- [ ] Secondary phone in tooltip on hover (if exists)
+- [ ] No tooltip for single-phone members
+- [ ] Tooltips work on desktop (hover) and mobile (tap)
+- [ ] Cards grow naturally to accommodate content
+- [ ] No layout breakage across screen sizes
+
+**Implementation Notes:**
+- Frontend-only change (no API modifications)
+- Use Bootstrap tooltip component (`data-bs-toggle="tooltip"`)
+- Tooltip pattern prepares for WHO-14 (manual overrides) gray line display
+- Secondary phone discoverable without cluttering cards
+- Tabler Icons font already loaded (no additional requests)
+- Dispose tooltips before re-rendering calendar
+
+**Dependencies:**
+- WHO-17 (Dual-Device SMS) - Complete v1.2.0 (provides `secondary_phone` field)
+
+**Testing:**
+- Visual: Icon displays on all calendar cards
+- Tooltip: Hover shows secondary phone (when exists)
+- Mobile: Tap shows tooltip on touch devices
+- Data: Test with/without secondary phone
+- Browser: Chrome, Firefox, Safari, Mobile Safari, Mobile Chrome
+
+---
+
 ### Future Vision (Phase 4 - Advanced Features)
 
 **Status:** 🔮 Vision (Not Yet Approved)  
@@ -787,6 +889,8 @@ The following features are explicitly out of scope for initial releases:
 - 📋 RHEL 10 production validation
 - 📋 HTTPS support via nginx
 - 📋 Twilio 10DLC approval completion
+- 📋 REQ-051: Weekly escalation contact schedule summary (WHO-23)
+- 📋 REQ-052: Calendar card phone display enhancement (WHO-24)
 - 📋 1-week production trial
 
 **Deliverables:**
@@ -794,6 +898,7 @@ The following features are explicitly out of scope for initial releases:
 - Offline installer bundle
 - Production deployment guide
 - Performance validation report
+- Enhanced supervisor workflow tools
 
 ### Phase 3: Enhancements 📋 PLANNED
 **Duration:** December 2025 - January 2026 (6-8 weeks estimated)
