@@ -96,6 +96,9 @@
             text-align: center;
         }
     </style>
+
+    <!-- Shared team color utilities -->
+    <script src="/js/team-colors.js"></script>
 </head>
 <body data-page="schedule">
     <div class="page">
@@ -260,11 +263,6 @@
         // Get team member initials
         function getInitials(name) {
             return name.split(' ').map(n => n[0]).join('').toUpperCase();
-        }
-
-        // Get team color class for member by index
-        function getTeamColor(index) {
-            return `team-color-${(index % 16) + 1}`;
         }
 
         // Set default start date to next Monday
@@ -464,7 +462,6 @@
                     const shift = allShifts.find(s => s.id === schedule.shift_id);
 
                     if (member && shift) {
-                        const memberIndex = allTeamMembers.indexOf(member);
                         const dayName = currentDate.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
                         const dateNum = currentDate.getDate();
 
@@ -474,7 +471,7 @@
                                     <div class="card-body p-2">
                                         <div class="day-card-header">${dayName} ${dateNum}</div>
                                         <div class="day-card-body">
-                                            <div class="team-member-avatar ${getTeamColor(memberIndex)} mx-auto mb-2" style="width: 48px; height: 48px; font-size: 16px;">
+                                            <div class="team-member-avatar ${getTeamColor(member.id, allTeamMembers)} mx-auto mb-2" style="width: 48px; height: 48px; font-size: 16px;">
                                                 ${getInitials(member.name)}
                                             </div>
                                             <div class="small fw-bold">${member.name}</div>

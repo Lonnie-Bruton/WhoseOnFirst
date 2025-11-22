@@ -52,6 +52,9 @@
         .team-color-15 { background-color: #c2410c; color: white; } /* Rust */
         .team-color-16 { background-color: #7e22ce; color: white; } /* Violet */
     </style>
+
+    <!-- Shared team color utilities -->
+    <script src="/js/team-colors.js"></script>
 </head>
 <body data-page="notifications">
     <div class="page">
@@ -484,21 +487,6 @@
         const API_BASE = '/api/v1';
         let currentUser = null;
 
-        // Team member color mapping (1-16 unique colors)
-        const TEAM_COLORS = [
-            'team-color-1',  'team-color-2',  'team-color-3',  'team-color-4',
-            'team-color-5',  'team-color-6',  'team-color-7',  'team-color-8',
-            'team-color-9',  'team-color-10', 'team-color-11', 'team-color-12',
-            'team-color-13', 'team-color-14', 'team-color-15', 'team-color-16'
-        ];
-
-        // Get color class for team member
-        function getTeamColor(memberId, allMembers) {
-            const sorted = [...allMembers].sort((a, b) => a.id - b.id);
-            const index = sorted.findIndex(m => m.id === memberId);
-            return TEAM_COLORS[index % TEAM_COLORS.length];
-        }
-
         // Format date/time
         function formatDateTime(dateString) {
             const date = new Date(dateString);
@@ -558,7 +546,7 @@
                 const [notificationsRes, schedulesRes, membersRes] = await Promise.all([
                     fetch(`${API_BASE}/notifications/recent?limit=50`, { credentials: 'include' }),
                     fetch(`${API_BASE}/schedules/upcoming?weeks=8`, { credentials: 'include' }),
-                    fetch(`${API_BASE}/team-members/`, { credentials: 'include' })
+                    fetch(`${API_BASE}/team-members/?active_only=true`, { credentials: 'include' })
                 ]);
 
                 if (!notificationsRes.ok) {
@@ -597,8 +585,13 @@
                     // Recipient (use snapshot or current data)
                     const recipientCell = document.createElement('td');
                     if (recipientName !== 'Unknown') {
-                        // Use member.id for color if available, otherwise use a hash of the name
-                        const colorClass = member ? getTeamColor(member.id, members) : getTeamColor(1, members);
+                        // Find member by schedule lookup OR by name from snapshot data
+                        let memberForColor = member;
+                        if (!memberForColor && recipientName) {
+                            // Try to find member by name (from snapshot)
+                            memberForColor = members.find(m => m.name === recipientName);
+                        }
+                        const colorClass = memberForColor ? getTeamColor(memberForColor.id, members) : 'team-color-1';
                         // Extract initials from name
                         const initials = recipientName.split(' ').map(n => n[0]).join('').toUpperCase();
                         recipientCell.innerHTML = `

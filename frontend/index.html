@@ -168,6 +168,9 @@
             border-radius: 3px;
         }
     </style>
+
+    <!-- Shared team color utilities -->
+    <script src="/js/team-colors.js"></script>
 </head>
 <body data-page="index">
     <div class="page">
@@ -330,24 +333,9 @@
         const API_BASE = '/api/v1';
         let currentUser = null;
 
-        // Team member color mapping (1-16 unique colors)
-        const TEAM_COLORS = [
-            'team-color-1',  'team-color-2',  'team-color-3',  'team-color-4',
-            'team-color-5',  'team-color-6',  'team-color-7',  'team-color-8',
-            'team-color-9',  'team-color-10', 'team-color-11', 'team-color-12',
-            'team-color-13', 'team-color-14', 'team-color-15', 'team-color-16'
-        ];
-
         // Calendar state
         let currentViewDate = new Date();
         let cachedData = null;
-
-        // Get color class for team member
-        function getTeamColor(memberId, allMembers) {
-            const sorted = [...allMembers].sort((a, b) => a.id - b.id);
-            const index = sorted.findIndex(m => m.id === memberId);
-            return TEAM_COLORS[index % TEAM_COLORS.length];
-        }
 
         // Get first name only
         function getFirstName(fullName) {
@@ -378,7 +366,7 @@
             try {
                 // Fetch all data in parallel - get all schedules and filter client-side
                 const [membersRes, schedulesRes, shiftsRes] = await Promise.all([
-                    fetch(`${API_BASE}/team-members/`, { credentials: 'include' }),
+                    fetch(`${API_BASE}/team-members/?active_only=true`, { credentials: 'include' }),
                     fetch(`${API_BASE}/schedules/`, { credentials: 'include' }),  // Get all schedules
                     fetch(`${API_BASE}/shifts/`, { credentials: 'include' })
                 ]);

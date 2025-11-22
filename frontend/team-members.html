@@ -110,6 +110,9 @@
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
         }
     </style>
+
+    <!-- Shared team color utilities -->
+    <script src="/js/team-colors.js"></script>
 </head>
 <body data-page="team-members">
     <div class="page">
@@ -408,6 +411,7 @@
         const API_BASE = '/api/v1';
         let currentUser = null;
         let allMembers = [];
+        let activeMembers = [];  // For consistent color calculation
         let currentFilter = 'active';  // Default to active members
         let sortableInstance = null;
         let orderChanged = false;
@@ -484,6 +488,9 @@
 
                 allMembers = await response.json();
 
+                // Create activeMembers array for consistent color calculation
+                activeMembers = allMembers.filter(m => m.is_active);
+
                 // Sort by rotation_order (with nulls last), then by ID
                 allMembers.sort((a, b) => {
                     if (a.rotation_order === null && b.rotation_order === null) return a.id - b.id;
@@ -545,7 +552,7 @@
                         ` : ''}
                         <div class="card-body" style="padding: 1.5rem;">
                             <div class="d-flex align-items-center mb-3">
-                                <span class="avatar avatar-lg me-3 team-color-${(index % 16) + 1} avatar-initials">
+                                <span class="avatar avatar-lg me-3 ${getTeamColor(member.id, activeMembers)} avatar-initials">
                                     ${getInitials(member.name)}
                                 </span>
                                 <div class="flex-fill">
