@@ -365,8 +365,9 @@
         async function loadDashboardData() {
             try {
                 // Fetch all data in parallel - get all schedules and filter client-side
+                // Note: Fetch ALL members (including inactive) to display historical schedules
                 const [membersRes, schedulesRes, shiftsRes] = await Promise.all([
-                    fetch(`${API_BASE}/team-members/?active_only=true`, { credentials: 'include' }),
+                    fetch(`${API_BASE}/team-members/`, { credentials: 'include' }),
                     fetch(`${API_BASE}/schedules/`, { credentials: 'include' }),  // Get all schedules
                     fetch(`${API_BASE}/shifts/`, { credentials: 'include' })
                 ]);
@@ -506,7 +507,9 @@
                 return;
             }
 
-            const colorClass = getTeamColor(member.id, members);
+            // Inactive members shown in gray, active members get algorithm color
+            const activeMembers = members.filter(m => m.is_active);
+            const colorClass = member.is_active ? getTeamColor(member.id, activeMembers) : 'bg-secondary';
             const startDate = new Date(schedule.start_datetime);
             const endDate = new Date(schedule.end_datetime);
             const isActive = now >= startDate && now < endDate;
@@ -547,7 +550,9 @@
                 return;
             }
 
-            const colorClass = getTeamColor(member.id, allMembers);
+            // Inactive members shown in gray, active members get algorithm color
+            const activeMembers = allMembers.filter(m => m.is_active);
+            const colorClass = member.is_active ? getTeamColor(member.id, activeMembers) : 'bg-secondary';
             const initials = getInitials(member.name);
 
             container.innerHTML = `
@@ -709,7 +714,9 @@
 
                     if (member && shift) {
                         const badge = document.createElement('div');
-                        const colorClass = getTeamColor(member.id, members);
+                        // Inactive members shown in gray, active members get algorithm color
+                        const activeMembers = members.filter(m => m.is_active);
+                        const colorClass = member.is_active ? getTeamColor(member.id, activeMembers) : 'bg-secondary';
                         badge.className = `on-call-badge ${colorClass}`;
 
                         let displayName = member.name;
@@ -738,13 +745,14 @@
             const legend = document.querySelector('.team-legend');
             legend.innerHTML = '';
 
-            const sorted = [...members].filter(m => m.is_active).sort((a, b) => a.id - b.id);
+            const activeMembers = members.filter(m => m.is_active);
+            const sorted = [...activeMembers].sort((a, b) => a.id - b.id);
             sorted.forEach(member => {
                 const item = document.createElement('div');
                 item.className = 'legend-item';
 
                 const colorBox = document.createElement('div');
-                colorBox.className = `legend-color ${getTeamColor(member.id, members)}`;
+                colorBox.className = `legend-color ${getTeamColor(member.id, activeMembers)}`;
 
                 const name = document.createElement('span');
                 name.textContent = member.name;

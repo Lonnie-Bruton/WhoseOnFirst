@@ -543,10 +543,11 @@
         // Load notification history
         async function loadHistory() {
             try {
+                // Note: Fetch ALL members (including inactive) to display historical notifications
                 const [notificationsRes, schedulesRes, membersRes] = await Promise.all([
                     fetch(`${API_BASE}/notifications/recent?limit=50`, { credentials: 'include' }),
                     fetch(`${API_BASE}/schedules/upcoming?weeks=8`, { credentials: 'include' }),
-                    fetch(`${API_BASE}/team-members/?active_only=true`, { credentials: 'include' })
+                    fetch(`${API_BASE}/team-members/`, { credentials: 'include' })
                 ]);
 
                 if (!notificationsRes.ok) {
@@ -591,7 +592,11 @@
                             // Try to find member by name (from snapshot)
                             memberForColor = members.find(m => m.name === recipientName);
                         }
-                        const colorClass = memberForColor ? getTeamColor(memberForColor.id, members) : 'team-color-1';
+                        // Inactive members shown in gray, active members get algorithm color
+                        const activeMembers = members.filter(m => m.is_active);
+                        const colorClass = memberForColor
+                            ? (memberForColor.is_active ? getTeamColor(memberForColor.id, activeMembers) : 'bg-secondary')
+                            : 'team-color-1';
                         // Extract initials from name
                         const initials = recipientName.split(' ').map(n => n[0]).join('').toUpperCase();
                         recipientCell.innerHTML = `
