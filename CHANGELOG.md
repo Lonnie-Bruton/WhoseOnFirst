@@ -15,6 +15,67 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.4] - 2025-11-21
+
+### Fixed
+
+- **Global Team Member Color Consistency** - Team member avatar colors now consistent across all pages ([WHO-22](https://linear.app/hextrackr/issue/WHO-22))
+  - **Issue**: Same team member displayed in different colors on Dashboard, Team Members, Schedule, and Notifications pages
+  - **Root Cause**: Each page used different color assignment algorithms (sorted by ID, loop index, rotation order)
+  - **Solution**: Created shared `/frontend/js/team-colors.js` utility with standardized algorithm
+  - **Algorithm**: Sorts active members by database ID, finds position in sorted array, uses modulo to map to 16-color palette
+  - **Implementation**:
+    - Created shared `team-colors.js` with `TEAM_COLORS` array and `getTeamColor(memberId, allMembers)` function
+    - Updated all 4 pages to include shared script and use consistent function calls
+    - Removed duplicate color code from Dashboard, Team Members, Schedule, and Notifications
+  - **Files Changed**:
+    - `frontend/js/team-colors.js` (NEW) - Shared color assignment utilities
+    - `frontend/index.html` - Include shared script, remove local TEAM_COLORS and getTeamColor
+    - `frontend/team-members.html` - Include shared script, replace inline color logic with activeMembers filter
+    - `frontend/schedule.html` - Include shared script, remove local getTeamColor function
+    - `frontend/notifications.html` - Include shared script, remove local TEAM_COLORS and getTeamColor
+  - **Result**: All team members now display with same color across all pages (e.g., Gary K = purple everywhere, Clark M = cyan everywhere)
+  - **Testing**: Verified via Chrome DevTools on all 4 pages with 7 active team members
+
+- **Inactive Members Missing from Historical Views** - Inactive team members now display in gray on historical calendar and notification records
+  - **Issue**: After deactivating Ken U on Nov 16th, his historical schedule entries disappeared from Dashboard calendar
+  - **Root Cause**: Pages were filtering to `active_only=true`, excluding inactive members from member arrays
+  - **Solution**: Implemented dynamic conditional coloring based on member status
+  - **Implementation**:
+    - Dashboard and Notifications now fetch ALL members (including inactive) for historical data display
+    - Added conditional color logic: inactive members → `bg-secondary` (gray), active members → algorithm-based color
+    - Filter to active members only BEFORE calculating algorithm-based colors for consistency
+  - **Files Changed**:
+    - `frontend/index.html:369-372` - Remove `active_only=true`, add conditional coloring in 4 locations
+    - `frontend/notifications.html:549-550` - Remove `active_only=true`, add conditional coloring
+  - **Result**: Historical schedules/notifications now display correctly with inactive members shown in gray
+  - **Visual Impact**: Ken U's historical calendar entries now visible in gray, making inactive status immediately clear
+  - **Benefit**: Preserves historical accuracy while maintaining color consistency for active members
+
+### Technical Details
+
+- **Color Assignment Algorithm** (shared across all pages):
+  ```javascript
+  // Active members get consistent colors based on sorted ID position
+  const activeMembers = allMembers.filter(m => m.is_active);
+  const sorted = [...activeMembers].sort((a, b) => a.id - b.id);
+  const index = sorted.findIndex(m => m.id === memberId);
+  return TEAM_COLORS[index % TEAM_COLORS.length];
+
+  // Inactive members always shown in gray
+  const colorClass = member.is_active
+      ? getTeamColor(member.id, activeMembers)
+      : 'bg-secondary';
+  ```
+- **Handles Edge Cases**:
+  - Missing database IDs (e.g., ID 8 gap) via `findIndex()`
+  - Teams larger than 16 members via modulo operation
+  - Inactive members in historical data via conditional rendering
+- **No Database Changes**: Pure frontend fix using existing team member IDs
+- **Backward Compatible**: Existing data and APIs unchanged
+
+---
+
 ## [1.2.0] - 2025-11-17
 
 ### Added

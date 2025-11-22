@@ -501,5 +501,89 @@ Closes WHO-22
 ---
 
 **Sprint Created**: 2025-11-21 19:25 CST
-**Status**: Ready to implement
+**Sprint Completed**: 2025-11-21 21:00 CST
+**Status**: ✅ COMPLETE
 **Checkpoint**: WHO-22-checkpoint (commit: 36fcf3b)
+
+---
+
+## 🎉 Sprint Completion Summary
+
+### Implementation Results
+
+**Commits:**
+- `76df20c` - Initial color consistency implementation (shared team-colors.js)
+- `4ae9e1b` - Bonus fix for inactive member display (gray coloring)
+
+**Actual Time:** ~2 hours (including discovery and bonus fix)
+**Estimated Time:** 40 minutes
+
+**Time Breakdown:**
+- Research & Planning: 30 min ✅
+- Implementation: 45 min ✅
+- Testing & Discovery: 30 min ✅
+- Bonus Fix (inactive members): 15 min ⭐
+
+### Files Modified
+
+1. ✅ `frontend/js/team-colors.js` (NEW) - Shared color utilities
+2. ✅ `frontend/index.html` - Dashboard with conditional coloring
+3. ✅ `frontend/team-members.html` - Team Members with activeMembers filter
+4. ✅ `frontend/schedule.html` - Schedule with shared function
+5. ✅ `frontend/notifications.html` - Notifications with conditional coloring
+6. ✅ `docs/sprints/WHO-22-color-consistency.md` (THIS FILE)
+
+### All Success Criteria Met ✅
+
+- ✅ Shared `team-colors.js` file created
+- ✅ All 4 pages include shared script
+- ✅ All 4 pages use `getTeamColor(memberId, allMembers)` consistently
+- ✅ Gary K shows **same color** on all 4 pages (team-color-5 / Purple)
+- ✅ Clark M shows **same color** on all 4 pages (team-color-6 / Cyan)
+- ✅ All 7 active members have consistent colors
+- ✅ Ken U (inactive) displays in gray on historical records
+- ✅ Docker rebuild successful with no errors
+- ✅ No JavaScript console errors
+- ✅ Colors persist after page refresh
+
+### Bonus Achievement ⭐
+
+**Discovered Issue:** Inactive members (Ken U) were missing from historical calendar views after being deactivated on Nov 16th.
+
+**Solution:** Implemented dynamic coloring logic:
+- Dashboard & Notifications fetch ALL members (including inactive)
+- Conditional color assignment: inactive → `bg-secondary` (gray), active → algorithm
+- Filter to active members only before calculating algorithm-based colors
+
+**Result:** Historical schedules/notifications now display correctly with inactive members shown in gray.
+
+### Verified Color Assignments
+
+All pages tested via Chrome DevTools:
+
+| Member | Color | Status | Verification |
+|--------|-------|--------|--------------|
+| Lonnie B | team-color-1 (Blue) | Active | ✅ All 4 pages |
+| Ben B | team-color-2 (Green) | Active | ✅ All 4 pages |
+| Ben D | team-color-3 (Yellow) | Active | ✅ All 4 pages |
+| Matt C | team-color-4 (Pink) | Active | ✅ All 4 pages |
+| Gary K | team-color-5 (Purple) | Active | ✅ All 4 pages |
+| Clark M | team-color-6 (Cyan) | Active | ✅ All 4 pages |
+| Lance B | team-color-7 (Orange) | Active | ✅ All 4 pages |
+| Ken U | bg-secondary (Gray) | Inactive | ✅ Dashboard & Notifications |
+
+### Linear Issue
+
+- **Issue**: [WHO-22](https://linear.app/hextrackr/issue/WHO-22)
+- **Status**: ✅ Done
+- **Updated**: 2025-11-21 21:00 CST
+- **Comment**: Added implementation summary with verified results
+
+### Release
+
+**Version:** v1.0.4 (patch release)
+**CHANGELOG:** Updated with both fixes (color consistency + inactive member display)
+
+---
+
+**Sprint Status**: ✅ COMPLETE - Shipped in WhoseOnFirst v1.0.4
