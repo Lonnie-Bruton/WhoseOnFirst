@@ -581,9 +581,9 @@ All pages tested via Chrome DevTools:
 
 ### Release
 
-**Version:** v1.0.4 (patch release)
+**Version:** v1.2.1 (patch release)
 **CHANGELOG:** Updated with both fixes (color consistency + inactive member display)
 
 ---
 
-**Sprint Status**: ✅ COMPLETE - Shipped in WhoseOnFirst v1.0.4
+**Sprint Status**: ✅ COMPLETE - Shipped in WhoseOnFirst v1.2.1
