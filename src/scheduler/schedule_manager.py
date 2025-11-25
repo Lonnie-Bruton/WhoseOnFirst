@@ -436,3 +436,148 @@ def check_auto_renewal() -> None:
         except Exception as e:
             logger.error("Error in auto-renewal check job: %s", str(e), exc_info=True)
             raise
+
+
+def send_weekly_escalation_summary() -> dict:
+    """
+    Send weekly schedule summary SMS to escalation contacts.
+
+    This function is executed by APScheduler every Monday at 8:00 AM CST.
+
+    Process:
+    1. Check if weekly escalation summary is enabled in settings
+    2. Get escalation contact configuration (names and phones)
+    3. Validate at least one contact is configured
+    4. Calculate next Monday 00:00 to following Sunday 23:59
+    5. Query schedules for the 7-day period
+    6. Compose weekly summary message with 48h shift handling
+    7. Send SMS to all escalation contacts (primary and secondary)
+    8. Return summary dict with successful/failed counts
+
+    Returns:
+        Dictionary with send results:
+        {
+            "successful": int,
+            "failed": int,
+            "total": int,
+            "timestamp": ISO datetime string
+        }
+
+    Note: This function runs in a background thread, so it must manage
+    its own database session.
+    """
+    from datetime import timedelta
+
+    logger.info("Starting weekly escalation summary job")
+
+    with get_db_session() as db:
+        try:
+            # Check if weekly summary is enabled
+            settings_service = SettingsService(db)
+
+            if not settings_service.is_escalation_weekly_enabled():
+                logger.info("Weekly escalation summary is disabled, skipping")
+                return {
+                    "successful": 0,
+                    "failed": 0,
+                    "total": 0,
+                    "timestamp": datetime.now(CHICAGO_TZ).isoformat(),
+                    "message": "Feature disabled"
+                }
+
+            # Get escalation contact configuration
+            escalation_config = settings_service.get_escalation_config()
+
+            # Validate that escalation is enabled and at least one contact configured
+            if not escalation_config.get('enabled'):
+                logger.warning("Escalation contacts are disabled in config")
+                return {
+                    "successful": 0,
+                    "failed": 0,
+                    "total": 0,
+                    "timestamp": datetime.now(CHICAGO_TZ).isoformat(),
+                    "message": "Escalation contacts disabled"
+                }
+
+            # Check if at least one contact has name and phone
+            has_primary = (escalation_config.get('primary_name') and
+                          escalation_config.get('primary_phone'))
+            has_secondary = (escalation_config.get('secondary_name') and
+                            escalation_config.get('secondary_phone'))
+
+            if not (has_primary or has_secondary):
+                logger.warning("No escalation contacts configured with name and phone")
+                return {
+                    "successful": 0,
+                    "failed": 0,
+                    "total": 0,
+                    "timestamp": datetime.now(CHICAGO_TZ).isoformat(),
+                    "message": "No contacts configured"
+                }
+
+            logger.info(
+                "Weekly escalation summary enabled, contacts configured: "
+                f"primary={'Yes' if has_primary else 'No'}, "
+                f"secondary={'Yes' if has_secondary else 'No'}"
+            )
+
+            # Calculate date range for next 7 days starting from next Monday
+            # (or today if today is Monday and it's before 8 AM)
+            now = datetime.now(CHICAGO_TZ)
+
+            # Find next Monday (0 = Monday)
+            days_until_monday = (7 - now.weekday()) % 7
+            if days_until_monday == 0 and now.hour >= 8:
+                # Already Monday and past 8 AM, use next Monday
+                days_until_monday = 7
+
+            next_monday = (now + timedelta(days=days_until_monday)).replace(
+                hour=0, minute=0, second=0, microsecond=0
+            )
+            following_sunday = next_monday + timedelta(days=6, hours=23, minutes=59, seconds=59)
+
+            logger.info(
+                "Querying schedules for week: %s to %s",
+                next_monday.date(),
+                following_sunday.date()
+            )
+
+            # Query schedules for the 7-day period
+            schedule_service = ScheduleService(db)
+            schedules = schedule_service.schedule_repo.get_by_date_range(
+                start_date=next_monday,
+                end_date=following_sunday,
+                include_relationships=True  # Load team_member and shift
+            )
+
+            logger.info(f"Found {len(schedules)} schedules for the week")
+
+            # Compose weekly summary message
+            sms_service = SMSService(db)
+            message = sms_service._compose_weekly_summary(schedules)
+
+            logger.info(f"Composed weekly summary message ({len(message)} chars)")
+
+            # Send to escalation contacts
+            result = sms_service.send_escalation_weekly_summary(
+                message=message,
+                escalation_config=escalation_config
+            )
+
+            logger.info(
+                "Weekly escalation summary complete: %d successful, %d failed, %d total",
+                result['successful'],
+                result['failed'],
+                result['total']
+            )
+
+            return {
+                "successful": result['successful'],
+                "failed": result['failed'],
+                "total": result['total'],
+                "timestamp": datetime.now(CHICAGO_TZ).isoformat()
+            }
+
+        except Exception as e:
+            logger.error("Error in weekly escalation summary job: %s", str(e), exc_info=True)
+            raise
