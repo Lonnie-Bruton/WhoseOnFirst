@@ -147,6 +147,19 @@ class SMSService:
         if not schedule.shift:
             raise SMSServiceError(f"Schedule {schedule.id} has no shift assigned")
 
+        # Check for active override
+        override_repo = ScheduleOverrideRepository(self.db)
+        override = override_repo.get_override_for_schedule(schedule.id)
+
+        # Determine recipient (override member or original member)
+        if override and override.is_active:
+            recipient_member = override.override_member
+            recipient_name = override.override_member_name
+            logger.info(f"Override active for schedule {schedule.id}: sending to {recipient_name}")
+        else:
+            recipient_member = schedule.team_member
+            recipient_name = schedule.team_member.name
+
         # Check if already notified
         if schedule.notified and not force:
             logger.info(f"Schedule {schedule.id} already notified, skipping")
@@ -171,8 +184,8 @@ class SMSService:
                 schedule_id=schedule.id,
                 status='failed',
                 error_message=f"Exceeded maximum retry attempts ({self.max_retries})",
-                recipient_name=schedule.team_member.name,
-                recipient_phone=schedule.team_member.phone
+                recipient_name=recipient_name,
+                recipient_phone=recipient_member.phone
             )
             return {
                 "success": False,
@@ -187,9 +200,9 @@ class SMSService:
         # Compose message
         message_body = self._compose_message(schedule)
 
-        # Send to primary phone
+        # Send to primary phone (override member or original member)
         primary_result = self._send_to_single_phone(
-            phone=schedule.team_member.phone,
+            phone=recipient_member.phone,
             message_body=message_body,
             schedule=schedule,
             phone_type="primary"
@@ -197,9 +210,9 @@ class SMSService:
 
         # Send to secondary phone if configured
         secondary_result = None
-        if schedule.team_member.secondary_phone:
+        if recipient_member.secondary_phone:
             secondary_result = self._send_to_single_phone(
-                phone=schedule.team_member.secondary_phone,
+                phone=recipient_member.secondary_phone,
                 message_body=message_body,
                 schedule=schedule,
                 phone_type="secondary"
@@ -392,7 +405,7 @@ class SMSService:
         Compose SMS message for a schedule assignment using template from database.
 
         Loads the SMS template from settings and replaces variables:
-        - {name}: Team member name
+        - {name}: Team member name (or override member if override is active)
         - {start_time}: Shift start time (e.g., "Mon 08:00 AM")
         - {end_time}: Shift end time (e.g., "Tue 08:00 AM")
         - {duration}: Shift duration (e.g., "24h")
@@ -410,8 +423,18 @@ class SMSService:
             # Load template from database
             template = self.settings_service.get_sms_template()
 
+            # Check for active override
+            override_repo = ScheduleOverrideRepository(self.db)
+            override = override_repo.get_override_for_schedule(schedule.id)
+
+            # Use override member if override exists and is active
+            if override and override.is_active:
+                member_name = override.override_member_name
+                logger.info(f"Using override member '{member_name}' for schedule {schedule.id}")
+            else:
+                member_name = schedule.team_member.name
+
             # Prepare template variables
-            member_name = schedule.team_member.name
             duration_hours = schedule.shift.duration_hours
             start_time = schedule.start_datetime.strftime('%a %I:%M %p')
             end_time = schedule.end_datetime.strftime('%a %I:%M %p')
@@ -435,7 +458,16 @@ class SMSService:
         except Exception as e:
             # Fallback to basic message if template loading fails
             logger.error(f"Error loading SMS template: {str(e)}, using fallback")
-            member_name = schedule.team_member.name
+
+            # Check for active override (even in fallback)
+            override_repo = ScheduleOverrideRepository(self.db)
+            override = override_repo.get_override_for_schedule(schedule.id)
+
+            if override and override.is_active:
+                member_name = override.override_member_name
+            else:
+                member_name = schedule.team_member.name
+
             end_time = schedule.end_datetime.strftime('%a %I:%M %p')
             return f"WhoseOnFirst: {member_name}, your on-call shift has started (until {end_time})"
 
