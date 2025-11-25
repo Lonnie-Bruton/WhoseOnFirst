@@ -390,6 +390,36 @@
                                 <small class="form-hint">Format: +1XXXXXXXXXX (E.164)</small>
                             </div>
                         </div>
+
+                        <!-- Weekly Schedule Summary -->
+                        <hr class="my-4">
+                        <h6 class="mb-3">
+                            <i class="ti ti-calendar-week me-2"></i>
+                            Weekly Schedule Summary
+                        </h6>
+                        <div class="alert alert-info mb-3">
+                            <div class="d-flex">
+                                <div>
+                                    <i class="ti ti-info-circle me-2"></i>
+                                </div>
+                                <div class="text-muted small">
+                                    Send a weekly SMS schedule summary to escalation contacts every <strong>Monday at 8:00 AM CST</strong>.
+                                    The message shows the upcoming 7-day schedule with team member names and phone numbers.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="weeklyEnabled">
+                                <span class="form-check-label">Send weekly schedule summary to escalation contacts</span>
+                            </label>
+                        </div>
+                        <div class="text-end">
+                            <button type="button" class="btn btn-ghost-secondary btn-sm" id="testWeeklySummaryBtn">
+                                <i class="ti ti-send me-2"></i>
+                                Test Weekly Summary Now
+                            </button>
+                        </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn" data-bs-dismiss="modal">Cancel</button>
