@@ -15,6 +15,105 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.3.0] - 2025-11-25 (Beta)
+
+### Added
+
+- **Weekly Escalation Contact Schedule Summary** - Automated weekly SMS summaries sent to escalation contacts every Monday at 8:00 AM CST ([WHO-23](https://linear.app/hextrackr/issue/WHO-23))
+  - **Purpose**: Provides escalation contacts (supervisors) with upcoming week's on-call schedule for planning purposes
+  - **Features**:
+    - Sends 7-day schedule summary (Monday-Sunday) to configured escalation contacts
+    - Smart 48-hour shift handling - shows "Name +Phone (48h)" on first day, "Name (continues)" on second day
+    - Toggle to enable/disable weekly summaries in Escalation Contacts modal
+    - Manual "Test Weekly Summary Now" button for immediate testing
+    - Scheduled via APScheduler (CronTrigger: Mondays 8:00 AM CST)
+    - Integrates with existing escalation contact configuration
+  - **Implementation**:
+    - **Backend**:
+      - `src/services/settings_service.py:374-398` - Weekly toggle setting (get/set methods)
+      - `src/services/sms_service.py:442-556` - Message composition with continuation logic
+      - `src/services/sms_service.py:794-961` - Send to all configured escalation contacts
+      - `src/scheduler/schedule_manager.py:441-621` - Scheduled job + manual trigger wrapper
+      - `src/scheduler/__init__.py:13,22` - Export trigger_weekly_summary_manually function
+    - **API**:
+      - `GET /api/v1/settings/escalation-weekly` - Retrieve weekly summary toggle state
+      - `PUT /api/v1/settings/escalation-weekly` - Update weekly summary toggle (admin-only)
+      - `POST /api/v1/schedules/notifications/weekly-summary/trigger` - Manual trigger for testing (admin-only)
+    - **Frontend**:
+      - `frontend/team-members.html:394-422` - Weekly Summary section in Escalation Contacts modal
+      - `frontend/team-members.html:936-943` - Load weekly setting on modal open
+      - `frontend/team-members.html:992-1034` - Save weekly setting with escalation config
+      - `frontend/team-members.html:1031-1074` - Test button handler with result display
+  - **Message Format** (example):
+    ```
+    WhoseOnFirst Weekly Schedule (Dec 01 - Dec 07)
+
+    Mon 12/01: Ben B +19187019714
+    Tue 12/02: Ben D +19189783350 (48h)
+    Wed 12/03: Ben D (continues)
+    Thu 12/04: Clark M +19187019714
+    Fri 12/05: Gary K +19187019714
+    Sat 12/06: Matt C +19187019714
+    Sun 12/07: Lonnie B +19187019714
+    ```
+  - **SMS Cost**: ~320 characters = 2 segments × 2 contacts = 4 segments/week = ~$0.032/week ($1.66/year)
+  - **Notification Logging**: Stored with `schedule_id=NULL` to differentiate from shift-based notifications
+  - **Result**: Supervisors receive weekly schedule visibility without manual lookup
+
+### Fixed
+
+- **48-Hour Shift Continuation Display** - Second day of 48-hour shifts now correctly shows "Name (continues)" instead of "No assignment"
+  - **Issue**: Weekly summary showed "Wed 12/03: No assignment" when Ben D had a 48-hour shift Tue-Wed
+  - **Root Cause**: 48-hour shifts have ONE schedule entry spanning both days; continuation day had no separate entry
+  - **Solution**: Added continuation detection logic - if `is_continuation=true` and no schedule entry found, use previous person's name
+  - **Files Changed**: `src/services/sms_service.py:540-549`
+  - **Commit**: `08b0192`
+
+- **Modal Backdrop Stuck After Save** - Fixed frozen page backdrop using event-driven modal cleanup
+  - **Issue**: After saving escalation contacts, success alert appeared but page remained darkened/unclickable until refresh
+  - **Root Cause**: Native `alert()` blocks JavaScript execution, interrupting Bootstrap's `hidden.bs.modal` event handler (fires at ~300ms)
+  - **Solution**: Listen for Bootstrap's `hidden.bs.modal` event, only show alert AFTER modal fully closed
+  - **Pattern**: Event-driven cleanup instead of setTimeout-based timing
+  - **Files Changed**: `frontend/team-members.html:1011-1063`
+  - **Impact**: Modal closes cleanly, no frozen backdrops, consistent UX on success/error paths
+  - **Commits**: `d8822b9`, `2da9e29` (final fix)
+
+- **Modal Load Error** - Eliminated "Failed to load escalation configuration" error on modal open
+  - **Issue**: Frontend tried to fetch weekly setting from `/api/v1/settings/` (endpoint didn't exist)
+  - **Solution**: Added `GET /api/v1/settings/escalation-weekly` endpoint for retrieving toggle state
+  - **Files Changed**: `src/api/routes/settings.py:332-355`, `frontend/team-members.html:937-942`
+  - **Commit**: `4be8586`
+
+- **Test Button Result Handling** - Fixed "can't access property 'successful'" error with defensive result parsing
+  - **Issue**: Test button assumed `result.result.successful` structure always exists
+  - **Solution**: Added fallback logic - `const counts = result.result || result` with undefined checks
+  - **Files Changed**: `frontend/team-members.html:1063-1069`
+  - **Commit**: `4be8586`
+
+- **Notification Badge Contrast** - Improved text visibility in status badges and inactive member avatars
+  - **Issue**: Green/red status badges and gray inactive avatars used dark gray text (poor contrast)
+  - **Solution**: Added `style="color: white;"` to force white text on all colored backgrounds
+  - **Files Changed**: `frontend/notifications.html:604,628`
+  - **Impact**: WCAG AA compliant contrast, status instantly readable at a glance
+  - **Commit**: `3236228`
+
+### Technical Notes
+
+- **Beta Status**: v1.3.0 is in beta testing. Weekly summary feature will run automatically starting Monday 2025-12-01 at 8:00 AM CST. Long-term testing in production environment to identify edge cases.
+- **Scheduler**: Weekly job registered successfully, next run: 2025-12-01 08:00:00-06:00
+- **Event-Driven Pattern**: Established best practice for Bootstrap modal cleanup - always wait for `hidden.bs.modal` event before showing blocking dialogs
+- **Message Composition**: State machine approach for 48h shift detection (previous_schedule + is_continuation flag)
+- **Twilio Integration**: Uses existing SMS infrastructure with retry logic and exponential backoff
+
+### Known Limitations
+
+- Weekly summary only shows 7-day forward-looking schedule (Monday-Sunday from execution date)
+- Requires at least one escalation contact configured (primary or secondary)
+- Manual trigger button always sends to configured contacts (no dry-run mode yet)
+- Message length capped at ~320 characters (2 SMS segments) for cost efficiency
+
+---
+
 ## [1.2.1] - 2025-11-21
 
 ### Fixed
