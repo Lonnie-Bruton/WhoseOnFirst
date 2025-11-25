@@ -111,6 +111,30 @@ class ScheduleManager:
         )
         logger.info("Added auto-renewal job: 2:00 AM %s", CHICAGO_TZ)
 
+    def add_weekly_escalation_job(self) -> None:
+        """
+        Add the weekly escalation summary job to the scheduler.
+
+        Configures a CronTrigger to run send_weekly_escalation_summary()
+        every Monday at 8:00 AM Chicago time.
+
+        The job will:
+        - Check if weekly escalation summary is enabled
+        - Get escalation contact configuration
+        - Query schedules for next 7 days (Mon-Sun)
+        - Compose weekly summary message with 48h shift handling
+        - Send SMS to all configured escalation contacts
+        - Log the weekly summary event
+        """
+        self.scheduler.add_job(
+            func=send_weekly_escalation_summary,
+            trigger=CronTrigger(day_of_week='mon', hour=8, minute=0, timezone=CHICAGO_TZ),
+            id='weekly_escalation_summary',
+            name='Weekly Escalation Contact Schedule Summary',
+            replace_existing=True
+        )
+        logger.info("Added weekly escalation summary job: Monday 8:00 AM %s", CHICAGO_TZ)
+
     def start(self) -> None:
         """
         Start the scheduler.
