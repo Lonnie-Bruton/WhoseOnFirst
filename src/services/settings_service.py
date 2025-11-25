@@ -21,6 +21,7 @@ ESCALATION_PRIMARY_NAME = "escalation_primary_name"
 ESCALATION_PRIMARY_PHONE = "escalation_primary_phone"
 ESCALATION_SECONDARY_NAME = "escalation_secondary_name"
 ESCALATION_SECONDARY_PHONE = "escalation_secondary_phone"
+ESCALATION_WEEKLY_ENABLED = "escalation_weekly_enabled"
 
 # Default SMS template
 DEFAULT_SMS_TEMPLATE = """WhoseOnFirst Alert
@@ -369,3 +370,29 @@ class SettingsService:
             )
 
         return updated
+
+    def is_escalation_weekly_enabled(self) -> bool:
+        """
+        Check if weekly escalation contact schedule summary is enabled.
+
+        Returns:
+            True if enabled, False otherwise (default: False)
+        """
+        return self.repository.get_value(ESCALATION_WEEKLY_ENABLED, default=False)
+
+    def set_escalation_weekly_enabled(self, enabled: bool) -> Settings:
+        """
+        Enable or disable weekly escalation contact schedule summary.
+
+        Args:
+            enabled: True to enable, False to disable
+
+        Returns:
+            Settings instance
+        """
+        return self.set_setting(
+            ESCALATION_WEEKLY_ENABLED,
+            enabled,
+            "bool",
+            "Send weekly SMS schedule summary to escalation contacts every Monday 8:00 AM CST"
+        )
