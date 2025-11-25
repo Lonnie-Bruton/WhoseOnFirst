@@ -11,7 +11,71 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-(No unreleased changes yet)
+- **Manual Schedule Override System** - Full CRUD UI and backend for manually overriding schedule assignments ([WHO-14](https://linear.app/hextrackr/issue/WHO-14))
+  - **Purpose**: Allow admins to manually override on-call schedules for vacation, sick days, shift swaps, or emergency coverage without affecting rotation algorithm
+  - **Status**: ✅ **Core functionality complete** | 🧪 **Testing in progress** (natural schedule validation)
+  - **Features**:
+    - Create, view, edit, cancel, and delete schedule overrides via dedicated UI page
+    - Override member can be any team member (active OR inactive) - allows supervisors to cover shifts
+    - Overrides respect member colors on dashboard (inactive members use gray background)
+    - Real-time override indicators on dashboard calendar and escalation chain (orange badges with swap icons)
+    - Daily SMS notifications sent to override member instead of originally scheduled member
+    - Weekly escalation summary shows override members with correct contact info
+    - Overrides are non-destructive - original schedule remains unchanged, resolution happens at display/notification time
+  - **Implementation**:
+    - **Backend**:
+      - `src/models/schedule_override.py` - SQLAlchemy model with status tracking and audit fields
+      - `src/repositories/schedule_override_repository.py` - Repository layer with override queries
+      - `src/services/schedule_override_service.py` - Business logic with validation (no is_active check)
+      - `src/api/routes/schedule_overrides.py` - REST API with CRUD endpoints
+      - `src/services/sms_service.py:414-459` - Updated _compose_message() to check for overrides
+      - `src/services/sms_service.py:150-219` - Updated send_notification() to send to override member
+      - `src/services/sms_service.py:514-550` - Updated weekly summary to show override members
+    - **Database**:
+      - New table: `schedule_overrides` with columns: id, schedule_id (FK), override_member_id (FK), original_member_id (FK), reason, status, override_member_name (snapshot), original_member_name (snapshot), created_at, created_by, updated_at, cancelled_at, notes
+      - Migration: `alembic/versions/XXX_add_schedule_overrides.py`
+    - **API**:
+      - `GET /api/v1/schedule-overrides/` - List all overrides with filtering (status, date range)
+      - `GET /api/v1/schedule-overrides/{id}` - Retrieve single override
+      - `POST /api/v1/schedule-overrides/` - Create new override
+      - `PUT /api/v1/schedule-overrides/{id}` - Update override reason/notes
+      - `DELETE /api/v1/schedule-overrides/{id}/cancel` - Cancel override (soft delete)
+      - `DELETE /api/v1/schedule-overrides/{id}/permanent` - Hard delete override (admin-only)
+    - **Frontend**:
+      - `frontend/schedule-overrides.html` - Full CRUD UI with modal dialogs (600+ lines)
+      - `frontend/index.html:364-772` - Dashboard integration with override indicators
+      - Override resolution helper: `findOverrideForSchedule()` checks active overrides per schedule
+      - Visual indicators: Orange badges with white text, swap icons, "Covering for [Name]" tooltips
+  - **Validation Rules**:
+    - Schedule must exist and not be in the past
+    - Override member must exist (no longer requires is_active flag)
+    - Override member must be different from original assignee
+    - No duplicate active override for same schedule
+  - **Display-Time Resolution Pattern**:
+    - Frontend fetches overrides once per page load
+    - For each schedule, checks if active override exists
+    - If override exists: display override member with orange badge
+    - If no override: display original scheduled member
+    - Same pattern used in daily notifications and weekly summary
+
+### Fixed
+
+- **Inactive Team Members Now Allowed in Overrides** - Removed is_active validation that prevented using inactive members in overrides
+  - **Issue**: Schedule override creation blocked inactive team members (like supervisors), even though is_active flag only controls rotation eligibility
+  - **Root Cause**: Validation in `schedule_override_service.py` line 82-83 checked `is_active` flag
+  - **Solution**: Removed is_active validation - override eligibility is independent of rotation eligibility
+  - **Files Changed**: `src/services/schedule_override_service.py:78-81`, `src/api/routes/schedule_overrides.py:41`
+  - **Impact**: Inactive members (like Ken U) can now be assigned to cover shifts via overrides
+
+### Testing Notes
+
+- **Natural Schedule Testing**: Two test overrides created for Ken U (11/28) and Lonnie B (11/27)
+- **Test Scope**: Daily SMS notifications (8:00 AM CST) and weekly escalation summary (Mondays 8:00 AM CST)
+- **Expected Results**:
+  - Daily SMS sent to override member's phone number
+  - Weekly summary shows override member with correct contact info
+  - Dashboard displays orange override badges with correct member colors (gray for inactive)
+- **Next Steps**: Monitor natural schedule execution and verify override behavior in production-like conditions
 
 ---
 
