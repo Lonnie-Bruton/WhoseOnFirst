@@ -8,6 +8,7 @@ from sqlalchemy import Column, Integer, ForeignKey, DateTime, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from datetime import datetime
+from typing import Optional
 from .database import Base
 
 
