@@ -320,20 +320,22 @@ class NotificationLogRepository(BaseRepository[NotificationLog]):
 
     def get_recent_logs(
         self,
-        limit: int = 50,
+        limit: int = 25,
+        offset: int = 0,
         include_schedule: bool = True
     ) -> List[NotificationLog]:
         """
-        Get most recent notification logs.
+        Get most recent notification logs with pagination support.
 
         Useful for dashboard and audit views.
 
         Args:
-            limit: Maximum number of logs to return (default 50)
+            limit: Maximum number of logs to return (default 25)
+            offset: Number of records to skip (default 0)
             include_schedule: Whether to eagerly load schedule relationship
 
         Returns:
-            List of recent NotificationLog instances
+            List of recent NotificationLog instances ordered by sent_at DESC
 
         Raises:
             Exception: If database operation fails
@@ -348,12 +350,29 @@ class NotificationLogRepository(BaseRepository[NotificationLog]):
                 query
                 .order_by(self.model.sent_at.desc())
                 .limit(limit)
+                .offset(offset)
                 .all()
             )
 
         except SQLAlchemyError as e:
             self.db.rollback()
             raise Exception(f"Database error getting recent logs: {str(e)}")
+
+    def count_all(self) -> int:
+        """
+        Get total count of all notification logs for pagination.
+
+        Returns:
+            Total number of notification log records
+
+        Raises:
+            Exception: If database operation fails
+        """
+        try:
+            return self.db.query(self.model).count()
+        except SQLAlchemyError as e:
+            self.db.rollback()
+            raise Exception(f"Database error counting notification logs: {str(e)}")
 
     def log_notification_attempt(
         self,
