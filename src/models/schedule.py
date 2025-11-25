@@ -70,6 +70,11 @@ class Schedule(Base):
         back_populates="schedule",
         cascade="all, delete-orphan"
     )
+    overrides = relationship(
+        "ScheduleOverride",
+        back_populates="schedule",
+        cascade="all, delete-orphan"
+    )
 
     def __repr__(self):
         """String representation of Schedule."""

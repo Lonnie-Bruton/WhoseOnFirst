@@ -8,6 +8,7 @@ from .database import Base, engine, SessionLocal, get_db, init_db, drop_db
 from .team_member import TeamMember
 from .shift import Shift
 from .schedule import Schedule
+from .schedule_override import ScheduleOverride
 from .notification_log import NotificationLog
 from .user import User, UserRole
 from .settings import Settings
@@ -25,6 +26,7 @@ __all__ = [
     "TeamMember",
     "Shift",
     "Schedule",
+    "ScheduleOverride",
     "NotificationLog",
     "User",
     "UserRole",
