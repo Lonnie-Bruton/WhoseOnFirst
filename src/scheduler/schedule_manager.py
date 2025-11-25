@@ -150,6 +150,7 @@ class ScheduleManager:
 
         self.add_daily_notification_job()
         self.add_auto_renewal_job()
+        self.add_weekly_escalation_job()
         self.scheduler.start()
         self.is_running = True
         logger.info("Scheduler started successfully")
