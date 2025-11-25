@@ -611,7 +611,7 @@
                 showMessage('Override created successfully!', 'success');
 
                 // Close modal and reset form
-                const modal = bootstrap.Modal.getInstance(document.getElementById('createOverrideModal'));
+                const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('createOverrideModal'));
                 modal.hide();
                 document.getElementById('createOverrideForm').reset();
 
