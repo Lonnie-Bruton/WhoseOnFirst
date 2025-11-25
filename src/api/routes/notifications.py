@@ -5,6 +5,7 @@ FastAPI router for SMS notification management and history.
 """
 
 from fastapi import APIRouter, Depends, Query, HTTPException, status
+from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
@@ -77,9 +78,9 @@ def get_recent_notifications(
     # Calculate total pages
     total_pages = math.ceil(total_count / per_page) if total_count > 0 else 1
 
-    # Return paginated response
+    # Return paginated response (convert SQLAlchemy models to dicts)
     return {
-        "notifications": logs,
+        "notifications": jsonable_encoder(logs),
         "pagination": {
             "page": page,
             "per_page": per_page,
