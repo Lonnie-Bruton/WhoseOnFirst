@@ -15,7 +15,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 
 # Import routers
-from src.api.routes import team_members, shifts, schedules, notifications, auth, settings
+from src.api.routes import team_members, shifts, schedules, notifications, auth, settings, schedule_overrides
 from src.scheduler import get_schedule_manager
 
 
@@ -157,6 +157,11 @@ app.include_router(
     settings.router,
     prefix="/api/v1/settings",
     tags=["settings"]
+)
+app.include_router(
+    schedule_overrides.router,
+    prefix="/api/v1/schedule-overrides",
+    tags=["schedule-overrides"]
 )
 
 # Mount static files (frontend) - MUST be after API routes to avoid conflicts
