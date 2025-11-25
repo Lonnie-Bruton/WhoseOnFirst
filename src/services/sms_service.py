@@ -14,7 +14,7 @@ from twilio.rest import Client
 from twilio.base.exceptions import TwilioRestException
 from sqlalchemy.orm import Session
 
-from ..repositories import NotificationLogRepository, ScheduleRepository
+from ..repositories import NotificationLogRepository, ScheduleRepository, ScheduleOverrideRepository
 from ..models import Schedule
 from .settings_service import SettingsService
 
@@ -504,6 +504,7 @@ class SMSService:
 
         # Track 48h shifts to handle "continues" on second day
         previous_schedule = None
+        previous_member_name = None  # Track actual displayed member (with overrides)
         is_continuation = False
 
         # Iterate through 7 days
@@ -513,13 +514,25 @@ class SMSService:
 
             if current_date in schedule_map:
                 schedule = schedule_map[current_date]
-                member_name = schedule.team_member.name
-                member_phone = schedule.team_member.phone
+
+                # Check for active override for this schedule
+                override_repo = ScheduleOverrideRepository(self.db)
+                override = override_repo.get_override_for_schedule(schedule.id)
+
+                # Use override member if override exists and is active
+                if override and override.is_active:
+                    member_name = override.override_member_name
+                    member_phone = override.override_member.phone
+                else:
+                    member_name = schedule.team_member.name
+                    member_phone = schedule.team_member.phone
+
                 duration = schedule.shift.duration_hours
 
                 # Check if this is a continuation of previous 48h shift
+                # Compare actual displayed names (accounting for overrides)
                 if (previous_schedule and
-                    previous_schedule.team_member_id == schedule.team_member_id and
+                    previous_member_name == member_name and
                     is_continuation):
                     # Second day of 48h shift - just show name + "(continues)"
                     lines.append(f"{day_name}: {member_name} (continues)")
@@ -534,19 +547,21 @@ class SMSService:
                         is_continuation = False
 
                 previous_schedule = schedule
+                previous_member_name = member_name  # Track displayed member for continuation logic
             else:
                 # No schedule entry for this day
                 # Check if we're in the middle of a 48h shift continuation
-                if is_continuation and previous_schedule:
+                if is_continuation and previous_member_name:
                     # This is the second day of a 48h shift
-                    member_name = previous_schedule.team_member.name
-                    lines.append(f"{day_name}: {member_name} (continues)")
+                    # Use the previously displayed member name (accounting for overrides)
+                    lines.append(f"{day_name}: {previous_member_name} (continues)")
                     is_continuation = False  # Reset after showing continuation
                 else:
                     # Truly no assignment for this day
                     lines.append(f"{day_name}: No assignment")
                     is_continuation = False
                     previous_schedule = None
+                    previous_member_name = None
 
         # Build final message
         message_lines = [header, ""] + lines
