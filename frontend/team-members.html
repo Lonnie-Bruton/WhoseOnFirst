@@ -934,12 +934,12 @@
                 document.getElementById('secondaryPhone').value = config.secondary_phone || '';
 
                 // Load weekly summary setting
-                const weeklyResponse = await fetch(`${API_BASE}/settings/`, {
+                const weeklyResponse = await fetch(`${API_BASE}/settings/escalation-weekly`, {
                     credentials: 'include'
                 });
                 if (weeklyResponse.ok) {
-                    const settings = await weeklyResponse.json();
-                    document.getElementById('weeklyEnabled').checked = settings.escalation_weekly_enabled || false;
+                    const weeklySetting = await weeklyResponse.json();
+                    document.getElementById('weeklyEnabled').checked = weeklySetting.enabled || false;
                 }
 
             } catch (error) {
@@ -1004,9 +1004,16 @@
                     throw new Error(error.detail || 'Failed to save weekly summary setting');
                 }
 
-                // Close modal and clean up backdrop
+                showSuccess('✅ Escalation contacts saved successfully!');
+
+            } catch (error) {
+                showError('❌ ' + error.message);
+            } finally {
+                // Always close modal and clean up backdrop (even on error)
                 const modal = bootstrap.Modal.getInstance(document.getElementById('escalationModal'));
-                modal.hide();
+                if (modal) {
+                    modal.hide();
+                }
 
                 // Manually remove backdrop and reset body state (Bootstrap sometimes leaves these)
                 setTimeout(() => {
@@ -1016,11 +1023,6 @@
                     document.body.style.removeProperty('overflow');
                 }, 100);
 
-                showSuccess('✅ Escalation contacts saved successfully!');
-
-            } catch (error) {
-                showError('❌ ' + error.message);
-            } finally {
                 btn.disabled = false;
                 btn.innerHTML = '<i class="ti ti-check me-2"></i>Save Configuration';
             }
@@ -1060,7 +1062,13 @@
 
                 // Show detailed result
                 if (result.status === 'success') {
-                    showSuccess(`✅ Weekly summary sent!\n\nSuccessful: ${result.result.successful}\nFailed: ${result.result.failed}\nTotal: ${result.result.total}`);
+                    // Handle nested result structure
+                    const counts = result.result || result;
+                    if (counts.successful !== undefined) {
+                        showSuccess(`✅ Weekly summary sent!\n\nSuccessful: ${counts.successful}\nFailed: ${counts.failed}\nTotal: ${counts.total}`);
+                    } else {
+                        showSuccess(`✅ ${result.message || 'Weekly summary sent successfully!'}`);
+                    }
                 } else {
                     showError(`⚠️ ${result.message}`);
                 }

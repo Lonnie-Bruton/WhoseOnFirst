@@ -329,6 +329,32 @@ def update_escalation_config(
     return config
 
 
+@router.get("/escalation-weekly")
+def get_escalation_weekly(
+    db: Session = Depends(get_db),
+    current_user = Depends(require_auth)
+):
+    """
+    Get weekly escalation summary setting.
+
+    Returns whether the weekly schedule summary SMS is enabled.
+
+    Args:
+        db: Database session (injected)
+        current_user: Authenticated user (injected)
+
+    Returns:
+        Dictionary with 'enabled' boolean status
+
+    Example:
+        GET /api/v1/settings/escalation-weekly
+    """
+    service = SettingsService(db)
+    return {
+        "enabled": service.is_escalation_weekly_enabled()
+    }
+
+
 @router.put("/escalation-weekly")
 def update_escalation_weekly(
     request: dict,
