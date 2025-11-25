@@ -1004,25 +1004,45 @@
                     throw new Error(error.detail || 'Failed to save weekly summary setting');
                 }
 
-                showSuccess('✅ Escalation contacts saved successfully!');
-
-            } catch (error) {
-                showError('❌ ' + error.message);
-            } finally {
-                // Always close modal and clean up backdrop (even on error)
+                // SUCCESS: Close modal BEFORE showing alert
                 const modal = bootstrap.Modal.getInstance(document.getElementById('escalationModal'));
                 if (modal) {
                     modal.hide();
                 }
 
-                // Manually remove backdrop and reset body state (Bootstrap sometimes leaves these)
+                // Clean up backdrop after modal animation completes (300ms + buffer)
                 setTimeout(() => {
                     document.querySelector('.modal-backdrop')?.remove();
                     document.body.classList.remove('modal-open');
                     document.body.style.removeProperty('padding-right');
                     document.body.style.removeProperty('overflow');
+                }, 400);
+
+                // Show success alert AFTER modal is closing
+                setTimeout(() => {
+                    showSuccess('✅ Escalation contacts saved successfully!');
                 }, 100);
 
+            } catch (error) {
+                // ERROR: Close modal BEFORE showing alert
+                const modal = bootstrap.Modal.getInstance(document.getElementById('escalationModal'));
+                if (modal) {
+                    modal.hide();
+                }
+
+                // Clean up backdrop
+                setTimeout(() => {
+                    document.querySelector('.modal-backdrop')?.remove();
+                    document.body.classList.remove('modal-open');
+                    document.body.style.removeProperty('padding-right');
+                    document.body.style.removeProperty('overflow');
+                }, 400);
+
+                // Show error alert AFTER modal is closing
+                setTimeout(() => {
+                    showError('❌ ' + error.message);
+                }, 100);
+            } finally {
                 btn.disabled = false;
                 btn.innerHTML = '<i class="ti ti-check me-2"></i>Save Configuration';
             }
