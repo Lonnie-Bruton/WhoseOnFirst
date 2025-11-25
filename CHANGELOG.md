@@ -15,6 +15,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.3.1] - 2025-11-25
+
+### Added
+
+- **Notification History Pagination** - Server-side pagination for notification table with Tabler.io controls ([WHO-27](https://linear.app/hextrackr/issue/WHO-27))
+  - **Purpose**: Improve performance and UX by loading only needed notifications instead of all 50+ records
+  - **Features**:
+    - Server-side pagination with configurable page size (10-100 items, default 25)
+    - Tabler.io pagination controls with Prev/Next buttons and page numbers
+    - Smart page number display (max 5 visible, centered around current page)
+    - Pagination info display (e.g., "Showing 1-25 of 87 notifications")
+    - Maintains current page on refresh button click
+    - Boundary detection disables Prev/Next buttons at edges
+  - **Implementation**:
+    - **Backend**:
+      - `src/repositories/notification_log_repository.py:321-375` - Modified `get_recent_logs()` to accept `offset` parameter, added `count_all()` method
+      - `src/api/routes/notifications.py:8,30-92` - Added pagination query params (page, per_page), returns dict with pagination metadata
+    - **API**:
+      - `GET /api/v1/notifications/recent?page=1&per_page=25` - Paginated notification history
+      - Query params: `page` (1-indexed, min 1), `per_page` (10-100, default 25)
+      - Response includes: `notifications` array, `pagination` object with page/total/has_prev/has_next
+    - **Frontend**:
+      - `frontend/notifications.html:271-278` - Pagination footer with Tabler.io card-footer styling
+      - `frontend/notifications.html:495-771` - JavaScript pagination state and control rendering
+      - Smart centering: Adjusts visible page range based on current page position
+  - **Performance Impact**: Reduced initial page load from 50 records to 25 records (50% reduction in payload size)
+  - **Algorithm**: Standard LIMIT/OFFSET SQL pagination with `math.ceil()` for total pages calculation
+
+### Fixed
+
+- **Notification API Serialization Error** - Fixed 500 error when loading paginated notification history
+  - **Issue**: "Error loading notification history" with `PydanticSerializationError: Unable to serialize unknown type: <class 'src.models.notification_log.NotificationLog'>`
+  - **Root Cause**: API endpoint returned raw SQLAlchemy model objects in dictionary; FastAPI couldn't serialize them to JSON
+  - **Solution**: Wrapped logs with `jsonable_encoder(logs)` to convert models to JSON-serializable dictionaries
+  - **Files Changed**: `src/api/routes/notifications.py:8,83`
+  - **Impact**: Pagination now loads correctly without errors
+
+### Technical Notes
+
+- **Pagination Pattern**: Repository → API → Frontend with LIMIT/OFFSET SQL queries
+- **State Management**: Frontend maintains `currentPage` variable to persist pagination across refresh clicks
+- **Serialization**: FastAPI requires explicit `jsonable_encoder()` for SQLAlchemy models in non-Pydantic responses
+- **Page Calculation**: `offset = (page - 1) * per_page`, `total_pages = math.ceil(total / per_page)`
+
+---
+
 ## [1.3.0] - 2025-11-25 (Beta)
 
 ### Added
