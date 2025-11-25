@@ -410,7 +410,9 @@
                 const select = document.getElementById('overrideMemberSelect');
 
                 select.innerHTML = '<option value="">Select team member...</option>';
-                members.filter(m => m.is_active).forEach(member => {
+                // Show all team members (active + inactive) for override flexibility
+                // is_active flag only controls rotation, not override eligibility
+                members.forEach(member => {
                     const option = document.createElement('option');
                     option.value = member.id;
                     option.textContent = member.name;
