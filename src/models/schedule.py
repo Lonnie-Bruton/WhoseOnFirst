@@ -158,3 +158,23 @@ class Schedule(Base):
         now = datetime.now()
         # Check if start time is within notification window (e.g., same day)
         return self.start_datetime.date() == now.date()
+
+    @property
+    def team_member_name(self) -> Optional[str]:
+        """
+        Get the name of the assigned team member.
+
+        Returns:
+            Team member name if relationship is loaded, None otherwise
+        """
+        return self.team_member.name if self.team_member else None
+
+    @property
+    def shift_number(self) -> Optional[int]:
+        """
+        Get the shift number for display.
+
+        Returns:
+            Shift number if relationship is loaded, None otherwise
+        """
+        return self.shift.shift_number if self.shift else None
