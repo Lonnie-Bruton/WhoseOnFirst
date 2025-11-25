@@ -581,3 +581,41 @@ def send_weekly_escalation_summary() -> dict:
         except Exception as e:
             logger.error("Error in weekly escalation summary job: %s", str(e), exc_info=True)
             raise
+
+
+def trigger_weekly_summary_manually() -> dict:
+    """
+    Manually trigger the weekly escalation summary job for testing.
+
+    This function can be called from an API endpoint to test the
+    weekly summary system without waiting for Monday 8:00 AM.
+
+    Returns:
+        dict: Result summary with counts (successful, failed, total) and status
+
+    Example:
+        >>> result = trigger_weekly_summary_manually()
+        >>> print(f"Status: {result['status']}, Sent: {result['successful']}/{result['total']}")
+    """
+    logger.info("Manual weekly summary trigger requested")
+
+    try:
+        result = send_weekly_escalation_summary()
+        return {
+            'status': 'success',
+            'message': 'Weekly escalation summary processed successfully',
+            'timestamp': result.get('timestamp', datetime.now(CHICAGO_TZ).isoformat()),
+            'successful': result.get('successful', 0),
+            'failed': result.get('failed', 0),
+            'total': result.get('total', 0)
+        }
+    except Exception as e:
+        logger.error("Manual weekly summary trigger failed: %s", str(e))
+        return {
+            'status': 'error',
+            'message': str(e),
+            'timestamp': datetime.now(CHICAGO_TZ).isoformat(),
+            'successful': 0,
+            'failed': 0,
+            'total': 0
+        }
