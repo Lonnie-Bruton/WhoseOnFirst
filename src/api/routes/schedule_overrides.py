@@ -38,7 +38,7 @@ def create_override(
 
     Validations:
     - Schedule must exist
-    - Override member must exist and be active
+    - Override member must exist
     - No duplicate active override for same schedule
     - Override member must be different from original assignee
 

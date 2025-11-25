@@ -75,12 +75,10 @@ class ScheduleOverrideService:
         if not schedule:
             raise ValueError(f"Schedule not found: {schedule_id}")
 
-        # Validation 2: Override member exists and is active
+        # Validation 2: Override member exists
         override_member = self.team_member_repo.get_by_id(override_member_id)
         if not override_member:
             raise ValueError(f"Team member not found: {override_member_id}")
-        if not override_member.is_active:
-            raise ValueError(f"Team member is inactive: {override_member.name}")
 
         # Validation 3: No duplicate active override
         existing = self.override_repo.get_override_for_schedule(schedule_id)
