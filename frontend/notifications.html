@@ -268,8 +268,13 @@
                                         </tbody>
                                     </table>
                                 </div>
-                                <div class="card-footer">
-                                    <div class="text-muted" id="historyCount">Showing 0 notifications</div>
+                                <div class="card-footer d-flex align-items-center">
+                                    <p class="m-0 text-muted" id="paginationInfo">
+                                        Showing 0 notifications
+                                    </p>
+                                    <ul class="pagination m-0 ms-auto" id="paginationControls">
+                                        <!-- Pagination buttons rendered by JavaScript -->
+                                    </ul>
                                 </div>
                             </div>
                         </div>
@@ -487,6 +492,12 @@
         const API_BASE = '/api/v1';
         let currentUser = null;
 
+        // Pagination state
+        let currentPage = 1;
+        let perPage = 25;
+        let totalPages = 1;
+        let totalCount = 0;
+
         // Format date/time
         function formatDateTime(dateString) {
             const date = new Date(dateString);
@@ -541,11 +552,13 @@
         }
 
         // Load notification history
-        async function loadHistory() {
+        async function loadHistory(page = 1) {
             try {
                 // Note: Fetch ALL members (including inactive) to display historical notifications
                 const [notificationsRes, schedulesRes, membersRes] = await Promise.all([
-                    fetch(`${API_BASE}/notifications/recent?limit=50`, { credentials: 'include' }),
+                    fetch(`${API_BASE}/notifications/recent?page=${page}&per_page=${perPage}`, {
+                        credentials: 'include'
+                    }),
                     fetch(`${API_BASE}/schedules/upcoming?weeks=8`, { credentials: 'include' }),
                     fetch(`${API_BASE}/team-members/`, { credentials: 'include' })
                 ]);
@@ -554,15 +567,24 @@
                     throw new Error('Failed to fetch notifications');
                 }
 
-                const notifications = await notificationsRes.json();
+                const data = await notificationsRes.json();
+                const notifications = data.notifications;
+                const pagination = data.pagination;
+
+                // Update pagination state
+                currentPage = pagination.page;
+                totalPages = pagination.pages;
+                totalCount = pagination.total;
+
                 const schedules = await schedulesRes.json();
                 const members = await membersRes.json();
 
                 const tbody = document.getElementById('historyTableBody');
 
                 if (notifications.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No notifications sent yet</td></tr>';
-                    document.getElementById('historyCount').textContent = 'Showing 0 notifications';
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No notifications sent yet</td></tr>';
+                    updatePaginationInfo(0, 0, 0);
+                    renderPaginationControls(1, 1, false, false);
                     return;
                 }
 
@@ -657,13 +679,95 @@
                     tbody.appendChild(row);
                 });
 
-                document.getElementById('historyCount').textContent = `Showing ${notifications.length} notifications`;
+                // Update pagination UI
+                const startItem = (currentPage - 1) * perPage + 1;
+                const endItem = Math.min(currentPage * perPage, totalCount);
+                updatePaginationInfo(startItem, endItem, totalCount);
+                renderPaginationControls(
+                    currentPage,
+                    totalPages,
+                    pagination.has_prev,
+                    pagination.has_next
+                );
 
             } catch (error) {
                 console.error('Error loading history:', error);
                 const tbody = document.getElementById('historyTableBody');
                 tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Error loading notification history</td></tr>';
             }
+        }
+
+        // Pagination helper: Update info text
+        function updatePaginationInfo(start, end, total) {
+            const infoElement = document.getElementById('paginationInfo');
+            if (total === 0) {
+                infoElement.textContent = 'No notifications';
+            } else {
+                infoElement.textContent = `Showing ${start}-${end} of ${total} notifications`;
+            }
+        }
+
+        // Pagination helper: Render page controls
+        function renderPaginationControls(page, pages, hasPrev, hasNext) {
+            const controls = document.getElementById('paginationControls');
+            controls.innerHTML = '';
+
+            // Previous button
+            const prevItem = document.createElement('li');
+            prevItem.className = `page-item ${!hasPrev ? 'disabled' : ''}`;
+            prevItem.innerHTML = `
+                <a class="page-link" href="#" ${!hasPrev ? 'tabindex="-1"' : ''}>
+                    <i class="ti ti-chevron-left"></i> Prev
+                </a>
+            `;
+            if (hasPrev) {
+                prevItem.querySelector('a').addEventListener('click', (e) => {
+                    e.preventDefault();
+                    loadHistory(page - 1);
+                });
+            }
+            controls.appendChild(prevItem);
+
+            // Page numbers (show up to 5 pages)
+            const maxVisible = 5;
+            let startPage = Math.max(1, page - Math.floor(maxVisible / 2));
+            let endPage = Math.min(pages, startPage + maxVisible - 1);
+
+            // Adjust start if end is at max
+            if (endPage === pages) {
+                startPage = Math.max(1, endPage - maxVisible + 1);
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                const pageItem = document.createElement('li');
+                pageItem.className = `page-item ${i === page ? 'active' : ''}`;
+                pageItem.innerHTML = `<a class="page-link" href="#">${i}</a>`;
+
+                if (i !== page) {
+                    pageItem.querySelector('a').addEventListener('click', (e) => {
+                        e.preventDefault();
+                        loadHistory(i);
+                    });
+                }
+
+                controls.appendChild(pageItem);
+            }
+
+            // Next button
+            const nextItem = document.createElement('li');
+            nextItem.className = `page-item ${!hasNext ? 'disabled' : ''}`;
+            nextItem.innerHTML = `
+                <a class="page-link" href="#" ${!hasNext ? 'tabindex="-1"' : ''}>
+                    Next <i class="ti ti-chevron-right"></i>
+                </a>
+            `;
+            if (hasNext) {
+                nextItem.querySelector('a').addEventListener('click', (e) => {
+                    e.preventDefault();
+                    loadHistory(page + 1);
+                });
+            }
+            controls.appendChild(nextItem);
         }
 
         // View Message Details from Twilio
@@ -884,7 +988,7 @@ Your shift lasts {duration}. Thank you for being available!`;
         function setupEventListeners(user) {
             // Refresh history
             document.getElementById('refreshHistory').addEventListener('click', function() {
-                loadHistory();
+                loadHistory(currentPage);  // Maintain current page on refresh
             });
 
             // Template editing (admin only)
