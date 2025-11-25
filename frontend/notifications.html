@@ -601,7 +601,7 @@
                         const initials = recipientName.split(' ').map(n => n[0]).join('').toUpperCase();
                         recipientCell.innerHTML = `
                             <div class="d-flex align-items-center">
-                                <span class="avatar avatar-sm me-2 ${colorClass}">${initials}</span>
+                                <span class="avatar avatar-sm me-2 ${colorClass}" style="color: white;">${initials}</span>
                                 ${recipientName}
                             </div>
                         `;
@@ -625,7 +625,7 @@
                     } else if (notification.status === 'pending') {
                         badgeClass = 'bg-warning';
                     }
-                    statusCell.innerHTML = `<span class="badge ${badgeClass}">${notification.status}</span>`;
+                    statusCell.innerHTML = `<span class="badge ${badgeClass}" style="color: white;">${notification.status}</span>`;
                     row.appendChild(statusCell);
 
                     // Twilio SID (clickable link to Twilio Console)
