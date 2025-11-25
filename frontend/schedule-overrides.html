@@ -301,8 +301,8 @@
         let perPage = 25;
         let currentUser = null;
 
-        // Load data on page load
-        document.addEventListener('DOMContentLoaded', async () => {
+        // Load data on page load - wait for sidebar to be ready
+        window.addEventListener('sidebarLoaded', async () => {
             await checkAuth();
             await loadTeamMembers();
             await loadUpcomingSchedules();
@@ -328,6 +328,19 @@
 
                 currentUser = await response.json();
 
+                // Update user info display in sidebar
+                document.getElementById('usernameDisplay').textContent = currentUser.username;
+
+                // Set role display and icon based on user role
+                const roleIcon = document.getElementById('userRoleIcon').querySelector('i');
+                if (currentUser.role === 'admin') {
+                    document.getElementById('userRoleDisplay').textContent = 'Administrator';
+                    roleIcon.className = 'ti ti-shield-check';
+                } else {
+                    document.getElementById('userRoleDisplay').textContent = 'Viewer';
+                    roleIcon.className = 'ti ti-eye';
+                }
+
                 // Show/hide admin-only elements
                 const isAdmin = currentUser.role === 'admin';
                 document.querySelectorAll('.admin-only').forEach(el => {
@@ -337,6 +350,20 @@
                 if (!isAdmin) {
                     showMessage('Admin access required for this page', 'warning');
                 }
+
+                // Wire up logout button
+                document.getElementById('logoutBtn').addEventListener('click', async function(e) {
+                    e.preventDefault();
+                    try {
+                        await fetch(`${API_BASE}/auth/logout`, {
+                            method: 'POST',
+                            credentials: 'include'
+                        });
+                    } catch (error) {
+                        console.error('Logout error:', error);
+                    }
+                    window.location.href = '/login.html';
+                });
             } catch (error) {
                 console.error('Auth check failed:', error);
                 window.location.href = '/login.html';
@@ -610,14 +637,25 @@
 
                 showMessage('Override created successfully!', 'success');
 
-                // Close modal and reset form
-                const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('createOverrideModal'));
-                modal.hide();
-                document.getElementById('createOverrideForm').reset();
+                // Get modal instance and set up cleanup after it's fully hidden
+                const modalElement = document.getElementById('createOverrideModal');
+                const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
 
-                // Reload data
-                await loadOverrides(currentPage);
-                await loadStats();
+                // Listen for modal fully hidden event (fires after animation completes)
+                modalElement.addEventListener('hidden.bs.modal', async function handleHidden() {
+                    // Reset form
+                    document.getElementById('createOverrideForm').reset();
+
+                    // Reload data after modal is fully closed
+                    await loadOverrides(currentPage);
+                    await loadStats();
+
+                    // Remove this event listener to prevent duplicates
+                    modalElement.removeEventListener('hidden.bs.modal', handleHidden);
+                }, { once: true });
+
+                // Trigger modal hide (will fire hidden.bs.modal event when animation completes)
+                modal.hide();
             } catch (error) {
                 console.error('Failed to create override:', error);
                 showMessage(error.message, 'danger');
