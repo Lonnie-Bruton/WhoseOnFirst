@@ -439,6 +439,114 @@ class SMSService:
             end_time = schedule.end_datetime.strftime('%a %I:%M %p')
             return f"WhoseOnFirst: {member_name}, your on-call shift has started (until {end_time})"
 
+    def _compose_weekly_summary(self, schedules: list) -> str:
+        """
+        Compose weekly schedule summary message for escalation contacts.
+
+        Formats a 7-day schedule (Mon-Sun) with special handling for 48-hour shifts.
+        - Single-day shifts: "Mon 11/25: Name +1234567890"
+        - 48h shift first day: "Tue 11/26: Name +1234567890 (48h)"
+        - 48h shift second day: "Wed 11/27: Name (continues)"
+        - Missing assignments: "Thu 11/28: No assignment"
+
+        Args:
+            schedules: List of Schedule instances sorted by start_datetime
+
+        Returns:
+            Formatted weekly summary message (~320 chars)
+
+        Example:
+            WhoseOnFirst Weekly Schedule (Nov 25 - Dec 1)
+
+            Mon 11/25: Lance B +19187019714
+            Tue 11/26: Gary K +19187019714 (48h)
+            Wed 11/27: Gary K (continues)
+            Thu 11/28: Troy M +19187019714
+            ...
+
+            Questions? Reply to this message.
+        """
+        from datetime import datetime, timedelta
+        from pytz import timezone
+
+        # Get America/Chicago timezone
+        chicago_tz = timezone('America/Chicago')
+
+        # Determine date range from schedules
+        if not schedules:
+            now = datetime.now(chicago_tz)
+            start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        else:
+            start_date = schedules[0].start_datetime
+            if start_date.tzinfo is None:
+                start_date = chicago_tz.localize(start_date)
+            else:
+                start_date = start_date.astimezone(chicago_tz)
+
+        end_date = start_date + timedelta(days=6)
+
+        # Format header with date range
+        header = f"WhoseOnFirst Weekly Schedule ({start_date.strftime('%b %d')} - {end_date.strftime('%b %d')})"
+
+        # Build schedule lines
+        lines = []
+
+        # Create a map of date -> schedule for easy lookup
+        schedule_map = {}
+        for schedule in schedules:
+            sched_date = schedule.start_datetime
+            if sched_date.tzinfo is None:
+                sched_date = chicago_tz.localize(sched_date)
+            else:
+                sched_date = sched_date.astimezone(chicago_tz)
+            date_key = sched_date.date()
+            schedule_map[date_key] = schedule
+
+        # Track 48h shifts to handle "continues" on second day
+        previous_schedule = None
+        is_continuation = False
+
+        # Iterate through 7 days
+        for day_offset in range(7):
+            current_date = (start_date + timedelta(days=day_offset)).date()
+            day_name = (start_date + timedelta(days=day_offset)).strftime('%a %m/%d')
+
+            if current_date in schedule_map:
+                schedule = schedule_map[current_date]
+                member_name = schedule.team_member.name
+                member_phone = schedule.team_member.phone
+                duration = schedule.shift.duration_hours
+
+                # Check if this is a continuation of previous 48h shift
+                if (previous_schedule and
+                    previous_schedule.team_member_id == schedule.team_member_id and
+                    is_continuation):
+                    # Second day of 48h shift - just show name + "(continues)"
+                    lines.append(f"{day_name}: {member_name} (continues)")
+                    is_continuation = False  # Reset for next potential 48h shift
+                else:
+                    # Check if this is the START of a 48h shift
+                    if duration == 48:
+                        lines.append(f"{day_name}: {member_name} {member_phone} (48h)")
+                        is_continuation = True  # Next day will be continuation
+                    else:
+                        lines.append(f"{day_name}: {member_name} {member_phone}")
+                        is_continuation = False
+
+                previous_schedule = schedule
+            else:
+                # No assignment for this day
+                lines.append(f"{day_name}: No assignment")
+                is_continuation = False
+                previous_schedule = None
+
+        # Build final message
+        message_lines = [header, ""] + lines + ["", "Questions? Reply to this message."]
+        message = "\n".join(message_lines)
+
+        logger.info(f"Composed weekly summary: {len(message)} characters")
+        return message
+
     def _is_retryable_error(self, error: TwilioRestException) -> bool:
         """
         Determine if a Twilio error is retryable.
