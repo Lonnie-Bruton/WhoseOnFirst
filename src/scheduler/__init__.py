@@ -10,6 +10,7 @@ from src.scheduler.schedule_manager import (
     get_schedule_manager,
     send_daily_notifications,
     trigger_notifications_manually,
+    trigger_weekly_summary_manually,
     check_auto_renewal
 )
 
@@ -18,5 +19,6 @@ __all__ = [
     'get_schedule_manager',
     'send_daily_notifications',
     'trigger_notifications_manually',
+    'trigger_weekly_summary_manually',
     'check_auto_renewal'
 ]
