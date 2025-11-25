@@ -22,7 +22,7 @@ from src.services import (
     InsufficientMembersError,
     NoShiftsConfiguredError
 )
-from src.scheduler import trigger_notifications_manually, get_schedule_manager
+from src.scheduler import trigger_notifications_manually, trigger_weekly_summary_manually, get_schedule_manager
 from src.api.routes.auth import require_auth, require_admin
 
 
@@ -335,6 +335,36 @@ def trigger_notifications(
         POST /api/v1/schedules/notifications/trigger?force=true
     """
     result = trigger_notifications_manually(force=force)
+    return result
+
+
+@router.post("/notifications/weekly-summary/trigger", tags=["notifications"])
+def trigger_weekly_summary(
+    db: Session = Depends(get_db),
+    current_user = Depends(require_admin)
+):
+    """
+    Manually trigger the weekly escalation contact schedule summary.
+
+    This endpoint allows testing the weekly summary feature without waiting
+    for the scheduled Monday 8:00 AM CST run time. It sends the next 7-day
+    schedule summary to all configured escalation contacts.
+
+    **Note:** This is primarily for testing and manual execution.
+    In production, weekly summaries are sent automatically by APScheduler
+    every Monday at 8:00 AM CST.
+
+    Args:
+        db: Database session (injected)
+        current_user: Authenticated admin user (injected)
+
+    Returns:
+        dict: Result summary with status, message, and send counts
+
+    Example:
+        POST /api/v1/schedules/notifications/weekly-summary/trigger
+    """
+    result = trigger_weekly_summary_manually()
     return result
 
 
