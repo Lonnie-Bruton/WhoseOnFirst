@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhoseOnFirst - Schedule Overrides</title>
+
+    <!-- Tabler CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/css/tabler.min.css" rel="stylesheet">
+    <!-- Tabler Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" rel="stylesheet">
+
+    <!-- Load sidebar component -->
+    <script src="/js/sidebar-loader.js" defer></script>
+
+    <style>
+        /* Custom Logo Styles */
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .logo-svg {
+            width: 32px;
+            height: 32px;
+        }
+
+        /* Enhanced Cards */
+        .stat-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        /* Override-specific styles */
+        .override-badge {
+            position: relative;
+            padding-left: 24px;
+        }
+        .override-badge::before {
+            content: "🔄";
+            position: absolute;
+            left: 4px;
+            font-size: 14px;
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .status-active {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+        .status-cancelled {
+            background-color: #e5e7eb;
+            color: #374151;
+        }
+        .status-completed {
+            background-color: #dbeafe;
+            color: #1e40af;
+        }
+
+        /* Team Member Colors - 16 unique WCAG AA compliant colors */
+        .team-color-1  { background-color: #1e40af; color: white; } /* Blue */
+        .team-color-2  { background-color: #dc2626; color: white; } /* Red */
+        .team-color-3  { background-color: #059669; color: white; } /* Green */
+        .team-color-4  { background-color: #d97706; color: white; } /* Amber */
+        .team-color-5  { background-color: #9333ea; color: white; } /* Purple */
+        .team-color-6  { background-color: #0891b2; color: white; } /* Cyan */
+        .team-color-7  { background-color: #ea580c; color: white; } /* Orange */
+        .team-color-8  { background-color: #be185d; color: white; } /* Pink */
+        .team-color-9  { background-color: #0f766e; color: white; } /* Teal */
+        .team-color-10 { background-color: #a16207; color: white; } /* Yellow */
+        .team-color-11 { background-color: #6b21a8; color: white; } /* Deep Purple */
+        .team-color-12 { background-color: #b91c1c; color: white; } /* Dark Red */
+        .team-color-13 { background-color: #1e3a8a; color: white; } /* Navy */
+        .team-color-14 { background-color: #15803d; color: white; } /* Forest Green */
+        .team-color-15 { background-color: #c2410c; color: white; } /* Rust */
+        .team-color-16 { background-color: #7e22ce; color: white; } /* Violet */
+    </style>
+
+    <!-- Shared team color utilities -->
+    <script src="/js/team-colors.js"></script>
+</head>
+<body data-page="schedule-overrides">
+    <div class="page">
+        <!-- Sidebar Component (loaded via JavaScript) -->
+        <div id="sidebar-container"></div>
+
+        <!-- Main Content -->
+        <div class="page-wrapper">
+            <!-- Page Header -->
+            <div class="page-header d-print-none">
+                <div class="container-xl">
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <div class="page-pretitle">MANAGEMENT</div>
+                            <h2 class="page-title">
+                                <i class="ti ti-calendar-x me-2"></i>
+                                Schedule Overrides
+                            </h2>
+                        </div>
+                        <div class="col-auto ms-auto d-print-none">
+                            <div class="btn-list">
+                                <button class="btn btn-primary admin-only"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#createOverrideModal">
+                                    <i class="ti ti-plus me-2"></i>
+                                    Create Override
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Page Body -->
+            <div class="page-body">
+                <div class="container-xl">
+                    <!-- Stats Cards -->
+                    <div class="row row-deck row-cards mb-4">
+                        <div class="col-sm-6 col-lg-4">
+                            <div class="card stat-card">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center">
+                                        <div class="subheader">Total Overrides</div>
+                                        <div class="ms-auto">
+                                            <span class="bg-blue text-white avatar">
+                                                <i class="ti ti-calendar-stats"></i>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="h1 mb-3" id="totalOverrides">-</div>
+                                    <div class="d-flex mb-2">
+                                        <div class="text-muted">All time</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-lg-4">
+                            <div class="card stat-card">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center">
+                                        <div class="subheader">Active Overrides</div>
+                                        <div class="ms-auto">
+                                            <span class="bg-green text-white avatar">
+                                                <i class="ti ti-calendar-check"></i>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="h1 mb-3" id="activeOverrides">-</div>
+                                    <div class="d-flex mb-2">
+                                        <div class="text-muted">Currently active</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-lg-4">
+                            <div class="card stat-card">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center">
+                                        <div class="subheader">Completed</div>
+                                        <div class="ms-auto">
+                                            <span class="bg-azure text-white avatar">
+                                                <i class="ti ti-circle-check"></i>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="h1 mb-3" id="completedOverrides">-</div>
+                                    <div class="d-flex mb-2">
+                                        <div class="text-muted">Past shifts</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Override Table -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <i class="ti ti-history me-2"></i>
+                                Override History
+                            </h3>
+                            <div class="card-actions">
+                                <button class="btn btn-sm" id="refreshTable">
+                                    <i class="ti ti-refresh"></i> Refresh
+                                </button>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table card-table table-vcenter">
+                                <thead>
+                                    <tr>
+                                        <th>Schedule ID</th>
+                                        <th>Original Member</th>
+                                        <th>Override Member</th>
+                                        <th>Reason</th>
+                                        <th>Status</th>
+                                        <th>Created By</th>
+                                        <th>Created At</th>
+                                        <th class="w-1">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="overrideTableBody">
+                                    <tr>
+                                        <td colspan="8" class="text-center text-muted py-4">
+                                            <i class="ti ti-loader-2 ti-spin me-2"></i>
+                                            Loading overrides...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination -->
+                        <div class="card-footer d-flex align-items-center">
+                            <p class="m-0 text-muted" id="paginationInfo">Loading...</p>
+                            <ul class="pagination m-0 ms-auto" id="paginationControls"></ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Override Modal -->
+    <div class="modal modal-blur fade" id="createOverrideModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="ti ti-calendar-plus me-2"></i>
+                        Create Schedule Override
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="createOverrideForm">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label required">Schedule to Override</label>
+                            <select class="form-select" id="scheduleSelect" required>
+                                <option value="">Loading schedules...</option>
+                            </select>
+                            <small class="form-hint">Select the schedule assignment you want to override</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label required">Override Member</label>
+                            <select class="form-select" id="overrideMemberSelect" required>
+                                <option value="">Select team member...</option>
+                            </select>
+                            <small class="form-hint">Who will cover this shift?</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Reason</label>
+                            <textarea class="form-control"
+                                      id="reasonInput"
+                                      rows="3"
+                                      maxlength="500"
+                                      placeholder="e.g., Vacation, Sick day, Emergency coverage..."></textarea>
+                            <small class="form-hint">Optional - explain why this override is needed</small>
+                        </div>
+
+                        <div class="alert alert-info mb-0">
+                            <div class="d-flex">
+                                <div>
+                                    <i class="ti ti-info-circle me-2"></i>
+                                </div>
+                                <div>
+                                    <strong>Note:</strong> Creating an override does not affect the rotation algorithm.
+                                    The override member will receive the SMS notification instead of the originally assigned member.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="ti ti-check me-2"></i>
+                            Create Override
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabler JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/js/tabler.min.js"></script>
+
+    <script>
+        const API_BASE = '/api/v1';
+        let currentPage = 1;
+        let perPage = 25;
+        let currentUser = null;
+
+        // Load data on page load
+        document.addEventListener('DOMContentLoaded', async () => {
+            await checkAuth();
+            await loadTeamMembers();
+            await loadUpcomingSchedules();
+            await loadOverrides();
+            await loadStats();
+
+            // Set up event listeners
+            document.getElementById('refreshTable').addEventListener('click', () => loadOverrides(currentPage));
+            document.getElementById('createOverrideForm').addEventListener('submit', handleCreateOverride);
+        });
+
+        // Check authentication
+        async function checkAuth() {
+            try {
+                const response = await fetch(`${API_BASE}/auth/me`, {
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    window.location.href = '/login.html';
+                    return;
+                }
+
+                currentUser = await response.json();
+
+                // Show/hide admin-only elements
+                const isAdmin = currentUser.role === 'admin';
+                document.querySelectorAll('.admin-only').forEach(el => {
+                    el.style.display = isAdmin ? '' : 'none';
+                });
+
+                if (!isAdmin) {
+                    showMessage('Admin access required for this page', 'warning');
+                }
+            } catch (error) {
+                console.error('Auth check failed:', error);
+                window.location.href = '/login.html';
+            }
+        }
+
+        // Load team members for dropdown
+        async function loadTeamMembers() {
+            try {
+                const response = await fetch(`${API_BASE}/team-members`, {
+                    credentials: 'include'
+                });
+
+                if (!response.ok) throw new Error('Failed to fetch team members');
+
+                const members = await response.json();
+                const select = document.getElementById('overrideMemberSelect');
+
+                select.innerHTML = '<option value="">Select team member...</option>';
+                members.filter(m => m.is_active).forEach(member => {
+                    const option = document.createElement('option');
+                    option.value = member.id;
+                    option.textContent = member.name;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Failed to load team members:', error);
+                showMessage('Failed to load team members', 'danger');
+            }
+        }
+
+        // Load upcoming schedules for dropdown
+        async function loadUpcomingSchedules() {
+            try {
+                const response = await fetch(`${API_BASE}/schedules/upcoming?weeks=4`, {
+                    credentials: 'include'
+                });
+
+                if (!response.ok) throw new Error('Failed to fetch schedules');
+
+                const data = await response.json();
+                const select = document.getElementById('scheduleSelect');
+
+                select.innerHTML = '<option value="">Select schedule...</option>';
+
+                // Group by week
+                const schedulesByWeek = {};
+                data.schedules.forEach(schedule => {
+                    const week = schedule.week_number;
+                    if (!schedulesByWeek[week]) {
+                        schedulesByWeek[week] = [];
+                    }
+                    schedulesByWeek[week].push(schedule);
+                });
+
+                // Add schedules to dropdown
+                Object.keys(schedulesByWeek).sort().forEach(week => {
+                    const optgroup = document.createElement('optgroup');
+                    optgroup.label = `Week ${week}`;
+
+                    schedulesByWeek[week].forEach(schedule => {
+                        const option = document.createElement('option');
+                        option.value = schedule.id;
+                        const startDate = new Date(schedule.start_datetime).toLocaleDateString();
+                        option.textContent = `${schedule.team_member_name} - ${startDate}`;
+                        optgroup.appendChild(option);
+                    });
+
+                    select.appendChild(optgroup);
+                });
+            } catch (error) {
+                console.error('Failed to load schedules:', error);
+                showMessage('Failed to load schedules', 'danger');
+            }
+        }
+
+        // Load overrides with pagination
+        async function loadOverrides(page = 1) {
+            try {
+                const response = await fetch(
+                    `${API_BASE}/schedule-overrides/?page=${page}&per_page=${perPage}`,
+                    { credentials: 'include' }
+                );
+
+                if (!response.ok) throw new Error('Failed to fetch overrides');
+
+                const data = await response.json();
+                currentPage = data.pagination.page;
+
+                renderTable(data.overrides);
+                updatePaginationInfo(data.pagination);
+                renderPaginationControls(data.pagination);
+            } catch (error) {
+                console.error('Failed to load overrides:', error);
+                document.getElementById('overrideTableBody').innerHTML = `
+                    <tr>
+                        <td colspan="8" class="text-center text-danger py-4">
+                            <i class="ti ti-alert-circle me-2"></i>
+                            Failed to load overrides. Please try refreshing.
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        // Load statistics
+        async function loadStats() {
+            try {
+                const response = await fetch(`${API_BASE}/schedule-overrides/`, {
+                    credentials: 'include'
+                });
+
+                if (!response.ok) throw new Error('Failed to fetch stats');
+
+                const data = await response.json();
+                const overrides = data.overrides;
+
+                // Calculate stats
+                const total = data.pagination.total;
+                const active = overrides.filter(o => o.status === 'active').length;
+                const completed = overrides.filter(o => o.status === 'completed').length;
+
+                document.getElementById('totalOverrides').textContent = total;
+                document.getElementById('activeOverrides').textContent = active;
+                document.getElementById('completedOverrides').textContent = completed;
+            } catch (error) {
+                console.error('Failed to load stats:', error);
+            }
+        }
+
+        // Render table
+        function renderTable(overrides) {
+            const tbody = document.getElementById('overrideTableBody');
+
+            if (overrides.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="text-center text-muted py-4">
+                            <i class="ti ti-inbox me-2"></i>
+                            No overrides found. Create one to get started!
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = overrides.map(override => {
+                const createdDate = new Date(override.created_at).toLocaleString();
+                const statusClass = `status-${override.status}`;
+
+                return `
+                    <tr>
+                        <td>
+                            <span class="text-muted">#${override.schedule_id}</span>
+                        </td>
+                        <td>${override.original_member_name}</td>
+                        <td>
+                            <span class="override-badge">${override.override_member_name}</span>
+                        </td>
+                        <td>
+                            <span class="text-muted">${override.reason || '-'}</span>
+                        </td>
+                        <td>
+                            <span class="status-badge ${statusClass}">
+                                ${override.status.charAt(0).toUpperCase() + override.status.slice(1)}
+                            </span>
+                        </td>
+                        <td>${override.created_by}</td>
+                        <td>
+                            <span class="text-muted">${createdDate}</span>
+                        </td>
+                        <td>
+                            ${override.status === 'active' ? `
+                                <button class="btn btn-sm btn-ghost-danger admin-only"
+                                        onclick="cancelOverride(${override.id})"
+                                        title="Cancel Override">
+                                    <i class="ti ti-x"></i>
+                                </button>
+                            ` : '-'}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Update pagination info
+        function updatePaginationInfo(pagination) {
+            const start = (pagination.page - 1) * pagination.per_page + 1;
+            const end = Math.min(pagination.page * pagination.per_page, pagination.total);
+            const info = pagination.total > 0
+                ? `Showing ${start} to ${end} of ${pagination.total} overrides`
+                : 'No overrides found';
+            document.getElementById('paginationInfo').textContent = info;
+        }
+
+        // Render pagination controls
+        function renderPaginationControls(pagination) {
+            const controls = document.getElementById('paginationControls');
+
+            if (pagination.pages <= 1) {
+                controls.innerHTML = '';
+                return;
+            }
+
+            let html = '';
+
+            // Previous button
+            html += `
+                <li class="page-item ${!pagination.has_prev ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="loadOverrides(${pagination.page - 1}); return false;">
+                        <i class="ti ti-chevron-left"></i> Prev
+                    </a>
+                </li>
+            `;
+
+            // Page numbers
+            const startPage = Math.max(1, pagination.page - 2);
+            const endPage = Math.min(pagination.pages, pagination.page + 2);
+
+            for (let i = startPage; i <= endPage; i++) {
+                html += `
+                    <li class="page-item ${i === pagination.page ? 'active' : ''}">
+                        <a class="page-link" href="#" onclick="loadOverrides(${i}); return false;">${i}</a>
+                    </li>
+                `;
+            }
+
+            // Next button
+            html += `
+                <li class="page-item ${!pagination.has_next ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="loadOverrides(${pagination.page + 1}); return false;">
+                        Next <i class="ti ti-chevron-right"></i>
+                    </a>
+                </li>
+            `;
+
+            controls.innerHTML = html;
+        }
+
+        // Handle create override form submission
+        async function handleCreateOverride(e) {
+            e.preventDefault();
+
+            const scheduleId = document.getElementById('scheduleSelect').value;
+            const overrideMemberId = document.getElementById('overrideMemberSelect').value;
+            const reason = document.getElementById('reasonInput').value.trim();
+
+            if (!scheduleId || !overrideMemberId) {
+                showMessage('Please fill in all required fields', 'warning');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/schedule-overrides/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        schedule_id: parseInt(scheduleId),
+                        override_member_id: parseInt(overrideMemberId),
+                        reason: reason || null
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Failed to create override');
+                }
+
+                showMessage('Override created successfully!', 'success');
+
+                // Close modal and reset form
+                const modal = bootstrap.Modal.getInstance(document.getElementById('createOverrideModal'));
+                modal.hide();
+                document.getElementById('createOverrideForm').reset();
+
+                // Reload data
+                await loadOverrides(currentPage);
+                await loadStats();
+            } catch (error) {
+                console.error('Failed to create override:', error);
+                showMessage(error.message, 'danger');
+            }
+        }
+
+        // Cancel override
+        async function cancelOverride(overrideId) {
+            if (!confirm('Are you sure you want to cancel this override?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/schedule-overrides/${overrideId}`, {
+                    method: 'DELETE',
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Failed to cancel override');
+                }
+
+                showMessage('Override cancelled successfully', 'success');
+
+                // Reload data
+                await loadOverrides(currentPage);
+                await loadStats();
+            } catch (error) {
+                console.error('Failed to cancel override:', error);
+                showMessage(error.message, 'danger');
+            }
+        }
+
+        // Show toast message
+        function showMessage(message, type = 'info') {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible position-fixed top-0 start-50 translate-middle-x mt-3`;
+            alertDiv.style.zIndex = '9999';
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(alertDiv);
+
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

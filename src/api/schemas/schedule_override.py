@@ -119,16 +119,6 @@ class ScheduleOverrideResponse(BaseModel):
         examples=[None]
     )
 
-    # Optional nested objects for enhanced responses
-    schedule: Optional[dict] = Field(
-        None,
-        description="Full schedule details (optional)"
-    )
-    override_member: Optional[dict] = Field(
-        None,
-        description="Full override member details (optional)"
-    )
-
     class Config:
         """Pydantic configuration."""
         from_attributes = True

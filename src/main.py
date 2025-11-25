@@ -187,6 +187,7 @@ if frontend_path.exists():
             "shifts.html": "shifts.html",
             "schedule.html": "schedule.html",
             "notifications.html": "notifications.html",
+            "schedule-overrides.html": "schedule-overrides.html",
             "help.html": "help.html",
             "change-password.html": "change-password.html"
         }
