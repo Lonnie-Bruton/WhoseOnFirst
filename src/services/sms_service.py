@@ -535,13 +535,21 @@ class SMSService:
 
                 previous_schedule = schedule
             else:
-                # No assignment for this day
-                lines.append(f"{day_name}: No assignment")
-                is_continuation = False
-                previous_schedule = None
+                # No schedule entry for this day
+                # Check if we're in the middle of a 48h shift continuation
+                if is_continuation and previous_schedule:
+                    # This is the second day of a 48h shift
+                    member_name = previous_schedule.team_member.name
+                    lines.append(f"{day_name}: {member_name} (continues)")
+                    is_continuation = False  # Reset after showing continuation
+                else:
+                    # Truly no assignment for this day
+                    lines.append(f"{day_name}: No assignment")
+                    is_continuation = False
+                    previous_schedule = None
 
         # Build final message
-        message_lines = [header, ""] + lines + ["", "Questions? Reply to this message."]
+        message_lines = [header, ""] + lines
         message = "\n".join(message_lines)
 
         logger.info(f"Composed weekly summary: {len(message)} characters")
