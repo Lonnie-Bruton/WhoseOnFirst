@@ -346,7 +346,7 @@
         // Load team members for dropdown
         async function loadTeamMembers() {
             try {
-                const response = await fetch(`${API_BASE}/team-members`, {
+                const response = await fetch(`${API_BASE}/team-members/`, {
                     credentials: 'include'
                 });
 
@@ -377,14 +377,14 @@
 
                 if (!response.ok) throw new Error('Failed to fetch schedules');
 
-                const data = await response.json();
+                const schedules = await response.json();
                 const select = document.getElementById('scheduleSelect');
 
                 select.innerHTML = '<option value="">Select schedule...</option>';
 
                 // Group by week
                 const schedulesByWeek = {};
-                data.schedules.forEach(schedule => {
+                schedules.forEach(schedule => {
                     const week = schedule.week_number;
                     if (!schedulesByWeek[week]) {
                         schedulesByWeek[week] = [];
