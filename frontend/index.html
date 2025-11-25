@@ -361,18 +361,27 @@
             return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
         }
 
+        // Find active override for a schedule
+        function findOverrideForSchedule(scheduleId, overrides) {
+            if (!overrides || !Array.isArray(overrides)) {
+                return null;
+            }
+            return overrides.find(o => o.schedule_id === scheduleId && o.status === 'active');
+        }
+
         // Load dashboard data
         async function loadDashboardData() {
             try {
                 // Fetch all data in parallel - get all schedules and filter client-side
                 // Note: Fetch ALL members (including inactive) to display historical schedules
-                const [membersRes, schedulesRes, shiftsRes] = await Promise.all([
+                const [membersRes, schedulesRes, shiftsRes, overridesRes] = await Promise.all([
                     fetch(`${API_BASE}/team-members/`, { credentials: 'include' }),
                     fetch(`${API_BASE}/schedules/`, { credentials: 'include' }),  // Get all schedules
-                    fetch(`${API_BASE}/shifts/`, { credentials: 'include' })
+                    fetch(`${API_BASE}/shifts/`, { credentials: 'include' }),
+                    fetch(`${API_BASE}/schedule-overrides/?status=active`, { credentials: 'include' })
                 ]);
 
-                if (!membersRes.ok || !schedulesRes.ok || !shiftsRes.ok) {
+                if (!membersRes.ok || !schedulesRes.ok || !shiftsRes.ok || !overridesRes.ok) {
                     throw new Error('Failed to fetch data');
                 }
 
@@ -380,18 +389,20 @@
                 const activeMembers = allMembers.filter(m => m.is_active);
                 const schedules = await schedulesRes.json();
                 const shifts = await shiftsRes.json();
+                const overridesData = await overridesRes.json();
+                const overrides = overridesData.overrides || [];
 
                 // Cache the data for navigation
-                cachedData = { members: allMembers, schedules, shifts };
+                cachedData = { members: allMembers, schedules, shifts, overrides };
 
                 // Update active members count
                 document.getElementById('activeMembers').textContent = activeMembers.length;
 
                 // Update on-call escalation chain
-                updateOnCallChain(schedules, allMembers, shifts);
+                updateOnCallChain(schedules, allMembers, shifts, overrides);
 
                 // Build calendar for current month
-                buildCalendar(schedules, allMembers, shifts);
+                buildCalendar(schedules, allMembers, shifts, overrides);
 
             } catch (error) {
                 console.error('Error loading dashboard data:', error);
@@ -402,7 +413,7 @@
         function navigatePrevMonth() {
             currentViewDate = new Date(currentViewDate.getFullYear(), currentViewDate.getMonth() - 1, 1);
             if (cachedData) {
-                buildCalendar(cachedData.schedules, cachedData.members, cachedData.shifts);
+                buildCalendar(cachedData.schedules, cachedData.members, cachedData.shifts, cachedData.overrides);
             }
         }
 
@@ -410,7 +421,7 @@
         function navigateNextMonth() {
             currentViewDate = new Date(currentViewDate.getFullYear(), currentViewDate.getMonth() + 1, 1);
             if (cachedData) {
-                buildCalendar(cachedData.schedules, cachedData.members, cachedData.shifts);
+                buildCalendar(cachedData.schedules, cachedData.members, cachedData.shifts, cachedData.overrides);
             }
         }
 
@@ -418,12 +429,12 @@
         function navigateToday() {
             currentViewDate = new Date();
             if (cachedData) {
-                buildCalendar(cachedData.schedules, cachedData.members, cachedData.shifts);
+                buildCalendar(cachedData.schedules, cachedData.members, cachedData.shifts, cachedData.overrides);
             }
         }
 
         // Update on-call escalation chain
-        function updateOnCallChain(schedules, members, shifts) {
+        function updateOnCallChain(schedules, members, shifts, overrides = []) {
             const now = new Date();
 
             // Sort schedules by start time to find current primary
@@ -477,11 +488,11 @@
             }
 
             // Render Primary
-            renderOnCallPerson('primaryOnCall', primarySchedule, members, shifts, now, 'Primary');
+            renderOnCallPerson('primaryOnCall', primarySchedule, members, shifts, now, 'Primary', overrides);
 
             // Render Backup (with schedule for "Until" time)
             if (backupSchedule) {
-                renderOnCallPerson('backupOnCall', backupSchedule, members, shifts, now, 'Backup');
+                renderOnCallPerson('backupOnCall', backupSchedule, members, shifts, now, 'Backup', overrides);
             } else {
                 renderOnCallPersonFromMember('backupOnCall', backupMember, members, 'Backup');
             }
@@ -491,7 +502,7 @@
         }
 
         // Helper to render on-call person card
-        function renderOnCallPerson(elementId, schedule, members, shifts, now, label) {
+        function renderOnCallPerson(elementId, schedule, members, shifts, now, label, overrides = []) {
             const container = document.getElementById(elementId);
 
             if (!schedule) {
@@ -499,13 +510,21 @@
                 return;
             }
 
-            const member = members.find(m => m.id === schedule.team_member_id);
+            // Check for active override
+            const override = findOverrideForSchedule(schedule.id, overrides);
+            const originalMember = members.find(m => m.id === schedule.team_member_id);
+            const displayMember = override
+                ? members.find(m => m.id === override.override_member_id) || originalMember
+                : originalMember;
+
             const shift = shifts.find(s => s.id === schedule.shift_id);
 
-            if (!member || !shift) {
+            if (!displayMember || !shift) {
                 container.innerHTML = '<span class="text-muted">Unknown</span>';
                 return;
             }
+
+            const member = displayMember;  // Use displayMember for rendering
 
             // Inactive members shown in gray, active members get algorithm color
             const activeMembers = members.filter(m => m.is_active);
@@ -532,12 +551,14 @@
                         <span class="avatar-initials">${initials}</span>
                     </span>
                     <strong>${member.name}</strong>
+                    ${override ? '<span class="badge bg-orange ms-2" title="Covering for ' + originalMember.name + '"><i class="ti ti-arrows-exchange"></i></span>' : ''}
                 </div>
                 <div class="text-muted small">
                     <i class="ti ti-device-mobile me-1"></i>${member.phone}
                     ${member.secondary_phone ? '<br><i class="ti ti-device-mobile me-1"></i>' + member.secondary_phone : ''}
                 </div>
                 <div class="text-muted small">${timeInfo}</div>
+                ${override ? '<div class="text-muted small"><i class="ti ti-info-circle me-1"></i>Covering for ' + originalMember.name + '</div>' : ''}
             `;
         }
 
@@ -651,7 +672,7 @@
         }
 
         // Build calendar for viewed month
-        function buildCalendar(schedules, members, shifts) {
+        function buildCalendar(schedules, members, shifts, overrides = []) {
             const today = new Date();
             const year = currentViewDate.getFullYear();
             const month = currentViewDate.getMonth();
@@ -709,26 +730,43 @@
                 });
 
                 if (daySchedule) {
-                    const member = members.find(m => m.id === daySchedule.team_member_id);
+                    // Check for active override
+                    const override = findOverrideForSchedule(daySchedule.id, overrides);
+                    const originalMember = members.find(m => m.id === daySchedule.team_member_id);
+                    const displayMember = override
+                        ? members.find(m => m.id === override.override_member_id) || originalMember
+                        : originalMember;
+
                     const shift = shifts.find(s => s.id === daySchedule.shift_id);
 
-                    if (member && shift) {
+                    if (displayMember && shift) {
                         const badge = document.createElement('div');
                         // Inactive members shown in gray, active members get algorithm color
                         const activeMembers = members.filter(m => m.is_active);
-                        const colorClass = member.is_active ? getTeamColor(member.id, activeMembers) : 'bg-secondary';
+                        const colorClass = displayMember.is_active ? getTeamColor(displayMember.id, activeMembers) : 'bg-secondary';
                         badge.className = `on-call-badge ${colorClass}`;
 
-                        let displayName = member.name;
+                        let displayName = displayMember.name;
                         if (shift.duration_hours === 48) {
                             displayName += ' (48h)';
                         }
 
+                        // Add override indicator
+                        const overrideIndicator = override
+                            ? `<span class="badge badge-sm bg-orange" style="display: block; margin-top: 2px; font-size: 9px; color: white;">
+                                   <i class="ti ti-arrows-exchange" style="font-size: 10px;"></i> Covering for ${getFirstName(originalMember.name)}
+                               </span>`
+                            : '';
+
                         badge.innerHTML = `
                             <span class="badge-name">${displayName}</span>
-                            <span class="badge-phone">${member.phone}</span>
+                            <span class="badge-phone">${displayMember.phone}</span>
+                            ${overrideIndicator}
                         `;
                         badge.style.cursor = 'pointer';
+                        badge.title = override
+                            ? `${displayMember.name} is covering for ${originalMember.name}\nReason: ${override.reason || 'Not specified'}`
+                            : `${displayMember.name} is on-call`;
                         dayCell.appendChild(badge);
                     }
                 }
