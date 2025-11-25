@@ -933,6 +933,15 @@
                 document.getElementById('secondaryName').value = config.secondary_name || '';
                 document.getElementById('secondaryPhone').value = config.secondary_phone || '';
 
+                // Load weekly summary setting
+                const weeklyResponse = await fetch(`${API_BASE}/settings/`, {
+                    credentials: 'include'
+                });
+                if (weeklyResponse.ok) {
+                    const settings = await weeklyResponse.json();
+                    document.getElementById('weeklyEnabled').checked = settings.escalation_weekly_enabled || false;
+                }
+
             } catch (error) {
                 console.error('Error loading escalation config:', error);
                 showError('❌ Failed to load escalation configuration');
@@ -955,11 +964,13 @@
             const primaryPhone = document.getElementById('primaryPhone').value.trim();
             const secondaryName = document.getElementById('secondaryName').value.trim();
             const secondaryPhone = document.getElementById('secondaryPhone').value.trim();
+            const weeklyEnabled = document.getElementById('weeklyEnabled').checked;
 
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
 
             try {
+                // Save escalation contacts
                 const response = await fetch(`${API_BASE}/settings/escalation`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
@@ -976,6 +987,21 @@
                 if (!response.ok) {
                     const error = await response.json();
                     throw new Error(error.detail || 'Failed to save escalation config');
+                }
+
+                // Save weekly summary setting
+                const weeklyResponse = await fetch(`${API_BASE}/settings/escalation-weekly`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        enabled: weeklyEnabled
+                    })
+                });
+
+                if (!weeklyResponse.ok) {
+                    const error = await weeklyResponse.json();
+                    throw new Error(error.detail || 'Failed to save weekly summary setting');
                 }
 
                 // Close modal and clean up backdrop
@@ -997,6 +1023,53 @@
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = '<i class="ti ti-check me-2"></i>Save Configuration';
+            }
+        });
+
+        // Test Weekly Summary button handler
+        document.getElementById('testWeeklySummaryBtn').addEventListener('click', async function() {
+            // Prevent action for viewers
+            if (currentUser && currentUser.role === 'viewer') {
+                showError('You do not have permission to trigger weekly summaries');
+                return;
+            }
+
+            const btn = this;
+            const originalHTML = btn.innerHTML;
+
+            // Confirm action
+            if (!confirm('Send a weekly schedule summary to all configured escalation contacts now?')) {
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Sending...';
+
+            try {
+                const response = await fetch(`${API_BASE}/schedules/notifications/weekly-summary/trigger`, {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || error.message || 'Failed to send weekly summary');
+                }
+
+                const result = await response.json();
+
+                // Show detailed result
+                if (result.status === 'success') {
+                    showSuccess(`✅ Weekly summary sent!\n\nSuccessful: ${result.result.successful}\nFailed: ${result.result.failed}\nTotal: ${result.result.total}`);
+                } else {
+                    showError(`⚠️ ${result.message}`);
+                }
+
+            } catch (error) {
+                showError('❌ ' + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalHTML;
             }
         });
 

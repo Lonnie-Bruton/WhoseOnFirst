@@ -327,3 +327,45 @@ def update_escalation_config(
     # Return updated config
     config = service.get_escalation_config()
     return config
+
+
+@router.put("/escalation-weekly")
+def update_escalation_weekly(
+    request: dict,
+    db: Session = Depends(get_db),
+    current_user = Depends(require_admin)
+):
+    """
+    Update weekly escalation summary setting.
+
+    Enables or disables the weekly schedule summary SMS sent to
+    escalation contacts every Monday at 8:00 AM CST.
+
+    Only administrators can update this setting.
+
+    Args:
+        request: Dictionary with 'enabled' boolean field
+        db: Database session (injected)
+        current_user: Authenticated admin user (injected)
+
+    Returns:
+        Dictionary with updated 'enabled' status
+
+    Example:
+        PUT /api/v1/settings/escalation-weekly
+        {
+            "enabled": true
+        }
+    """
+    service = SettingsService(db)
+
+    # Extract enabled flag from request
+    enabled = request.get('enabled', False)
+
+    # Update the setting
+    service.set_escalation_weekly_enabled(enabled)
+
+    # Return updated status
+    return {
+        "enabled": service.is_escalation_weekly_enabled()
+    }
