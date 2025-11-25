@@ -791,6 +791,175 @@ class SMSService:
                 "error": str(e)
             }
 
+    def send_escalation_weekly_summary(
+        self,
+        message: str,
+        escalation_config: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        Send weekly schedule summary SMS to all configured escalation contacts.
+
+        Sends the provided message to all escalation contact phones (primary
+        and secondary contacts). Each send is logged individually with
+        schedule_id=NULL to indicate a weekly summary notification.
+
+        Args:
+            message: The weekly summary message text
+            escalation_config: Escalation config dict with keys:
+                - primary_name: Primary contact name
+                - primary_phone: Primary contact phone
+                - secondary_name: Secondary contact name
+                - secondary_phone: Secondary contact phone
+
+        Returns:
+            Dictionary with send results:
+            {
+                "successful": int (count of successful sends),
+                "failed": int (count of failed sends),
+                "total": int (total attempted sends),
+                "details": list of individual send results
+            }
+
+        Example:
+            >>> config = settings_service.get_escalation_config()
+            >>> message = sms_service._compose_weekly_summary(schedules)
+            >>> result = sms_service.send_escalation_weekly_summary(message, config)
+            >>> print(f"Sent to {result['successful']}/{result['total']} contacts")
+        """
+        logger.info("Sending weekly escalation summary to configured contacts")
+
+        results = {
+            "successful": 0,
+            "failed": 0,
+            "total": 0,
+            "details": []
+        }
+
+        # Collect all contacts to send to
+        contacts = []
+
+        # Primary escalation contact
+        if escalation_config.get('primary_name') and escalation_config.get('primary_phone'):
+            contacts.append({
+                "name": escalation_config['primary_name'],
+                "phone": escalation_config['primary_phone'],
+                "label": "Primary Escalation Contact"
+            })
+
+        # Secondary escalation contact
+        if escalation_config.get('secondary_name') and escalation_config.get('secondary_phone'):
+            contacts.append({
+                "name": escalation_config['secondary_name'],
+                "phone": escalation_config['secondary_phone'],
+                "label": "Secondary Escalation Contact"
+            })
+
+        # Send to each contact
+        for contact in contacts:
+            results["total"] += 1
+            contact_name = contact["name"]
+            contact_phone = contact["phone"]
+            contact_label = contact["label"]
+
+            try:
+                logger.info(
+                    f"Sending weekly summary to {self._sanitize_phone(contact_phone)} "
+                    f"({contact_name} - {contact_label})"
+                )
+
+                # Send SMS via Twilio
+                twilio_result = self._send_sms(contact_phone, message)
+
+                # Log successful send (schedule_id=NULL for weekly summary)
+                log_entry = self.notification_repo.log_notification_attempt(
+                    schedule_id=None,  # NULL for weekly summaries
+                    status='sent',
+                    twilio_sid=twilio_result['sid'],
+                    error_message=None,
+                    recipient_name=contact_name,
+                    recipient_phone=contact_phone
+                )
+
+                results["successful"] += 1
+                results["details"].append({
+                    "contact": contact_label,
+                    "name": contact_name,
+                    "phone": self._sanitize_phone(contact_phone),
+                    "status": "sent",
+                    "twilio_sid": twilio_result['sid'],
+                    "notification_id": log_entry.id
+                })
+
+                logger.info(
+                    f"Weekly summary sent successfully to {self._sanitize_phone(contact_phone)} "
+                    f"(SID: {twilio_result['sid']})"
+                )
+
+            except TwilioRestException as e:
+                error_msg = f"Twilio error: {str(e)}"
+                logger.error(f"Failed to send weekly summary to {contact_name}: {error_msg}")
+
+                # Log failed send
+                try:
+                    log_entry = self.notification_repo.log_notification_attempt(
+                        schedule_id=None,
+                        status='failed',
+                        twilio_sid=None,
+                        error_message=error_msg,
+                        recipient_name=contact_name,
+                        recipient_phone=contact_phone
+                    )
+                    notification_id = log_entry.id
+                except Exception as log_error:
+                    logger.error(f"Failed to log notification attempt: {str(log_error)}")
+                    notification_id = None
+
+                results["failed"] += 1
+                results["details"].append({
+                    "contact": contact_label,
+                    "name": contact_name,
+                    "phone": self._sanitize_phone(contact_phone),
+                    "status": "failed",
+                    "error": str(e),
+                    "notification_id": notification_id
+                })
+
+            except Exception as e:
+                error_msg = f"Unexpected error: {str(e)}"
+                logger.error(f"Failed to send weekly summary to {contact_name}: {error_msg}")
+
+                # Log failed send
+                try:
+                    log_entry = self.notification_repo.log_notification_attempt(
+                        schedule_id=None,
+                        status='failed',
+                        twilio_sid=None,
+                        error_message=error_msg,
+                        recipient_name=contact_name,
+                        recipient_phone=contact_phone
+                    )
+                    notification_id = log_entry.id
+                except Exception as log_error:
+                    logger.error(f"Failed to log notification attempt: {str(log_error)}")
+                    notification_id = None
+
+                results["failed"] += 1
+                results["details"].append({
+                    "contact": contact_label,
+                    "name": contact_name,
+                    "phone": self._sanitize_phone(contact_phone),
+                    "status": "failed",
+                    "error": str(e),
+                    "notification_id": notification_id
+                })
+
+        logger.info(
+            f"Weekly escalation summary complete: {results['successful']} successful, "
+            f"{results['failed']} failed, {results['total']} total"
+        )
+
+        return results
+
     def get_delivery_status(self, twilio_sid: str) -> Optional[Dict[str, Any]]:
         """
         Query Twilio for message delivery status.
