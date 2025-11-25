@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
 import os
+import math
 
 from src.api.dependencies import get_db
 from src.api.schemas.notification import (
@@ -26,35 +27,68 @@ from src.services.sms_service import SMSService
 router = APIRouter()
 
 
-@router.get("/recent", response_model=List[NotificationLogResponse])
+@router.get("/recent")
 def get_recent_notifications(
-    limit: int = Query(
-        50,
+    page: int = Query(
+        1,
         ge=1,
+        description="Page number (1-indexed)"
+    ),
+    per_page: int = Query(
+        25,
+        ge=10,
         le=100,
-        description="Number of recent notifications to retrieve (1-100)"
+        description="Items per page (10-100)"
     ),
     db: Session = Depends(get_db),
     current_user = Depends(require_auth)
-):
+) -> Dict[str, Any]:
     """
-    Get recent notification logs.
+    Get recent notification logs with pagination support.
 
-    Returns the most recent SMS notification attempts, ordered by timestamp descending.
+    Returns the most recent SMS notification attempts with pagination metadata,
+    ordered by timestamp descending.
 
     Args:
-        limit: Maximum number of notifications to return (default 50)
+        page: Page number, 1-indexed (default: 1)
+        per_page: Items per page, 10-100 (default: 25)
         db: Database session (injected)
 
     Returns:
-        List of recent notification log entries with schedule and member details
+        Dictionary with:
+        - notifications: List of notification log entries
+        - pagination: Metadata (page, per_page, total, pages, has_prev, has_next)
+
+    Backward Compatible:
+        Calling without params defaults to page 1, 25 items
 
     Example:
-        GET /api/v1/notifications/recent?limit=10
+        GET /api/v1/notifications/recent?page=1&per_page=25
     """
     repo = NotificationLogRepository(db)
-    logs = repo.get_recent_logs(limit=limit, include_schedule=True)
-    return logs
+
+    # Calculate offset from page number
+    offset = (page - 1) * per_page
+
+    # Fetch data
+    logs = repo.get_recent_logs(limit=per_page, offset=offset, include_schedule=True)
+    total_count = repo.count_all()
+
+    # Calculate total pages
+    total_pages = math.ceil(total_count / per_page) if total_count > 0 else 1
+
+    # Return paginated response
+    return {
+        "notifications": logs,
+        "pagination": {
+            "page": page,
+            "per_page": per_page,
+            "total": total_count,
+            "pages": total_pages,
+            "has_prev": page > 1,
+            "has_next": page < total_pages
+        }
+    }
 
 
 @router.get("/stats", response_model=NotificationStatsResponse)
