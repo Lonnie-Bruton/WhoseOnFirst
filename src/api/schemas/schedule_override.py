@@ -88,6 +88,11 @@ class ScheduleOverrideResponse(BaseModel):
         description="Covering member name (snapshot at override time)",
         examples=["Lonnie B"]
     )
+    override_date: datetime = Field(
+        ...,
+        description="Date/time of the shift being overridden",
+        examples=["2025-11-27T08:00:00"]
+    )
     reason: Optional[str] = Field(
         None,
         description="Override reason",
@@ -129,6 +134,7 @@ class ScheduleOverrideResponse(BaseModel):
                 "override_member_id": 5,
                 "original_member_name": "Gary K",
                 "override_member_name": "Lonnie B",
+                "override_date": "2025-11-27T08:00:00",
                 "reason": "Vacation - Gary out until Friday",
                 "status": "active",
                 "created_by": "admin",
@@ -165,6 +171,7 @@ class ScheduleOverrideListResponse(BaseModel):
                         "override_member_id": 5,
                         "original_member_name": "Gary K",
                         "override_member_name": "Lonnie B",
+                        "override_date": "2025-11-27T08:00:00",
                         "reason": "Vacation",
                         "status": "active",
                         "created_by": "admin",

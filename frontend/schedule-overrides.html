@@ -197,13 +197,13 @@
                             <table class="table card-table table-vcenter">
                                 <thead>
                                     <tr>
-                                        <th>Schedule ID</th>
+                                        <th>Override Date</th>
                                         <th>Original Member</th>
                                         <th>Override Member</th>
                                         <th>Reason</th>
                                         <th>Status</th>
                                         <th>Created By</th>
-                                        <th>Created At</th>
+                                        <th>Created At (CST)</th>
                                         <th class="w-1">Actions</th>
                                     </tr>
                                 </thead>
@@ -297,9 +297,36 @@
 
     <script>
         const API_BASE = '/api/v1';
+        const TIMEZONE = 'America/Chicago'; // CST/CDT
         let currentPage = 1;
         let perPage = 25;
         let currentUser = null;
+
+        // Timezone conversion utility
+        function formatDateTimeCST(dateString) {
+            if (!dateString) return '-';
+            const date = new Date(dateString);
+            return date.toLocaleString('en-US', {
+                timeZone: TIMEZONE,
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+            });
+        }
+
+        function formatDateCST(dateString) {
+            if (!dateString) return '-';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', {
+                timeZone: TIMEZONE,
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit'
+            });
+        }
 
         // Load data on page load - wait for sidebar to be ready
         window.addEventListener('sidebarLoaded', async () => {
@@ -511,13 +538,14 @@
             }
 
             tbody.innerHTML = overrides.map(override => {
-                const createdDate = new Date(override.created_at).toLocaleString();
+                const overrideDate = formatDateCST(override.override_date);
+                const createdDate = formatDateTimeCST(override.created_at);
                 const statusClass = `status-${override.status}`;
 
                 return `
                     <tr>
                         <td>
-                            <span class="text-muted">#${override.schedule_id}</span>
+                            <strong>${overrideDate}</strong>
                         </td>
                         <td>${override.original_member_name}</td>
                         <td>

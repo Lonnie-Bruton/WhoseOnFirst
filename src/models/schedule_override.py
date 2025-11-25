@@ -182,3 +182,13 @@ class ScheduleOverride(Base):
             True if status is 'completed', False otherwise
         """
         return self.status == "completed"
+
+    @property
+    def override_date(self):
+        """
+        Get the date of the shift being overridden.
+
+        Returns:
+            Datetime of the schedule start if relationship is loaded, None otherwise
+        """
+        return self.schedule.start_datetime if self.schedule else None
