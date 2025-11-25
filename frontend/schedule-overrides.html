@@ -635,23 +635,29 @@
                     throw new Error(error.detail || 'Failed to create override');
                 }
 
-                showMessage('Override created successfully!', 'success');
-
-                // Get modal instance and set up cleanup after it's fully hidden
+                // Close modal first, then show success message
                 const modalElement = document.getElementById('createOverrideModal');
                 const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
 
                 // Listen for modal fully hidden event (fires after animation completes)
                 modalElement.addEventListener('hidden.bs.modal', async function handleHidden() {
+                    // Explicitly remove any stuck backdrops
+                    document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());
+
+                    // Ensure body classes are cleaned up
+                    document.body.classList.remove('modal-open');
+                    document.body.style.overflow = '';
+                    document.body.style.paddingRight = '';
+
                     // Reset form
                     document.getElementById('createOverrideForm').reset();
 
-                    // Reload data after modal is fully closed
+                    // Show success message AFTER modal is fully closed
+                    showMessage('Override created successfully!', 'success');
+
+                    // Reload data
                     await loadOverrides(currentPage);
                     await loadStats();
-
-                    // Remove this event listener to prevent duplicates
-                    modalElement.removeEventListener('hidden.bs.modal', handleHidden);
                 }, { once: true });
 
                 // Trigger modal hide (will fire hidden.bs.modal event when animation completes)
