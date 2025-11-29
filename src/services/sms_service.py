@@ -205,7 +205,8 @@ class SMSService:
             phone=recipient_member.phone,
             message_body=message_body,
             schedule=schedule,
-            phone_type="primary"
+            phone_type="primary",
+            recipient_name=recipient_name
         )
 
         # Send to secondary phone if configured
@@ -215,7 +216,8 @@ class SMSService:
                 phone=recipient_member.secondary_phone,
                 message_body=message_body,
                 schedule=schedule,
-                phone_type="secondary"
+                phone_type="secondary",
+                recipient_name=recipient_name
             )
 
         # Mark as notified if EITHER phone succeeded (redundancy pattern)
@@ -262,7 +264,8 @@ class SMSService:
         phone: str,
         message_body: str,
         schedule: Schedule,
-        phone_type: str
+        phone_type: str,
+        recipient_name: str
     ) -> Dict[str, Any]:
         """
         Send SMS to a single phone number with retry logic.
@@ -272,6 +275,7 @@ class SMSService:
             message_body: SMS message text
             schedule: Schedule instance for logging
             phone_type: "primary" or "secondary" for logging purposes
+            recipient_name: Name of actual recipient (override member or scheduled member)
 
         Returns:
             Dictionary with result information for this phone
@@ -297,7 +301,7 @@ class SMSService:
                     status='sent',
                     twilio_sid=result['sid'],
                     error_message=None,
-                    recipient_name=schedule.team_member.name,
+                    recipient_name=recipient_name,
                     recipient_phone=phone
                 )
 
@@ -326,7 +330,7 @@ class SMSService:
                     status='failed',
                     twilio_sid=None,
                     error_message=error_msg,
-                    recipient_name=schedule.team_member.name,
+                    recipient_name=recipient_name,
                     recipient_phone=phone
                 )
 
@@ -348,7 +352,7 @@ class SMSService:
                     status='failed',
                     twilio_sid=None,
                     error_message=error_msg,
-                    recipient_name=schedule.team_member.name,
+                    recipient_name=recipient_name,
                     recipient_phone=phone
                 )
 
