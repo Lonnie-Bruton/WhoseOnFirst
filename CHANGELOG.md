@@ -60,6 +60,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Weekly Summary Sent Wrong Week** - Fixed off-by-one bug causing weekly escalation SMS to show next week instead of current week ([WHO-31](https://linear.app/hextrackr/issue/WHO-31))
+  - **Issue**: Monday 8:00 AM weekly summary showed Dec 8-14 schedule instead of Dec 1-7 schedule
+  - **Root Cause**: Date calculation at `schedule_manager.py:555` used `>=` operator which triggered at exactly 8:00 AM
+  - **Solution**: Changed `now.hour >= 8` to `now.hour > 8` so scheduled job at 8:00 AM gets current week
+  - **Files Changed**: `src/scheduler/schedule_manager.py:555`
+  - **Impact**: Weekly escalation contacts now receive correct week's schedule
+
 - **Inactive Team Members Now Allowed in Overrides** - Removed is_active validation that prevented using inactive members in overrides
   - **Issue**: Schedule override creation blocked inactive team members (like supervisors), even though is_active flag only controls rotation eligibility
   - **Root Cause**: Validation in `schedule_override_service.py` line 82-83 checked `is_active` flag
@@ -67,15 +74,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Files Changed**: `src/services/schedule_override_service.py:78-81`, `src/api/routes/schedule_overrides.py:41`
   - **Impact**: Inactive members (like Ken U) can now be assigned to cover shifts via overrides
 
+- **Notification Log Records Override Member Name** - Fixed notification history displaying original member instead of override member ([WHO-29](https://linear.app/hextrackr/issue/WHO-29))
+  - **Issue**: When override was active, notification log recorded original scheduled member name instead of override member
+  - **Solution**: Updated SMS service to pass override member name to notification logging
+  - **Files Changed**: `src/services/sms_service.py`
+  - **Impact**: Notification history now accurately shows who received the SMS
+
+### Known Issues
+
+- **Override Status Never Transitions to 'Completed'** ([WHO-30](https://linear.app/hextrackr/issue/WHO-30))
+  - **Issue**: Active overrides remain 'active' status indefinitely after schedule date passes; "Completed" count always shows 0
+  - **Root Cause**: No automated job exists to transition status from 'active' to 'completed'
+  - **Status**: Documented, planned fix in next release
+  - **Workaround**: None - cosmetic issue only, override functionality works correctly
+
 ### Testing Notes
 
-- **Natural Schedule Testing**: Two test overrides created for Ken U (11/28) and Lonnie B (11/27)
-- **Test Scope**: Daily SMS notifications (8:00 AM CST) and weekly escalation summary (Mondays 8:00 AM CST)
-- **Expected Results**:
-  - Daily SMS sent to override member's phone number
-  - Weekly summary shows override member with correct contact info
-  - Dashboard displays orange override badges with correct member colors (gray for inactive)
-- **Next Steps**: Monitor natural schedule execution and verify override behavior in production-like conditions
+- **WHO-14 Override Testing** (Dec 2, 2025):
+  - ✅ Daily SMS notifications correctly sent to override member
+  - ✅ Dashboard displays orange override badges with correct member colors
+  - ✅ Weekly summary shows override members with correct contact info
+  - 🐛 Weekly summary date bug identified and fixed (WHO-31)
+  - 🐛 Override completion status bug identified and documented (WHO-30)
+- **Test Overrides Created**: Ken U (11/28, 11/29), Matt C (11/28, 12/02), Lonnie B (11/27)
+- **Next Steps**: Verify WHO-31 fix on next Monday 8:00 AM scheduled run
 
 ---
 

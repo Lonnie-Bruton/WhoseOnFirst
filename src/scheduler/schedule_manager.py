@@ -546,14 +546,15 @@ def send_weekly_escalation_summary() -> dict:
                 f"secondary={'Yes' if has_secondary else 'No'}"
             )
 
-            # Calculate date range for next 7 days starting from next Monday
-            # (or today if today is Monday and it's before 8 AM)
+            # Calculate date range for 7 days starting from THIS Monday
+            # (or next Monday if today is Monday and it's AFTER 8 AM - for manual triggers)
             now = datetime.now(CHICAGO_TZ)
 
-            # Find next Monday (0 = Monday)
+            # Find this Monday (0 = Monday)
             days_until_monday = (7 - now.weekday()) % 7
-            if days_until_monday == 0 and now.hour >= 8:
-                # Already Monday and past 8 AM, use next Monday
+            if days_until_monday == 0 and now.hour > 8:
+                # Already Monday and PAST 8 AM (manual trigger), use next Monday
+                # Note: Use > not >= so scheduled 8:00 AM job gets THIS week
                 days_until_monday = 7
 
             next_monday = (now + timedelta(days=days_until_monday)).replace(
