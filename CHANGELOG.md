@@ -80,13 +80,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Files Changed**: `src/services/sms_service.py`
   - **Impact**: Notification history now accurately shows who received the SMS
 
-### Known Issues
-
-- **Override Status Never Transitions to 'Completed'** ([WHO-30](https://linear.app/hextrackr/issue/WHO-30))
-  - **Issue**: Active overrides remain 'active' status indefinitely after schedule date passes; "Completed" count always shows 0
-  - **Root Cause**: No automated job exists to transition status from 'active' to 'completed'
-  - **Status**: Documented, planned fix in next release
-  - **Workaround**: None - cosmetic issue only, override functionality works correctly
+- **Override Status Lifecycle** - Added automated status transition from 'active' to 'completed' ([WHO-30](https://linear.app/hextrackr/issue/WHO-30))
+  - **Issue**: Active overrides remained 'active' indefinitely after schedule date passed; "Completed" count always showed 0
+  - **Root Cause**: No automated job existed to transition status
+  - **Solution**: Added daily scheduler job at 8:05 AM CST to complete past overrides
+  - **Implementation**:
+    - New scheduler job: `complete_past_overrides()` at 8:05 AM daily (after notifications)
+    - Repository method queries active overrides where `schedule.end_datetime < now`
+    - Transitions status to 'completed' and sets `completed_at` timestamp
+    - New migration: `d91648dc4f04_add_completed_at_to_schedule_overrides.py`
+    - Manual trigger API: `POST /api/v1/schedule-overrides/complete-past`
+  - **Files Changed**:
+    - `src/models/schedule_override.py` - Added `completed_at` column
+    - `src/repositories/schedule_override_repository.py` - Added `complete_past_overrides()` method
+    - `src/services/schedule_override_service.py` - Added service wrapper
+    - `src/scheduler/schedule_manager.py` - Added scheduler job at 8:05 AM
+    - `src/api/routes/schedule_overrides.py` - Added manual trigger endpoint
+  - **Impact**: Override History table now shows accurate completed counts
 
 ### Testing Notes
 
@@ -94,10 +104,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - ✅ Daily SMS notifications correctly sent to override member
   - ✅ Dashboard displays orange override badges with correct member colors
   - ✅ Weekly summary shows override members with correct contact info
-  - 🐛 Weekly summary date bug identified and fixed (WHO-31)
-  - 🐛 Override completion status bug identified and documented (WHO-30)
+  - ✅ Weekly summary date bug identified and fixed (WHO-31)
+  - ✅ Override completion status bug identified and fixed (WHO-30)
+  - ✅ Manual trigger `/api/v1/schedule-overrides/complete-past` tested successfully - completed 3 past overrides
 - **Test Overrides Created**: Ken U (11/28, 11/29), Matt C (11/28, 12/02), Lonnie B (11/27)
-- **Next Steps**: Verify WHO-31 fix on next Monday 8:00 AM scheduled run
+- **Next Steps**: Monitor automated completion job at 8:05 AM, verify WHO-31 fix on Monday 8:00 AM
 
 ---
 

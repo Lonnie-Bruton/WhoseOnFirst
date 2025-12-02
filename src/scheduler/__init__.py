@@ -11,7 +11,9 @@ from src.scheduler.schedule_manager import (
     send_daily_notifications,
     trigger_notifications_manually,
     trigger_weekly_summary_manually,
-    check_auto_renewal
+    check_auto_renewal,
+    complete_past_overrides,
+    trigger_override_completion_manually
 )
 
 __all__ = [
@@ -20,5 +22,7 @@ __all__ = [
     'send_daily_notifications',
     'trigger_notifications_manually',
     'trigger_weekly_summary_manually',
-    'check_auto_renewal'
+    'check_auto_renewal',
+    'complete_past_overrides',
+    'trigger_override_completion_manually'
 ]

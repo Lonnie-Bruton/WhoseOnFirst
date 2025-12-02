@@ -25,6 +25,7 @@ from src.models.database import SessionLocal
 from src.services.schedule_service import ScheduleService
 from src.services.sms_service import SMSService
 from src.services.settings_service import SettingsService
+from src.services.schedule_override_service import ScheduleOverrideService
 
 
 # Configure logging
@@ -135,6 +136,31 @@ class ScheduleManager:
         )
         logger.info("Added weekly escalation summary job: Monday 8:00 AM %s", CHICAGO_TZ)
 
+    def add_override_completion_job(self) -> None:
+        """
+        Add the override completion job to the scheduler.
+
+        Configures a CronTrigger to run complete_past_overrides()
+        every day at 8:05 AM Chicago time (5 minutes after daily notifications).
+
+        The job will:
+        - Find all active overrides where schedule.end_datetime has passed
+        - Transition them from 'active' to 'completed' status
+        - Set completed_at timestamp
+        - Log how many overrides were completed
+
+        Runs at 8:05 AM to ensure daily notifications process first,
+        then cleanup happens after schedules have definitely ended.
+        """
+        self.scheduler.add_job(
+            func=complete_past_overrides,
+            trigger=CronTrigger(hour=8, minute=5, timezone=CHICAGO_TZ),
+            id='override_completion',
+            name='Complete Past Schedule Overrides',
+            replace_existing=True
+        )
+        logger.info("Added override completion job: 8:05 AM %s", CHICAGO_TZ)
+
     def start(self) -> None:
         """
         Start the scheduler.
@@ -151,6 +177,7 @@ class ScheduleManager:
         self.add_daily_notification_job()
         self.add_auto_renewal_job()
         self.add_weekly_escalation_job()
+        self.add_override_completion_job()
         self.scheduler.start()
         self.is_running = True
         logger.info("Scheduler started successfully")
@@ -644,4 +671,81 @@ def trigger_weekly_summary_manually() -> dict:
             'successful': 0,
             'failed': 0,
             'total': 0
+        }
+
+
+def complete_past_overrides() -> dict:
+    """
+    Mark active overrides as 'completed' if their schedule has ended.
+
+    This function is executed by APScheduler every day at 8:05 AM CST.
+
+    Process:
+    1. Query all active overrides where schedule.end_datetime < now
+    2. Transition each from 'active' to 'completed' status
+    3. Set completed_at timestamp
+    4. Log how many overrides were completed
+
+    Returns:
+        dict: Result summary with completed count and status
+
+    Note: This function runs in a background thread, so it must manage
+    its own database session.
+    """
+    logger.info("Starting override completion job")
+
+    with get_db_session() as db:
+        try:
+            override_service = ScheduleOverrideService(db)
+            completed_count = override_service.complete_past_overrides()
+
+            if completed_count > 0:
+                logger.info(
+                    "Override completion job: marked %d overrides as completed",
+                    completed_count
+                )
+            else:
+                logger.info("Override completion job: no overrides to complete")
+
+            return {
+                'completed_count': completed_count,
+                'timestamp': datetime.now(CHICAGO_TZ).isoformat()
+            }
+
+        except Exception as e:
+            logger.error("Error in override completion job: %s", str(e), exc_info=True)
+            raise
+
+
+def trigger_override_completion_manually() -> dict:
+    """
+    Manually trigger the override completion job for testing.
+
+    This function can be called from an API endpoint to test the
+    override completion system without waiting for 8:05 AM.
+
+    Returns:
+        dict: Result summary with completed count and status
+
+    Example:
+        >>> result = trigger_override_completion_manually()
+        >>> print(f"Status: {result['status']}, Completed: {result['completed_count']}")
+    """
+    logger.info("Manual override completion trigger requested")
+
+    try:
+        result = complete_past_overrides()
+        return {
+            'status': 'success',
+            'message': 'Override completion processed successfully',
+            'timestamp': result.get('timestamp', datetime.now(CHICAGO_TZ).isoformat()),
+            'completed_count': result.get('completed_count', 0)
+        }
+    except Exception as e:
+        logger.error("Manual override completion trigger failed: %s", str(e))
+        return {
+            'status': 'error',
+            'message': str(e),
+            'timestamp': datetime.now(CHICAGO_TZ).isoformat(),
+            'completed_count': 0
         }

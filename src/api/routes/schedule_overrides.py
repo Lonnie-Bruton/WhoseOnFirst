@@ -18,6 +18,7 @@ from src.api.schemas.schedule_override import (
     ScheduleOverrideListResponse
 )
 from src.services.schedule_override_service import ScheduleOverrideService
+from src.scheduler import trigger_override_completion_manually
 
 
 router = APIRouter()
@@ -230,3 +231,52 @@ def cancel_override(
         )
 
     return None  # 204 No Content
+
+
+@router.post("/complete-past", status_code=status.HTTP_200_OK)
+def complete_past_overrides(
+    current_user = Depends(require_admin)
+):
+    """
+    Manually trigger past override completion (admin-only).
+
+    Finds all active overrides where the schedule's end_datetime has passed
+    and transitions them from 'active' to 'completed' status.
+
+    This job normally runs automatically at 8:05 AM CST daily.
+    This endpoint allows manual triggering for testing or immediate cleanup.
+
+    Args:
+        current_user: Current admin user (injected)
+
+    Returns:
+        dict: Result with completed count and status
+            - status: 'success' or 'error'
+            - message: Human-readable result
+            - timestamp: ISO timestamp of execution
+            - completed_count: Number of overrides transitioned to completed
+
+    Raises:
+        401 Unauthorized: If not authenticated
+        403 Forbidden: If not admin
+        500 Internal Server Error: If completion fails
+
+    Example:
+        POST /api/v1/schedule-overrides/complete-past
+        Response:
+        {
+            "status": "success",
+            "message": "Override completion processed successfully",
+            "timestamp": "2024-12-02T14:30:00-06:00",
+            "completed_count": 4
+        }
+    """
+    result = trigger_override_completion_manually()
+
+    if result['status'] == 'error':
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=result['message']
+        )
+
+    return result

@@ -223,3 +223,19 @@ class ScheduleOverrideService:
         }
 
         return overrides, pagination
+
+    def complete_past_overrides(self) -> int:
+        """
+        Mark active overrides as 'completed' if their schedule has ended.
+
+        Delegates to repository method which finds all active overrides
+        with schedule.end_datetime in the past and transitions them
+        to 'completed' status.
+
+        This should be called daily by the scheduler after notifications
+        (e.g., 8:05 AM CST) to clean up overrides that have served their purpose.
+
+        Returns:
+            Number of overrides marked as completed
+        """
+        return self.override_repo.complete_past_overrides()

@@ -107,6 +107,11 @@ class ScheduleOverride(Base):
         nullable=True,
         comment="When override was cancelled (if applicable)"
     )
+    completed_at = Column(
+        DateTime,
+        nullable=True,
+        comment="When override was marked completed (schedule date passed)"
+    )
 
     # Relationships
     schedule = relationship("Schedule", back_populates="overrides")
@@ -151,6 +156,7 @@ class ScheduleOverride(Base):
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
             "cancelled_at": self.cancelled_at.isoformat() if self.cancelled_at else None,
+            "completed_at": self.completed_at.isoformat() if self.completed_at else None,
         }
 
     @property

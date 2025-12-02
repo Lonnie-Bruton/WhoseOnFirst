@@ -10,9 +10,11 @@ from datetime import datetime
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.sql import func
+from pytz import timezone
 
 from .base_repository import BaseRepository
 from ..models.schedule_override import ScheduleOverride
+from ..models.schedule import Schedule
 
 
 class ScheduleOverrideRepository(BaseRepository[ScheduleOverride]):
@@ -261,3 +263,55 @@ class ScheduleOverrideRepository(BaseRepository[ScheduleOverride]):
         except SQLAlchemyError as e:
             self.db.rollback()
             raise Exception(f"Database error getting recent overrides: {str(e)}")
+
+    def complete_past_overrides(self) -> int:
+        """
+        Mark active overrides as 'completed' if their schedule has ended.
+
+        Finds all overrides where:
+        - status = 'active'
+        - schedule.end_datetime < current time (Chicago timezone)
+
+        Updates them to:
+        - status = 'completed'
+        - completed_at = current timestamp
+
+        This should be called daily after notifications (e.g., 8:05 AM CST)
+        to transition overrides that have served their purpose.
+
+        Returns:
+            Number of overrides marked as completed
+
+        Raises:
+            Exception: If database operation fails
+        """
+        try:
+            chicago_tz = timezone('America/Chicago')
+            now = datetime.now(chicago_tz)
+
+            # Find active overrides with past schedule end times
+            # Need to join with Schedule to check end_datetime
+            past_overrides = (
+                self.db.query(self.model)
+                .join(Schedule, self.model.schedule_id == Schedule.id)
+                .filter(
+                    self.model.status == 'active',
+                    Schedule.end_datetime < now
+                )
+                .all()
+            )
+
+            completed_count = 0
+            for override in past_overrides:
+                override.status = 'completed'
+                override.completed_at = func.now()
+                completed_count += 1
+
+            if completed_count > 0:
+                self.db.commit()
+
+            return completed_count
+
+        except SQLAlchemyError as e:
+            self.db.rollback()
+            raise Exception(f"Database error completing past overrides: {str(e)}")
