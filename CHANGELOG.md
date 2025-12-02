@@ -9,11 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [1.4.0] - 2025-12-02
+
 ### Added
 
 - **Manual Schedule Override System** - Full CRUD UI and backend for manually overriding schedule assignments ([WHO-14](https://linear.app/hextrackr/issue/WHO-14))
   - **Purpose**: Allow admins to manually override on-call schedules for vacation, sick days, shift swaps, or emergency coverage without affecting rotation algorithm
-  - **Status**: ✅ **Core functionality complete** | 🧪 **Testing in progress** (natural schedule validation)
+  - **Status**: ✅ **Complete** - All features implemented and tested
   - **Features**:
     - Create, view, edit, cancel, and delete schedule overrides via dedicated UI page
     - Override member can be any team member (active OR inactive) - allows supervisors to cover shifts
