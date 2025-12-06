@@ -11,7 +11,7 @@ from typing import List, Optional
 import math
 
 from src.api.dependencies import get_db
-from src.api.routes.auth import require_admin
+from src.api.routes.auth import require_admin, require_auth
 from src.api.schemas.schedule_override import (
     ScheduleOverrideRequest,
     ScheduleOverrideResponse,
@@ -87,27 +87,27 @@ def list_overrides(
     per_page: int = Query(25, ge=10, le=100, description="Items per page"),
     status_filter: Optional[str] = Query(None, description="Filter by status: active, cancelled, completed"),
     db: Session = Depends(get_db),
-    current_user = Depends(require_admin)
+    current_user = Depends(require_auth)
 ):
     """
-    List all overrides with pagination (admin-only).
+    List all overrides with pagination (authenticated users).
 
     Returns paginated list of schedule overrides with metadata.
     Used for audit trail table display.
+    Available to all authenticated users (admin and viewer).
 
     Args:
         page: Page number (1-indexed, default 1)
         per_page: Items per page (10-100, default 25)
         status_filter: Optional status filter (active, cancelled, completed)
         db: Database session (injected)
-        current_user: Current admin user (injected)
+        current_user: Current authenticated user (injected)
 
     Returns:
         Paginated list of overrides with metadata
 
     Raises:
         401 Unauthorized: If not authenticated
-        403 Forbidden: If not admin
 
     Example:
         GET /api/v1/schedule-overrides/?page=1&per_page=25&status_filter=active
@@ -128,24 +128,24 @@ def list_overrides(
 @router.get("/active", response_model=List[ScheduleOverrideResponse])
 def get_active_overrides(
     db: Session = Depends(get_db),
-    current_user = Depends(require_admin)
+    current_user = Depends(require_auth)
 ):
     """
-    Get all active overrides (admin-only).
+    Get all active overrides (authenticated users).
 
     Returns list of all active overrides without pagination.
     Used by dashboard to check for overrides when rendering calendar.
+    Available to all authenticated users (admin and viewer).
 
     Args:
         db: Database session (injected)
-        current_user: Current admin user (injected)
+        current_user: Current authenticated user (injected)
 
     Returns:
         List of active overrides
 
     Raises:
         401 Unauthorized: If not authenticated
-        403 Forbidden: If not admin
 
     Example:
         GET /api/v1/schedule-overrides/active
@@ -158,24 +158,24 @@ def get_active_overrides(
 def get_override(
     override_id: int,
     db: Session = Depends(get_db),
-    current_user = Depends(require_admin)
+    current_user = Depends(require_auth)
 ):
     """
-    Get single override by ID (admin-only).
+    Get single override by ID (authenticated users).
 
     Retrieves detailed information about a specific override.
+    Available to all authenticated users (admin and viewer).
 
     Args:
         override_id: Override ID to retrieve
         db: Database session (injected)
-        current_user: Current admin user (injected)
+        current_user: Current authenticated user (injected)
 
     Returns:
         Override details
 
     Raises:
         401 Unauthorized: If not authenticated
-        403 Forbidden: If not admin
         404 Not Found: If override doesn't exist
 
     Example:

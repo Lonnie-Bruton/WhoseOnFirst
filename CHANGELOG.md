@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Viewer User Dashboard Loading Bug** - Fixed dashboard failing to load for viewer role users ([WHO-33](https://linear.app/hextrackr/issue/WHO-33))
+  - **Issue**: When logged in as viewer, dashboard showed "Loading..." forever with console error: `Error loading dashboard data: Error: Failed to fetch data`
+  - **Root Cause**: GET endpoints for schedule-overrides used `require_admin` instead of `require_auth`, returning 403 Forbidden for viewer users. Dashboard error handling treated any failed fetch as fatal.
+  - **Solution**: Changed read-only override endpoints from `require_admin` to `require_auth`:
+    - `GET /api/v1/schedule-overrides/` - List overrides (line 90)
+    - `GET /api/v1/schedule-overrides/active` - Active overrides for dashboard (line 131)
+    - `GET /api/v1/schedule-overrides/{id}` - Single override details (line 161)
+  - **Preserved Admin-Only**: Mutation endpoints remain `require_admin` (POST create, DELETE cancel, POST complete-past)
+  - **Files Changed**: `src/api/routes/schedule_overrides.py` (import + 3 endpoint permissions + docstrings)
+  - **Impact**: Viewer users can now see dashboard with full data including override indicators
+
 ---
 
 ## [1.4.0] - 2025-12-02
