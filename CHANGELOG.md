@@ -22,6 +22,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Files Changed**: `src/api/routes/schedule_overrides.py` (import + 3 endpoint permissions + docstrings)
   - **Impact**: Viewer users can now see dashboard with full data including override indicators
 
+- **Completed Overrides Not Showing on Dashboard** - Fixed calendar not displaying overrides after status transitions to 'completed' ([WHO-34](https://linear.app/hextrackr/issue/WHO-34))
+  - **Issue**: Dashboard calendar only showed override indicators (orange badges) for 'active' overrides. Once WHO-30 scheduler job transitioned status from 'active' to 'completed', calendar reverted to showing original scheduled person instead of who actually covered.
+  - **Root Cause**: Triple filter problem - override display was filtered at multiple levels all checking only `status='active'`:
+    - Repository: `get_active_overrides()` filtered `.filter(status == 'active')`
+    - Frontend filter: `findOverrideForSchedule()` checked `o.status === 'active'`
+    - Frontend fetch: Used `?status=active` query parameter
+  - **Solution**: Modified all layers to include both 'active' AND 'completed' overrides (excluding 'cancelled'):
+    - Renamed `get_active_overrides()` → `get_display_overrides()` for semantic accuracy
+    - Changed filter to `.filter(status.in_(['active', 'completed']))`
+    - Updated frontend to use `/active` endpoint and accept both statuses
+    - Fixed response parsing to handle both array and object response shapes
+  - **Files Changed**:
+    - `src/repositories/schedule_override_repository.py` (method rename + filter update)
+    - `src/api/routes/schedule_overrides.py` (endpoint update + docstring)
+    - `frontend/index.html` (fetch URL + filter function + response parsing)
+  - **Impact**: All completed overrides now display correctly on calendar with orange badges
+
 ---
 
 ## [1.4.0] - 2025-12-02

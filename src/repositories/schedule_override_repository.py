@@ -41,15 +41,16 @@ class ScheduleOverrideRepository(BaseRepository[ScheduleOverride]):
         """
         super().__init__(db, ScheduleOverride)
 
-    def get_active_overrides(self) -> List[ScheduleOverride]:
+    def get_display_overrides(self) -> List[ScheduleOverride]:
         """
-        Get all active overrides.
+        Get overrides for calendar display purposes.
 
-        Returns only overrides with status='active', ordered by creation date
-        (most recent first).
+        Returns both active and completed overrides (excludes cancelled).
+        Used by dashboard to show historical and current override coverage.
+        Ordered by creation date (most recent first).
 
         Returns:
-            List of active ScheduleOverride instances
+            List of ScheduleOverride instances for display
 
         Raises:
             Exception: If database operation fails
@@ -57,13 +58,13 @@ class ScheduleOverrideRepository(BaseRepository[ScheduleOverride]):
         try:
             return (
                 self.db.query(self.model)
-                .filter(self.model.status == 'active')
+                .filter(self.model.status.in_(['active', 'completed']))
                 .order_by(self.model.created_at.desc())
                 .all()
             )
         except SQLAlchemyError as e:
             self.db.rollback()
-            raise Exception(f"Database error getting active overrides: {str(e)}")
+            raise Exception(f"Database error getting display overrides: {str(e)}")
 
     def get_override_for_schedule(self, schedule_id: int) -> Optional[ScheduleOverride]:
         """

@@ -361,12 +361,12 @@
             return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
         }
 
-        // Find active override for a schedule
+        // Find override for a schedule (active or completed, excludes cancelled)
         function findOverrideForSchedule(scheduleId, overrides) {
             if (!overrides || !Array.isArray(overrides)) {
                 return null;
             }
-            return overrides.find(o => o.schedule_id === scheduleId && o.status === 'active');
+            return overrides.find(o => o.schedule_id === scheduleId && (o.status === 'active' || o.status === 'completed'));
         }
 
         // Load dashboard data
@@ -378,7 +378,7 @@
                     fetch(`${API_BASE}/team-members/`, { credentials: 'include' }),
                     fetch(`${API_BASE}/schedules/`, { credentials: 'include' }),  // Get all schedules
                     fetch(`${API_BASE}/shifts/`, { credentials: 'include' }),
-                    fetch(`${API_BASE}/schedule-overrides/?status=active`, { credentials: 'include' })
+                    fetch(`${API_BASE}/schedule-overrides/active`, { credentials: 'include' })
                 ]);
 
                 if (!membersRes.ok || !schedulesRes.ok || !shiftsRes.ok || !overridesRes.ok) {
@@ -390,7 +390,8 @@
                 const schedules = await schedulesRes.json();
                 const shifts = await shiftsRes.json();
                 const overridesData = await overridesRes.json();
-                const overrides = overridesData.overrides || [];
+                // /active endpoint returns array directly, paginated endpoint returns { overrides: [...] }
+                const overrides = Array.isArray(overridesData) ? overridesData : (overridesData.overrides || []);
 
                 // Cache the data for navigation
                 cachedData = { members: allMembers, schedules, shifts, overrides };

@@ -126,15 +126,16 @@ def list_overrides(
 
 
 @router.get("/active", response_model=List[ScheduleOverrideResponse])
-def get_active_overrides(
+def get_display_overrides(
     db: Session = Depends(get_db),
     current_user = Depends(require_auth)
 ):
     """
-    Get all active overrides (authenticated users).
+    Get overrides for dashboard display (authenticated users).
 
-    Returns list of all active overrides without pagination.
+    Returns both active and completed overrides (excludes cancelled).
     Used by dashboard to check for overrides when rendering calendar.
+    Completed overrides are included for historical accuracy.
     Available to all authenticated users (admin and viewer).
 
     Args:
@@ -142,7 +143,7 @@ def get_active_overrides(
         current_user: Current authenticated user (injected)
 
     Returns:
-        List of active overrides
+        List of overrides for display (active + completed)
 
     Raises:
         401 Unauthorized: If not authenticated
@@ -151,7 +152,7 @@ def get_active_overrides(
         GET /api/v1/schedule-overrides/active
     """
     service = ScheduleOverrideService(db)
-    return service.override_repo.get_active_overrides()
+    return service.override_repo.get_display_overrides()
 
 
 @router.get("/{override_id}", response_model=ScheduleOverrideResponse)
