@@ -59,6 +59,13 @@ venv.bak/
 HANDOFF.md
 .mcp.json
 
+# Claude Code local configuration (keep local, not for deployment)
+.claude/
+CLAUDE.md
+
+# Documentation (keep local for reference, not needed in deployment)
+docs/
+
 # Database
 *.db
 *.db-journal
