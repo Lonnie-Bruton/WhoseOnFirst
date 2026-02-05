@@ -16,12 +16,12 @@
         // Find the sidebar container and replace it with the sidebar HTML
         const sidebarContainer = document.getElementById('sidebar-container');
         if (sidebarContainer) {
-            // Create a temporary element to parse the HTML
-            const temp = document.createElement('div');
-            temp.innerHTML = sidebarHTML;
+            // Use DOMParser for safer HTML parsing (avoids innerHTML XSS vector)
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(sidebarHTML, 'text/html');
 
             // Replace the container with the actual sidebar element
-            sidebarContainer.replaceWith(temp.firstElementChild);
+            sidebarContainer.replaceWith(doc.body.firstElementChild);
         } else {
             console.error('Sidebar container (#sidebar-container) not found');
             return;

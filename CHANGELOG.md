@@ -57,6 +57,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - `frontend/index.html` (fetch URL + filter function + response parsing)
   - **Impact**: All completed overrides now display correctly on calendar with orange badges
 
+### Security
+
+- **Fixed innerHTML XSS Vulnerability in Sidebar Loader** - Replaced innerHTML with DOMParser for safer HTML parsing ([WHO-25](https://linear.app/hextrackr/issue/WHO-25))
+  - **Issue**: Codacy flagged 3 XSS vulnerabilities (2 Critical, 1 High) at `frontend/js/sidebar-loader.js:21` for unsafe `innerHTML` assignment
+  - **Risk Assessment**: Low actual risk (sidebar HTML is static), but best practice to fix for defense-in-depth
+  - **Solution**: Replaced `temp.innerHTML = sidebarHTML` with `DOMParser.parseFromString()` which parses HTML in an isolated context without executing scripts
+  - **Files Changed**: `frontend/js/sidebar-loader.js` (lines 19-24)
+  - **Impact**: Eliminates Codacy XSS warnings, follows OWASP security best practices
+
 ---
 
 ## [1.4.0] - 2025-12-02
