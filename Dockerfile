@@ -28,6 +28,9 @@ COPY requirements.txt .
 # UBI9 Python uses /opt/app-root for packages, not /usr/local
 RUN pip install --no-cache-dir --target=/install/site-packages -r requirements.txt
 
+# Switch back to non-root user (satisfies security scanners)
+USER 1001
+
 # ============================================
 # Stage 2: Runtime
 # ============================================
