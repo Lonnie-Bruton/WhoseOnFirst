@@ -2,47 +2,48 @@
 # WhoseOnFirst - Production Docker Image
 # ============================================
 # Multi-stage build for efficient container size
-# Target: RHEL 10 / Podman compatible
-# Version: 1.0.0
+# Target: RHEL 10 / Kubernetes / Podman compatible
+# Base: Red Hat UBI9 with Python 3.12
+# Version: 1.1.0
 # ============================================
 
 # ============================================
 # Stage 1: Builder
 # ============================================
-FROM python:3.11-slim AS builder
+FROM registry.access.redhat.com/ubi9/python-312 AS builder
 
 # Set working directory
 WORKDIR /app
 
-# Install system dependencies required for building Python packages
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc \
-    g++ \
-    libffi-dev \
-    && rm -rf /var/lib/apt/lists/*
+# Switch to root for package installation (UBI9 runs as non-root by default)
+USER 0
+
+# Note: UBI9 Python image already includes gcc, gcc-c++, libffi-devel
+# No additional build packages needed
 
 # Copy requirements file
 COPY requirements.txt .
 
-# Install Python dependencies to a local directory
-# This allows us to copy only the installed packages to the final image
-RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
+# Install Python dependencies to UBI9's site-packages location
+# UBI9 Python uses /opt/app-root for packages, not /usr/local
+RUN pip install --no-cache-dir --target=/install/site-packages -r requirements.txt
 
 # ============================================
 # Stage 2: Runtime
 # ============================================
-FROM python:3.11-slim
+FROM registry.access.redhat.com/ubi9/python-312
 
 # Set working directory
 WORKDIR /app
 
-# Install runtime dependencies only (no build tools)
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
+# Note: UBI9 already includes curl-minimal which provides the curl command
+# No additional runtime packages needed
 
-# Copy installed Python packages from builder stage
-COPY --from=builder /install /usr/local
+# Switch to root for setup (UBI9 runs as non-root user 1001 by default)
+USER 0
+
+# Copy installed Python packages from builder stage to UBI9's site-packages
+COPY --from=builder /install/site-packages /opt/app-root/lib/python3.12/site-packages
 
 # Create non-root user for security
 RUN groupadd -r whoseonfirst && useradd -r -g whoseonfirst whoseonfirst
@@ -79,5 +80,6 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
 VOLUME ["/app/data"]
 
 # Run database migrations and start the application
-# Note: In production, you may want to run migrations separately
-CMD ["sh", "-c", "alembic upgrade head && uvicorn src.main:app --host 0.0.0.0 --port 8000"]
+# Note: Using python -m for cross-platform compatibility with UBI9
+# In production, you may want to run migrations separately
+CMD ["sh", "-c", "python -m alembic upgrade head && python -m uvicorn src.main:app --host 0.0.0.0 --port 8000"]

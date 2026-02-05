@@ -9,6 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Docker Base Image Migration to UBI9** - Migrated from `python:3.11-slim` to `registry.access.redhat.com/ubi9/python-312` for Kubernetes/enterprise deployment compatibility ([WHO-5](https://linear.app/hextrackr/issue/WHO-5))
+  - **Purpose**: Enable deployment to corporate Kubernetes clusters using Red Hat Universal Base Image
+  - **Base Image**: `registry.access.redhat.com/ubi9/python-312` (RHEL 9 with Python 3.12)
+  - **Key Changes**:
+    - Removed apt-get commands (UBI9 uses dnf and has build tools pre-installed)
+    - Added `USER 0` directives for root operations (UBI9 runs as non-root by default)
+    - Updated pip install to use UBI9 site-packages path (`/opt/app-root/lib/python3.12/site-packages`)
+    - Changed CMD to use `python -m` syntax for cross-platform compatibility
+  - **Dev Dependencies Updated for Python 3.12**:
+    - pytest-asyncio: 0.21.1 → 0.23.0
+    - black: 23.12.0 → 24.1.0
+    - mypy: 1.7.1 → 1.8.0
+  - **Offline Installer**: Updated to version 1.1.0 with UBI9 image references
+  - **Verification**: Container builds, starts, passes health checks, all scheduler jobs initialize correctly
+  - **Impact**: WhoseOnFirst is now compatible with enterprise Kubernetes deployments using Red Hat container registry
+
 ### Fixed
 
 - **Viewer User Dashboard Loading Bug** - Fixed dashboard failing to load for viewer role users ([WHO-33](https://linear.app/hextrackr/issue/WHO-33))
