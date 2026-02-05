@@ -41,6 +41,7 @@ class TestTeamMemberServiceCreate:
 
         assert member.is_active is False
 
+    @pytest.mark.skip(reason="v1.5.0: Duplicate phone validation removed - allows testing with single phone number")
     def test_create_duplicate_phone_fails(self, db_session: Session, sample_team_member_data):
         """Test that creating member with duplicate phone raises error."""
         service = TeamMemberService(db_session)
@@ -257,6 +258,7 @@ class TestTeamMemberServiceUpdate:
         with pytest.raises(InvalidPhoneError):
             service.update(created.id, {"phone": "invalid"})
 
+    @pytest.mark.skip(reason="v1.5.0: Duplicate phone validation removed - allows testing with single phone number")
     def test_update_duplicate_phone_fails(self, db_session: Session, sample_team_member_data):
         """Test that updating to duplicate phone raises error."""
         service = TeamMemberService(db_session)

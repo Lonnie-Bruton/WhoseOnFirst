@@ -92,6 +92,7 @@ class TestCreateTeamMember:
         assert "id" in data
         assert "created_at" in data
 
+    @pytest.mark.skip(reason="v1.5.0: Duplicate phone validation removed - allows testing with single phone number")
     def test_create_duplicate_phone(self, client: TestClient, db_session: Session):
         """Test creating member with duplicate phone number."""
         # Create existing member
@@ -189,6 +190,7 @@ class TestUpdateTeamMember:
         response = client.put("/api/v1/team-members/999", json=update_data)
         assert response.status_code == 404
 
+    @pytest.mark.skip(reason="v1.5.0: Duplicate phone validation removed - allows testing with single phone number")
     def test_update_duplicate_phone(self, client: TestClient, db_session: Session):
         """Test updating to a phone number that already exists."""
         member1 = TeamMember(name="John Doe", phone="+15551234567", is_active=True)
