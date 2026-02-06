@@ -11,17 +11,22 @@
             throw new Error(`Failed to load sidebar: ${response.status}`);
         }
 
+        // SECURITY: Validate response is from expected same-origin path
+        // This ensures we only parse HTML from our own trusted server component
+        const responseURL = new URL(response.url);
+        const expectedPath = '/components/sidebar.html';
+        if (responseURL.origin !== window.location.origin || !responseURL.pathname.endsWith(expectedPath)) {
+            throw new Error('Security: Unexpected sidebar source');
+        }
+
         const sidebarHTML = await response.text();
 
         // Find the sidebar container and replace it with the sidebar HTML
         const sidebarContainer = document.getElementById('sidebar-container');
         if (sidebarContainer) {
-            // SECURITY NOTE: DOMParser is used here instead of innerHTML for safer HTML parsing.
-            // The sidebarHTML comes from our own server (/components/sidebar.html), not user input.
-            // This is a trusted source - no XSS risk. DOMParser also doesn't execute scripts.
-            // nosemgrep: javascript.browser.security.dom-based-xss
+            // Parse trusted same-origin HTML component using DOMParser (doesn't execute scripts)
             const parser = new DOMParser();
-            const doc = parser.parseFromString(sidebarHTML, 'text/html'); // Safe: trusted source
+            const doc = parser.parseFromString(sidebarHTML, 'text/html');
 
             // Replace the container with the actual sidebar element
             sidebarContainer.replaceWith(doc.body.firstElementChild);

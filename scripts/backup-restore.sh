@@ -146,16 +146,23 @@ restore_database() {
     # Try direct copy first
     if $RUNTIME cp "$BACKUP_FILE" "$CONTAINER_NAME:$CONTAINER_DB_PATH" 2>/dev/null; then
         print_success "Database restored to container"
+        # Fix permissions after copy
+        fix_container_permissions "$RUNTIME"
     else
         # Try named volume
         VOLUME_PATH=$($RUNTIME volume inspect whoseonfirst-dev-db --format '{{.Mountpoint}}' 2>/dev/null || echo "")
         if [[ -n "$VOLUME_PATH" ]]; then
             cp "$BACKUP_FILE" "$VOLUME_PATH/whoseonfirst.db"
+            # Fix permissions on volume - make world-writable for OpenShift compatibility
+            chmod 666 "$VOLUME_PATH/whoseonfirst.db" 2>/dev/null || true
             print_success "Database restored to volume"
         else
             # Create data directory and copy
             mkdir -p "./data"
             cp "$BACKUP_FILE" "./data/whoseonfirst.db"
+            # Make world-writable for OpenShift arbitrary UID compatibility
+            chmod 666 "./data/whoseonfirst.db"
+            chmod 777 "./data"
             print_success "Database restored to ./data/whoseonfirst.db"
             print_info "Make sure your docker-compose.yml mounts ./data:/app/data"
         fi
@@ -165,11 +172,30 @@ restore_database() {
     if [[ "$RESTART_AFTER" == "true" ]]; then
         print_info "Restarting container..."
         $RUNTIME start "$CONTAINER_NAME"
+        # Fix permissions after restart (container user now exists)
+        fix_container_permissions "$RUNTIME"
         print_success "Container restarted"
     fi
 
     echo ""
     print_success "Restore complete!"
+}
+
+fix_container_permissions() {
+    local RUNTIME="$1"
+    print_info "Fixing database permissions..."
+
+    # Try to fix ownership to whoseonfirst user (Docker Compose scenario)
+    if $RUNTIME exec -u 0 "$CONTAINER_NAME" chown whoseonfirst:whoseonfirst /app/data /app/data/whoseonfirst.db 2>/dev/null; then
+        print_success "Permissions fixed (whoseonfirst user)"
+    # Fallback: make world-writable (OpenShift arbitrary UID scenario)
+    elif $RUNTIME exec -u 0 "$CONTAINER_NAME" chmod -R 777 /app/data 2>/dev/null; then
+        print_success "Permissions fixed (world-writable for OpenShift)"
+    else
+        print_warning "Could not fix permissions automatically"
+        print_info "If you see 'readonly database' errors, run:"
+        echo "  $RUNTIME exec -u 0 $CONTAINER_NAME chown -R whoseonfirst:whoseonfirst /app/data"
+    fi
 }
 
 create_deployment_package() {

@@ -4,7 +4,7 @@
 # Multi-stage build for efficient container size
 # Target: RHEL 10 / Kubernetes / Podman compatible
 # Base: Red Hat UBI9 with Python 3.12
-# Version: 1.1.0
+# Version: 1.2.0
 # ============================================
 
 # ============================================
@@ -49,17 +49,25 @@ USER 0
 COPY --from=builder /install/site-packages /opt/app-root/lib/python3.12/site-packages
 
 # Create non-root user for security
-RUN groupadd -r whoseonfirst && useradd -r -g whoseonfirst whoseonfirst
+# Add to root group (GID 0) for OpenShift compatibility - OpenShift runs with arbitrary UIDs but GID 0
+RUN groupadd -r whoseonfirst && \
+    useradd -r -g whoseonfirst -G root whoseonfirst
 
 # Create directories with proper permissions
+# Group-writable (g+w) for OpenShift arbitrary UID support
 RUN mkdir -p /app/data /app/frontend /app/src /app/alembic && \
-    chown -R whoseonfirst:whoseonfirst /app
+    chown -R whoseonfirst:root /app && \
+    chmod -R g+rwX /app
 
-# Copy application code
-COPY --chown=whoseonfirst:whoseonfirst src/ /app/src/
-COPY --chown=whoseonfirst:whoseonfirst frontend/ /app/frontend/
-COPY --chown=whoseonfirst:whoseonfirst alembic/ /app/alembic/
-COPY --chown=whoseonfirst:whoseonfirst alembic.ini /app/
+# Copy application code (root group for OpenShift compatibility)
+COPY --chown=whoseonfirst:root src/ /app/src/
+COPY --chown=whoseonfirst:root frontend/ /app/frontend/
+COPY --chown=whoseonfirst:root alembic/ /app/alembic/
+COPY --chown=whoseonfirst:root alembic.ini /app/
+
+# Copy and setup entrypoint script
+COPY --chown=whoseonfirst:root scripts/docker-entrypoint.sh /app/
+RUN chmod +x /app/docker-entrypoint.sh
 
 # Switch to non-root user
 USER whoseonfirst
@@ -82,7 +90,6 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
 # Volume for persistent data (SQLite database)
 VOLUME ["/app/data"]
 
-# Run database migrations and start the application
-# Note: Using python -m for cross-platform compatibility with UBI9
-# In production, you may want to run migrations separately
-CMD ["sh", "-c", "python -m alembic upgrade head && python -m uvicorn src.main:app --host 0.0.0.0 --port 8000"]
+# Run entrypoint script (handles permission checks, migrations, and startup)
+# The entrypoint validates write access to /app/data before starting
+ENTRYPOINT ["/app/docker-entrypoint.sh"]

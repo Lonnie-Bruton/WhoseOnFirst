@@ -9,7 +9,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-_No unreleased changes yet._
+### Fixed
+
+- **Database Read-Only Bug After Container Rebuild** - Fixed SQLite database becoming read-only after Docker image rebuild
+  - **Issue**: After rebuilding the Docker image (e.g., UBI9 migration), the notification logs stopped being written with error: `sqlite3.OperationalError: attempt to write a readonly database`
+  - **Root Cause**: Docker volume-mounted database file retained previous ownership (systemd-coredump) instead of container user (whoseonfirst), making it read-only to the app
+  - **Impact**: SMS notifications were sent successfully to Twilio, but notification logs were not recorded (Feb 4-5, 2026 logs lost)
+  - **Solution**: Multiple improvements for both Docker Compose and OpenShift deployments:
+    1. **Dockerfile v1.2.0**: Added OpenShift arbitrary UID support (GID 0/root group, g+rwX permissions)
+    2. **Entrypoint script**: Added `/app/docker-entrypoint.sh` that validates write access on startup and provides clear error messages if permissions are wrong
+    3. **Backup-restore script**: Added `fix_container_permissions()` function that automatically corrects ownership after restore
+
+### Changed
+
+- **Dockerfile OpenShift Compatibility** (v1.2.0)
+  - Added user to root group (GID 0) for OpenShift arbitrary UID support
+  - Changed all COPY commands to use root group ownership (`whoseonfirst:root`)
+  - Added group-writable permissions (`g+rwX`) to /app directory
+  - Added entrypoint script for startup permission validation
+  - Switched from inline CMD to ENTRYPOINT for better error handling
+
+### Added
+
+- **Docker Entrypoint Script** (`scripts/docker-entrypoint.sh`)
+  - Validates /app/data directory is writable before starting
+  - Checks database file write permissions
+  - Provides clear fix instructions for both Docker and OpenShift scenarios
+  - Handles migrations and uvicorn startup
+
+- **Backup-Restore Permission Fixes** (`scripts/backup-restore.sh`)
+  - Added `fix_container_permissions()` function
+  - Automatic permission correction after database restore
+  - Fallback to world-writable for OpenShift arbitrary UID compatibility
+
+### Security
+
+- **Sidebar Loader XSS Hardening** (`frontend/js/sidebar-loader.js`)
+  - Added explicit same-origin URL validation before parsing HTML
+  - Validates response origin matches `window.location.origin`
+  - Validates response path ends with expected `/components/sidebar.html`
+  - Addresses Codacy HIGH severity XSS warning for `parseFromString`
 
 ---
 
