@@ -156,9 +156,10 @@ yarn-error.log
 *.tar.gz
 *.zip
 
-# Offline installer bundle (deployment artifact)
+# Deployment packages (contains secrets and database)
+deployment-packages/
 offline-installer/
-whoseonfirst-offline-installer-*.tar.gz
+whoseonfirst-*.tar.gz
 
 # Coverage reports
 .coverage

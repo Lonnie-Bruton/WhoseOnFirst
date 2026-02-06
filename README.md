@@ -3,7 +3,7 @@
 [![Python](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688.svg)](https://fastapi.tiangolo.com/)
 [![Version](https://img.shields.io/badge/version-1.5.0-success.svg)](CHANGELOG.md)
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/b37c9c41b9644a9990be09eeda5bf014)](https://app.codacy.com/gh/Lonnie-Bruton/WhoseOnFirst/dashboard)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/876350f66cf34d748628126b42ee9118)](https://app.codacy.com/gh/lbruton/WhoseOnFirst/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 
 Automated on-call rotation and SMS notification system for the technical support team.
 
